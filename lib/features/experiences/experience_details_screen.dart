@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_typography.dart';
+import '../../core/localization/locale_provider.dart';
 import '../../core/utils/html_utils.dart';
 import '../../core/widgets/custom_button.dart';
 import '../tours/data/models/tour_model.dart';
@@ -32,30 +34,43 @@ class _ExperienceDetailsScreenState extends ConsumerState<ExperienceDetailsScree
     super.dispose();
   }
 
+  Future<void> _openMap(TourModel tour) async {
+    final lat = tour.mapLat ?? 21.4689868;
+    final lng = tour.mapLng ?? 39.8279215;
+    final url = Uri.parse('https://www.google.com/maps/search/?api=1&query=$lat,$lng');
+    try {
+      if (await canLaunchUrl(url)) {
+        await launchUrl(url, mode: LaunchMode.externalApplication);
+      }
+    } catch (_) {}
+  }
+
   @override
   Widget build(BuildContext context) {
     final tourAsync = ref.watch(tourDetailProvider(widget.experienceId));
+    final currentLocale = ref.watch(localeProvider);
+    final isAr = currentLocale.languageCode == 'ar';
 
     return Scaffold(
       body: tourAsync.when(
         data: (tour) {
-          final gallery = tour.gallery.isNotEmpty
+          final images = tour.gallery.isNotEmpty
               ? tour.gallery
-              : [tour.imageUrl ?? 'https://images.unsplash.com/photo-1590073844006-33379778ae09?w=800&q=80'];
+              : (tour.imageUrl != null ? [tour.imageUrl!] : ['https://images.unsplash.com/photo-1590073844006-33379778ae09?w=800&q=80']);
 
           return Stack(
             children: [
               CustomScrollView(
                 slivers: [
-                  // Multi-Image Gallery SliverAppBar
+                  // 1. Multi-Image Carousel Header with Back & Share Buttons
                   SliverAppBar(
-                    expandedHeight: 340,
+                    expandedHeight: 380,
                     pinned: true,
                     backgroundColor: AppColors.background,
                     leading: Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: CircleAvatar(
-                        backgroundColor: Colors.black.withOpacity(0.6),
+                        backgroundColor: Colors.black.withOpacity(0.55),
                         child: IconButton(
                           icon: const Icon(Icons.arrow_back, color: Colors.white),
                           onPressed: () => context.pop(),
@@ -66,26 +81,15 @@ class _ExperienceDetailsScreenState extends ConsumerState<ExperienceDetailsScree
                       Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: CircleAvatar(
-                          backgroundColor: Colors.black.withOpacity(0.6),
+                          backgroundColor: Colors.black.withOpacity(0.55),
                           child: IconButton(
-                            icon: const Icon(Icons.favorite_border, color: Colors.white),
+                            icon: const Icon(Icons.favorite_border, color: AppColors.primaryGold),
                             onPressed: () {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('تمت الإضافة إلى المفضلة!'), backgroundColor: AppColors.success),
-                              );
-                            },
-                          ),
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.only(left: 8.0, top: 8.0, bottom: 8.0),
-                        child: CircleAvatar(
-                          backgroundColor: Colors.black.withOpacity(0.6),
-                          child: IconButton(
-                            icon: const Icon(Icons.share_outlined, color: Colors.white),
-                            onPressed: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('تم نسخ رابط التجربة للمشاركة'), backgroundColor: AppColors.primaryGold),
+                                SnackBar(
+                                  content: Text(isAr ? 'تمت إضافة المسار إلى المفضلة' : 'Added trail to favorites'),
+                                  backgroundColor: AppColors.success,
+                                ),
                               );
                             },
                           ),
@@ -98,167 +102,92 @@ class _ExperienceDetailsScreenState extends ConsumerState<ExperienceDetailsScree
                         children: [
                           PageView.builder(
                             controller: _pageController,
-                            itemCount: gallery.length,
-                            onPageChanged: (index) => setState(() => _currentGalleryIndex = index),
+                            itemCount: images.length,
+                            onPageChanged: (idx) => setState(() => _currentGalleryIndex = idx),
                             itemBuilder: (context, index) {
                               return CachedNetworkImage(
-                                imageUrl: gallery[index],
+                                imageUrl: images[index],
                                 fit: BoxFit.cover,
-                                errorWidget: (_, __, ___) => Image.network(
-                                  'https://images.unsplash.com/photo-1590073844006-33379778ae09?w=800&q=80',
-                                  fit: BoxFit.cover,
+                                errorWidget: (_, __, ___) => Container(
+                                  color: AppColors.surface,
+                                  child: const Icon(Icons.image_not_supported, color: AppColors.textMuted),
                                 ),
                               );
                             },
                           ),
                           // Dark gradient overlay
-                          Positioned.fill(
-                            child: DecoratedBox(
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  begin: Alignment.topCenter,
-                                  end: Alignment.bottomCenter,
-                                  colors: [
-                                    Colors.black.withOpacity(0.4),
-                                    Colors.transparent,
-                                    Colors.black.withOpacity(0.8),
-                                  ],
-                                ),
+                          DecoratedBox(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [
+                                  Colors.black.withOpacity(0.6),
+                                  Colors.transparent,
+                                  AppColors.background.withOpacity(0.95),
+                                  AppColors.background,
+                                ],
+                                stops: const [0.0, 0.4, 0.85, 1.0],
                               ),
                             ),
                           ),
-                          // Image counter badge
-                          if (gallery.length > 1)
-                            Positioned(
-                              bottom: 16,
-                              left: 16,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: Colors.black.withOpacity(0.7),
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: Colors.white24),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const Icon(Icons.photo_library_outlined, color: AppColors.primaryGold, size: 14),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      '${_currentGalleryIndex + 1} / ${gallery.length}',
-                                      style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
-                                    ),
-                                  ],
-                                ),
+                          // Image Counter Badge (📸 1/5)
+                          Positioned(
+                            bottom: 20,
+                            left: isAr ? 20 : null,
+                            right: isAr ? null : 20,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withOpacity(0.7),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(color: AppColors.primaryGold.withOpacity(0.5)),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.photo_library_outlined, color: AppColors.primaryGold, size: 14),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    '${_currentGalleryIndex + 1} / ${images.length}',
+                                    style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                                  ),
+                                ],
                               ),
                             ),
+                          ),
                         ],
                       ),
                     ),
                   ),
 
-                  // Content Body
+                  // 2. Content Details & Timeline Stages
                   SliverToBoxAdapter(
                     child: Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 20, 16, 110),
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 140),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Category and Rating
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-                                decoration: BoxDecoration(
-                                  color: AppColors.goldGlow,
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: Text(
-                                  tour.categoryName ?? 'مسار سياحي',
-                                  style: AppTypography.bodySmall.copyWith(
-                                    color: AppColors.primaryGold,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                              Row(
-                                children: [
-                                  const Icon(Icons.star, color: AppColors.primaryGold, size: 18),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    '${tour.rating} (${tour.reviewsCount} تقييم)',
-                                    style: AppTypography.titleSmall,
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-
-                          // Main Title
-                          Text(tour.title, style: AppTypography.headingMedium),
-                          const SizedBox(height: 8),
-
-                          // Location Address
-                          Row(
-                            children: [
-                              const Icon(Icons.location_on_outlined, color: AppColors.primaryGold, size: 18),
-                              const SizedBox(width: 6),
-                              Expanded(
-                                child: Text(
-                                  tour.address ?? tour.locationName ?? 'المملكة العربية السعودية',
-                                  style: AppTypography.bodyMedium,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 20),
-
-                          // Quick Info Highlights Bar
-                          Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: AppColors.card,
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: AppColors.border),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceAround,
-                              children: [
-                                _buildInfoItem(Icons.timelapse, 'مدة المسار', tour.duration ?? 'ساعتان'),
-                                Container(width: 1, height: 40, color: AppColors.border),
-                                _buildInfoItem(Icons.people_outline, 'المجموعة', '١ — ١٠ أفراد'),
-                                Container(width: 1, height: 40, color: AppColors.border),
-                                _buildInfoItem(Icons.confirmation_number_outlined, 'التذكرة', tour.formattedPrice),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 24),
-
-                          // Gallery Thumbnails Preview
-                          if (gallery.length > 1) ...[
-                            Text('معرض الصور والمشاهد', style: AppTypography.titleLarge),
-                            const SizedBox(height: 10),
+                          // Gallery Thumbnails Strip (if > 1 image)
+                          if (images.length > 1) ...[
                             SizedBox(
-                              height: 70,
+                              height: 60,
                               child: ListView.separated(
                                 scrollDirection: Axis.horizontal,
-                                itemCount: gallery.length,
-                                separatorBuilder: (_, __) => const SizedBox(width: 10),
-                                itemBuilder: (context, index) {
-                                  final isSelected = index == _currentGalleryIndex;
+                                itemCount: images.length,
+                                separatorBuilder: (_, __) => const SizedBox(width: 8),
+                                itemBuilder: (context, idx) {
+                                  final isSelected = _currentGalleryIndex == idx;
                                   return GestureDetector(
                                     onTap: () {
-                                      setState(() => _currentGalleryIndex = index);
                                       _pageController.animateToPage(
-                                        index,
+                                        idx,
                                         duration: const Duration(milliseconds: 300),
                                         curve: Curves.easeInOut,
                                       );
                                     },
                                     child: Container(
-                                      width: 70,
+                                      width: 60,
                                       decoration: BoxDecoration(
                                         borderRadius: BorderRadius.circular(12),
                                         border: Border.all(
@@ -269,7 +198,7 @@ class _ExperienceDetailsScreenState extends ConsumerState<ExperienceDetailsScree
                                       child: ClipRRect(
                                         borderRadius: BorderRadius.circular(10),
                                         child: CachedNetworkImage(
-                                          imageUrl: gallery[index],
+                                          imageUrl: images[idx],
                                           fit: BoxFit.cover,
                                         ),
                                       ),
@@ -278,30 +207,92 @@ class _ExperienceDetailsScreenState extends ConsumerState<ExperienceDetailsScree
                                 },
                               ),
                             ),
-                            const SizedBox(height: 24),
+                            const SizedBox(height: 16),
                           ],
 
-                          // Overview / About
-                          Text('عن المسار السياحي', style: AppTypography.titleLarge),
-                          const SizedBox(height: 8),
-                          Text(
-                            HtmlUtils.stripHtml(tour.content).isNotEmpty
-                                ? HtmlUtils.stripHtml(tour.content)
-                                : 'استمتع بتجربة سياحية وثقافية متكاملة تأخذك في جولة حية بين أحضان المعالم التاريخية والتراثية الأصيلة في المملكة العربية السعودية.',
-                            style: AppTypography.bodyLarge.copyWith(height: 1.6),
+                          // Category and Location Badge
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: AppColors.goldGlow,
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(color: AppColors.primaryGold.withOpacity(0.4)),
+                                ),
+                                child: Text(
+                                  tour.categoryName ?? (isAr ? 'مسار سياحي وتراثي' : 'Tourist Trail'),
+                                  style: const TextStyle(color: AppColors.primaryGold, fontSize: 12, fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                              if (tour.locationName != null) ...[
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.card,
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(color: AppColors.border),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(Icons.location_on_outlined, color: AppColors.textMuted, size: 14),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        tour.locationName!,
+                                        style: AppTypography.bodySmall.copyWith(color: AppColors.textPrimary),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ],
                           ),
-                          const SizedBox(height: 24),
 
-                          // Itinerary & Stages (محطات المسار)
-                          if (tour.itinerary.isNotEmpty) ...[
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          const SizedBox(height: 12),
+
+                          // Title
+                          Text(tour.title, style: AppTypography.headingMedium),
+
+                          const SizedBox(height: 12),
+
+                          // Rating and Duration Specs Grid
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: AppColors.card,
+                              borderRadius: BorderRadius.circular(18),
+                              border: Border.all(color: AppColors.border),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
                               children: [
-                                Text('محطات وجدول المسار', style: AppTypography.titleLarge),
-                                Text('${tour.itinerary.length} محطات', style: AppTypography.bodySmall.copyWith(color: AppColors.primaryGold)),
+                                _buildInfoItem(Icons.star, isAr ? 'التقييم' : 'Rating', '${tour.rating} (${tour.reviewsCount})'),
+                                Container(width: 1, height: 32, color: AppColors.border),
+                                _buildInfoItem(Icons.schedule, isAr ? 'المدة' : 'Duration', tour.duration ?? (isAr ? '٤-٦ ساعات' : '4-6 hours')),
+                                Container(width: 1, height: 32, color: AppColors.border),
+                                _buildInfoItem(Icons.groups_outlined, isAr ? 'المجموعة' : 'Group', isAr ? 'خاصة أو عائلية' : 'Private/Family'),
                               ],
                             ),
-                            const SizedBox(height: 12),
+                          ),
+
+                          const SizedBox(height: 24),
+
+                          // Description / About Tour
+                          Text(isAr ? 'عن المسار والتجربة' : 'About the Trail & Experience', style: AppTypography.titleLarge),
+                          const SizedBox(height: 8),
+                          Text(
+                            HtmlUtils.stripHtml(tour.content ?? ''),
+                            style: AppTypography.bodyLarge.copyWith(height: 1.7),
+                          ),
+
+                          const SizedBox(height: 24),
+
+                          // Itinerary / Timeline Stages
+                          if (tour.itinerary.isNotEmpty) ...[
+                            Text(isAr ? 'محطات ومراحل المسار' : 'Itinerary & Route Stages', style: AppTypography.titleLarge),
+                            const SizedBox(height: 14),
                             ListView.separated(
                               shrinkWrap: true,
                               physics: const NeverScrollableScrollPhysics(),
@@ -310,7 +301,7 @@ class _ExperienceDetailsScreenState extends ConsumerState<ExperienceDetailsScree
                               itemBuilder: (context, index) {
                                 final stage = tour.itinerary[index];
                                 return Container(
-                                  padding: const EdgeInsets.all(14),
+                                  padding: const EdgeInsets.all(16),
                                   decoration: BoxDecoration(
                                     color: AppColors.card,
                                     borderRadius: BorderRadius.circular(16),
@@ -335,18 +326,28 @@ class _ExperienceDetailsScreenState extends ConsumerState<ExperienceDetailsScree
                                         child: Column(
                                           crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
-                                            Text(stage.title, style: AppTypography.titleMedium),
+                                            Text(stage.title, style: AppTypography.titleSmall),
                                             if (stage.desc != null && stage.desc!.isNotEmpty) ...[
                                               const SizedBox(height: 2),
                                               Text(stage.desc!, style: AppTypography.bodySmall.copyWith(color: AppColors.primaryGold)),
                                             ],
                                             if (stage.content != null && stage.content!.isNotEmpty) ...[
                                               const SizedBox(height: 6),
-                                              Text(HtmlUtils.stripHtml(stage.content!), style: AppTypography.bodyMedium),
+                                              Text(HtmlUtils.stripHtml(stage.content!), style: AppTypography.bodySmall.copyWith(height: 1.5)),
                                             ],
                                           ],
                                         ),
                                       ),
+                                      if (stage.image != null && stage.image!.isNotEmpty)
+                                        ClipRRect(
+                                          borderRadius: BorderRadius.circular(10),
+                                          child: CachedNetworkImage(
+                                            imageUrl: stage.image!,
+                                            width: 64,
+                                            height: 64,
+                                            fit: BoxFit.cover,
+                                          ),
+                                        ),
                                     ],
                                   ),
                                 );
@@ -355,14 +356,14 @@ class _ExperienceDetailsScreenState extends ConsumerState<ExperienceDetailsScree
                             const SizedBox(height: 24),
                           ],
 
-                          // Included & Excluded Services
+                          // Includes & Excludes
                           if (tour.includes.isNotEmpty || tour.excludes.isNotEmpty) ...[
-                            Text('ما تشمله التجربة', style: AppTypography.titleLarge),
+                            Text(isAr ? 'تفاصيل باقة الحجز' : 'Package Inclusions & Exclusions', style: AppTypography.titleLarge),
                             const SizedBox(height: 12),
                             Container(
                               padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
-                                color: AppColors.surface,
+                                color: AppColors.card,
                                 borderRadius: BorderRadius.circular(16),
                                 border: Border.all(color: AppColors.border),
                               ),
@@ -370,33 +371,32 @@ class _ExperienceDetailsScreenState extends ConsumerState<ExperienceDetailsScree
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   if (tour.includes.isNotEmpty) ...[
-                                    Text('مشمول في الباقة', style: AppTypography.titleSmall.copyWith(color: AppColors.success)),
+                                    Text(isAr ? 'تشمل الرحلة:' : 'Includes:', style: AppTypography.titleSmall.copyWith(color: AppColors.success)),
                                     const SizedBox(height: 8),
                                     ...tour.includes.map(
                                       (inc) => Padding(
-                                        padding: const EdgeInsets.only(bottom: 6),
+                                        padding: const EdgeInsets.symmetric(vertical: 4),
                                         child: Row(
                                           children: [
-                                            const Icon(Icons.check_circle, color: AppColors.success, size: 16),
-                                            const SizedBox(width: 10),
+                                            const Icon(Icons.check_circle_outline, color: AppColors.success, size: 16),
+                                            const SizedBox(width: 8),
                                             Expanded(child: Text(inc, style: AppTypography.bodyMedium)),
                                           ],
                                         ),
                                       ),
                                     ),
                                   ],
-                                  if (tour.includes.isNotEmpty && tour.excludes.isNotEmpty)
-                                    const Divider(color: AppColors.border, height: 20),
                                   if (tour.excludes.isNotEmpty) ...[
-                                    Text('غير مشمول في الباقة', style: AppTypography.titleSmall.copyWith(color: AppColors.error)),
+                                    if (tour.includes.isNotEmpty) const Divider(color: AppColors.border, height: 20),
+                                    Text(isAr ? 'لا تشمل الرحلة:' : 'Excludes:', style: AppTypography.titleSmall.copyWith(color: AppColors.error)),
                                     const SizedBox(height: 8),
                                     ...tour.excludes.map(
                                       (exc) => Padding(
-                                        padding: const EdgeInsets.only(bottom: 6),
+                                        padding: const EdgeInsets.symmetric(vertical: 4),
                                         child: Row(
                                           children: [
-                                            const Icon(Icons.cancel, color: AppColors.error, size: 16),
-                                            const SizedBox(width: 10),
+                                            const Icon(Icons.cancel_outlined, color: AppColors.error, size: 16),
+                                            const SizedBox(width: 8),
                                             Expanded(child: Text(exc, style: AppTypography.bodyMedium)),
                                           ],
                                         ),
@@ -411,7 +411,7 @@ class _ExperienceDetailsScreenState extends ConsumerState<ExperienceDetailsScree
 
                           // FAQs
                           if (tour.faqs.isNotEmpty) ...[
-                            Text('الأسئلة الشائعة', style: AppTypography.titleLarge),
+                            Text(isAr ? 'الأسئلة الشائعة' : 'Frequently Asked Questions', style: AppTypography.titleLarge),
                             const SizedBox(height: 12),
                             ListView.separated(
                               shrinkWrap: true,
@@ -443,29 +443,55 @@ class _ExperienceDetailsScreenState extends ConsumerState<ExperienceDetailsScree
                             const SizedBox(height: 24),
                           ],
 
-                          // Map Section
-                          Text('الموقع الجغرافي والوصول', style: AppTypography.titleLarge),
+                          // Interactive Google Map Section
+                          Text(isAr ? 'الموقع الجغرافي والوصول' : 'Location & Directions', style: AppTypography.titleLarge),
                           const SizedBox(height: 8),
-                          Container(
-                            height: 140,
-                            width: double.infinity,
-                            decoration: BoxDecoration(
-                              color: AppColors.surface,
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: AppColors.border),
-                            ),
-                            child: Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const Icon(Icons.map_outlined, color: AppColors.primaryGold, size: 36),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    tour.address ?? tour.locationName ?? 'عرض الموقع على الخريطة',
-                                    style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold),
+                          GestureDetector(
+                            onTap: () => _openMap(tour),
+                            child: Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: AppColors.card,
+                                borderRadius: BorderRadius.circular(18),
+                                border: Border.all(color: AppColors.primaryGold.withOpacity(0.5)),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.3),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 4),
                                   ),
-                                  const SizedBox(height: 4),
-                                  const Text('انقر لفتح الاتجاهات عبر خرائط Google', style: TextStyle(color: AppColors.textMuted, fontSize: 11)),
+                                ],
+                              ),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(14),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.goldGlow,
+                                      borderRadius: BorderRadius.circular(14),
+                                    ),
+                                    child: const Icon(Icons.directions_outlined, color: AppColors.primaryGold, size: 28),
+                                  ),
+                                  const SizedBox(width: 14),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          tour.address ?? tour.locationName ?? (isAr ? 'موقع المسار التاريخي' : 'Trail Location'),
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 14),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          isAr ? 'انقر لفتح الاتجاهات المباشرة عبر خرائط Google' : 'Tap to open directions in Google Maps',
+                                          style: const TextStyle(color: AppColors.primaryGold, fontSize: 11),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const Icon(Icons.open_in_new, color: AppColors.primaryGold, size: 20),
                                 ],
                               ),
                             ),
@@ -484,9 +510,12 @@ class _ExperienceDetailsScreenState extends ConsumerState<ExperienceDetailsScree
                 bottom: 0,
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     color: AppColors.surface,
-                    border: Border(top: BorderSide(color: AppColors.border)),
+                    border: const Border(top: BorderSide(color: AppColors.border)),
+                    boxShadow: [
+                      BoxShadow(color: Colors.black.withOpacity(0.5), blurRadius: 12, offset: const Offset(0, -4)),
+                    ],
                   ),
                   child: SafeArea(
                     child: Row(
@@ -495,15 +524,15 @@ class _ExperienceDetailsScreenState extends ConsumerState<ExperienceDetailsScree
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Text('السعر الإجمالي يبدأ من', style: AppTypography.bodySmall),
+                            Text(isAr ? 'السعر يبدأ من' : 'Starts from', style: AppTypography.bodySmall),
                             Text(tour.formattedPrice, style: AppTypography.price),
                           ],
                         ),
-                        const SizedBox(width: 24),
+                        const SizedBox(width: 20),
                         Expanded(
                           child: CustomButton(
-                            text: 'حجز التذكرة والموعد',
-                            onPressed: () => _showBookingModal(context, tour),
+                            text: isAr ? 'حجز التذكرة والموعد' : 'Book Tickets & Date',
+                            onPressed: () => _showBookingModal(context, tour, isAr),
                           ),
                         ),
                       ],
@@ -525,11 +554,11 @@ class _ExperienceDetailsScreenState extends ConsumerState<ExperienceDetailsScree
               children: [
                 const Icon(Icons.error_outline, size: 54, color: AppColors.error),
                 const SizedBox(height: 16),
-                Text('تعذر تحميل تفاصيل التجربة', style: AppTypography.titleLarge),
+                Text(isAr ? 'تعذر تحميل تفاصيل المسار' : 'Failed to load trail details', style: AppTypography.titleLarge),
                 const SizedBox(height: 16),
                 ElevatedButton(
                   onPressed: () => ref.refresh(tourDetailProvider(widget.experienceId)),
-                  child: const Text('إعادة المحاولة'),
+                  child: Text(isAr ? 'إعادة المحاولة' : 'Retry'),
                 ),
               ],
             ),
@@ -539,7 +568,7 @@ class _ExperienceDetailsScreenState extends ConsumerState<ExperienceDetailsScree
     );
   }
 
-  void _showBookingModal(BuildContext context, TourModel tour) {
+  void _showBookingModal(BuildContext context, TourModel tour, bool isAr) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -547,7 +576,7 @@ class _ExperienceDetailsScreenState extends ConsumerState<ExperienceDetailsScree
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
-      builder: (ctx) => _BookingBottomSheet(tour: tour),
+      builder: (ctx) => _BookingBottomSheet(tour: tour, isAr: isAr),
     );
   }
 
@@ -566,21 +595,56 @@ class _ExperienceDetailsScreenState extends ConsumerState<ExperienceDetailsScree
 
 class _BookingBottomSheet extends StatefulWidget {
   final TourModel tour;
+  final bool isAr;
 
-  const _BookingBottomSheet({required this.tour});
+  const _BookingBottomSheet({required this.tour, required this.isAr});
 
   @override
   State<_BookingBottomSheet> createState() => _BookingBottomSheetState();
 }
 
 class _BookingBottomSheetState extends State<_BookingBottomSheet> {
-  int _guests = 1;
   DateTime _selectedDate = DateTime.now().add(const Duration(days: 1));
+  final Map<String, int> _personQuantities = {};
+  final Set<String> _selectedExtras = {};
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.tour.personTypes.isNotEmpty) {
+      for (var p in widget.tour.personTypes) {
+        _personQuantities[p.name] = (p.name.toLowerCase().contains('adult') || p.nameAr?.contains('18') == true) ? 1 : 0;
+      }
+    } else {
+      _personQuantities['default'] = 1;
+    }
+  }
+
+  double _calculateTotal() {
+    double total = 0;
+    if (widget.tour.personTypes.isNotEmpty) {
+      for (var p in widget.tour.personTypes) {
+        final q = _personQuantities[p.name] ?? 0;
+        total += (q * p.price);
+      }
+    } else {
+      final unit = widget.tour.salePrice ?? widget.tour.price;
+      total += (unit * (_personQuantities['default'] ?? 1));
+    }
+
+    // Add extras
+    for (var extra in widget.tour.extraPrices) {
+      if (_selectedExtras.contains(extra.name)) {
+        total += extra.price;
+      }
+    }
+    return total;
+  }
 
   @override
   Widget build(BuildContext context) {
-    final unitPrice = widget.tour.salePrice ?? widget.tour.price;
-    final total = unitPrice * _guests;
+    final isAr = widget.isAr;
+    final total = _calculateTotal();
 
     return Padding(
       padding: EdgeInsets.only(
@@ -589,152 +653,238 @@ class _BookingBottomSheetState extends State<_BookingBottomSheet> {
         top: 20,
         bottom: MediaQuery.of(context).viewInsets.bottom + 24,
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2)),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2)),
+              ),
             ),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: CachedNetworkImage(
-                  imageUrl: widget.tour.imageUrl ?? 'https://images.unsplash.com/photo-1590073844006-33379778ae09?w=800&q=80',
-                  width: 56,
-                  height: 56,
-                  fit: BoxFit.cover,
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: CachedNetworkImage(
+                    imageUrl: widget.tour.imageUrl ?? 'https://images.unsplash.com/photo-1590073844006-33379778ae09?w=800&q=80',
+                    width: 56,
+                    height: 56,
+                    fit: BoxFit.cover,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(widget.tour.title, style: AppTypography.titleMedium, maxLines: 1, overflow: TextOverflow.ellipsis),
-                    const SizedBox(height: 4),
-                    Text('${widget.tour.formattedPrice} / للشخص', style: AppTypography.price.copyWith(fontSize: 14)),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const Divider(color: AppColors.border, height: 28),
-
-          // Date Selector
-          Text('تاريخ الزيارة', style: AppTypography.titleSmall),
-          const SizedBox(height: 10),
-          GestureDetector(
-            onTap: () async {
-              final picked = await showDatePicker(
-                context: context,
-                initialDate: _selectedDate,
-                firstDate: DateTime.now(),
-                lastDate: DateTime.now().add(const Duration(days: 90)),
-                builder: (context, child) {
-                  return Theme(
-                    data: Theme.of(context).copyWith(
-                      colorScheme: const ColorScheme.dark(
-                        primary: AppColors.primaryGold,
-                        surface: AppColors.card,
-                        onSurface: AppColors.textPrimary,
-                      ),
-                    ),
-                    child: child!,
-                  );
-                },
-              );
-              if (picked != null) {
-                setState(() => _selectedDate = picked);
-              }
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              decoration: BoxDecoration(
-                color: AppColors.card,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: AppColors.border),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(Icons.calendar_month, color: AppColors.primaryGold, size: 20),
-                      const SizedBox(width: 10),
-                      Text(
-                        '${_selectedDate.year}-${_selectedDate.month.toString().padLeft(2, '0')}-${_selectedDate.day.toString().padLeft(2, '0')}',
-                        style: AppTypography.titleSmall,
-                      ),
+                      Text(widget.tour.title, style: AppTypography.titleMedium, maxLines: 1, overflow: TextOverflow.ellipsis),
+                      const SizedBox(height: 4),
+                      Text('${widget.tour.formattedPrice} / ${isAr ? 'للشخص' : 'per person'}', style: AppTypography.price.copyWith(fontSize: 14)),
                     ],
                   ),
-                  const Text('تغيير التاريخ', style: TextStyle(color: AppColors.primaryGold, fontSize: 13, fontWeight: FontWeight.bold)),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 20),
-
-          // Guest Counter
-          Text('عدد الزوار / التذاكر', style: AppTypography.titleSmall),
-          const SizedBox(height: 10),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
-              color: AppColors.card,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: AppColors.border),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('$_guests تذكرة', style: AppTypography.titleSmall),
-                Row(
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.remove_circle_outline, color: AppColors.primaryGold),
-                      onPressed: _guests > 1 ? () => setState(() => _guests--) : null,
-                    ),
-                    Text('$_guests', style: AppTypography.titleMedium),
-                    IconButton(
-                      icon: const Icon(Icons.add_circle_outline, color: AppColors.primaryGold),
-                      onPressed: () => setState(() => _guests++),
-                    ),
-                  ],
                 ),
               ],
             ),
-          ),
-          const SizedBox(height: 24),
+            const Divider(color: AppColors.border, height: 28),
 
-          // Total & Checkout Action
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('المجموع الإجمالي', style: AppTypography.bodySmall),
-                  Text('${total.toStringAsFixed(0)} ر.س', style: AppTypography.price),
-                ],
+            // 1. Date Selector
+            Text(isAr ? 'تاريخ الحجز' : 'Booking Date', style: AppTypography.titleSmall),
+            const SizedBox(height: 10),
+            GestureDetector(
+              onTap: () async {
+                final picked = await showDatePicker(
+                  context: context,
+                  initialDate: _selectedDate,
+                  firstDate: DateTime.now(),
+                  lastDate: DateTime.now().add(const Duration(days: 90)),
+                  builder: (context, child) {
+                    return Theme(
+                      data: Theme.of(context).copyWith(
+                        colorScheme: const ColorScheme.dark(
+                          primary: AppColors.primaryGold,
+                          surface: AppColors.card,
+                          onSurface: AppColors.textPrimary,
+                        ),
+                      ),
+                      child: child!,
+                    );
+                  },
+                );
+                if (picked != null) {
+                  setState(() => _selectedDate = picked);
+                }
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                decoration: BoxDecoration(
+                  color: AppColors.card,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.calendar_month, color: AppColors.primaryGold, size: 20),
+                        const SizedBox(width: 10),
+                        Text(
+                          '${_selectedDate.year}-${_selectedDate.month.toString().padLeft(2, '0')}-${_selectedDate.day.toString().padLeft(2, '0')}',
+                          style: AppTypography.titleSmall,
+                        ),
+                      ],
+                    ),
+                    Text(isAr ? 'تغيير التاريخ' : 'Change Date', style: const TextStyle(color: AppColors.primaryGold, fontSize: 13, fontWeight: FontWeight.bold)),
+                  ],
+                ),
               ),
-              CustomButton(
-                text: 'متابعة للدفع والتأكيد',
-                width: 200,
-                onPressed: () {
-                  Navigator.pop(context);
-                  context.push('/checkout/${widget.tour.id}');
-                },
+            ),
+            const SizedBox(height: 20),
+
+            // 2. Person Types / Ticket Quantities
+            Text(isAr ? 'خيارات التذاكر والزوار' : 'Ticket Options & Guests', style: AppTypography.titleSmall),
+            const SizedBox(height: 10),
+
+            if (widget.tour.personTypes.isNotEmpty)
+              ...widget.tour.personTypes.map((p) {
+                final q = _personQuantities[p.name] ?? 0;
+                final name = p.getDisplayName(isAr);
+                final desc = p.getDisplayDesc(isAr);
+
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: AppColors.card,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: q > 0 ? AppColors.primaryGold.withOpacity(0.5) : AppColors.border),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(name, style: AppTypography.titleSmall.copyWith(fontSize: 14)),
+                            if (desc != null && desc.isNotEmpty)
+                              Text(desc, style: AppTypography.bodySmall.copyWith(fontSize: 11, color: AppColors.textMuted)),
+                            Text('${p.price.toStringAsFixed(0)} ${isAr ? 'ر.س' : 'SAR'}', style: AppTypography.price.copyWith(fontSize: 13)),
+                          ],
+                        ),
+                      ),
+                      Row(
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.remove_circle_outline, color: AppColors.primaryGold, size: 22),
+                            onPressed: q > 0 ? () => setState(() => _personQuantities[p.name] = q - 1) : null,
+                          ),
+                          Text('$q', style: AppTypography.titleMedium),
+                          IconButton(
+                            icon: const Icon(Icons.add_circle_outline, color: AppColors.primaryGold, size: 22),
+                            onPressed: q < p.max ? () => setState(() => _personQuantities[p.name] = q + 1) : null,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                );
+              })
+            else
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                decoration: BoxDecoration(
+                  color: AppColors.card,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(isAr ? 'عدد الزوار' : 'Guests', style: AppTypography.titleSmall),
+                    Row(
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.remove_circle_outline, color: AppColors.primaryGold),
+                          onPressed: (_personQuantities['default'] ?? 1) > 1
+                              ? () => setState(() => _personQuantities['default'] = (_personQuantities['default'] ?? 1) - 1)
+                              : null,
+                        ),
+                        Text('${_personQuantities['default'] ?? 1}', style: AppTypography.titleMedium),
+                        IconButton(
+                          icon: const Icon(Icons.add_circle_outline, color: AppColors.primaryGold),
+                          onPressed: () => setState(() => _personQuantities['default'] = (_personQuantities['default'] ?? 1) + 1),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
+
+            // 3. Extra Services
+            if (widget.tour.extraPrices.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              Text(isAr ? 'خدمات إضافية اختيارية' : 'Optional Extra Services', style: AppTypography.titleSmall),
+              const SizedBox(height: 10),
+              ...widget.tour.extraPrices.map((extra) {
+                final isSelected = _selectedExtras.contains(extra.name);
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  decoration: BoxDecoration(
+                    color: AppColors.card,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: isSelected ? AppColors.primaryGold : AppColors.border),
+                  ),
+                  child: CheckboxListTile(
+                    activeColor: AppColors.primaryGold,
+                    checkColor: AppColors.textDark,
+                    title: Text(extra.getDisplayName(isAr), style: AppTypography.titleSmall.copyWith(fontSize: 14)),
+                    subtitle: Text('+ ${extra.price.toStringAsFixed(0)} ${isAr ? 'ر.س' : 'SAR'}', style: AppTypography.price.copyWith(fontSize: 12)),
+                    value: isSelected,
+                    onChanged: (val) {
+                      setState(() {
+                        if (val == true) {
+                          _selectedExtras.add(extra.name);
+                        } else {
+                          _selectedExtras.remove(extra.name);
+                        }
+                      });
+                    },
+                  ),
+                );
+              }),
             ],
-          ),
-        ],
+
+            const SizedBox(height: 24),
+
+            // Total & Checkout Action
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(isAr ? 'المجموع الإجمالي' : 'Total Amount', style: AppTypography.bodySmall),
+                    Text('${total.toStringAsFixed(0)} ${isAr ? 'ر.س' : 'SAR'}', style: AppTypography.price.copyWith(fontSize: 22)),
+                  ],
+                ),
+                CustomButton(
+                  text: isAr ? 'متابعة للدفع والتأكيد' : 'Proceed to Checkout',
+                  width: 190,
+                  onPressed: () {
+                    Navigator.pop(context);
+                    context.push('/checkout/${widget.tour.id}');
+                  },
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

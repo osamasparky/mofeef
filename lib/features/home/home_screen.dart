@@ -250,7 +250,7 @@ class HomeScreen extends ConsumerWidget {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          _buildCategoryCard(context, isAr ? 'الوجهات' : 'Destinations', Icons.map_outlined, () => context.go('/discover')),
+                          _buildCategoryCard(context, isAr ? 'الوجهات' : 'Destinations', Icons.map_outlined, () => context.push('/locations')),
                           _buildCategoryCard(context, isAr ? 'المسارات' : 'Trails', Icons.alt_route, () => context.push('/trails')),
                           _buildCategoryCard(context, isAr ? 'التجارب' : 'Experiences', Icons.explore_outlined, () => context.go('/discover')),
                           _buildCategoryCard(context, isAr ? 'المتاحف' : 'Museums', Icons.account_balance_outlined, () => context.push('/museums')),
@@ -263,7 +263,7 @@ class HomeScreen extends ConsumerWidget {
                           _buildCategoryCard(context, isAr ? 'الفعاليات' : 'Events', Icons.festival_outlined, () => context.push('/events')),
                           _buildCategoryCard(context, isAr ? 'المرشدون' : 'Guides', Icons.person_pin_outlined, () => context.push('/guides')),
                           _buildCategoryCard(context, isAr ? 'السيارات' : 'Cars', Icons.directions_car_outlined, () => context.push('/cars')),
-                          _buildCategoryCard(context, isAr ? 'المتجر' : 'Bazaar', Icons.storefront_outlined, () => context.push('/store')),
+                          _buildCategoryCard(context, isAr ? 'المتجر' : 'Shop', Icons.storefront_outlined, () => context.push('/store')),
                         ],
                       ),
                     ],
@@ -277,7 +277,7 @@ class HomeScreen extends ConsumerWidget {
                   title: isAr ? 'الوجهات الملهمة' : 'Inspiring Destinations',
                   subtitle: isAr ? 'أعرق الوجهات في المملكة العربية السعودية' : 'Top heritage destinations across KSA',
                   actionText: isAr ? 'الكل' : 'See all',
-                  onActionTap: () => context.go('/discover'),
+                  onActionTap: () => context.push('/locations'),
                 ),
 
                 locationsAsync.when(
@@ -307,7 +307,7 @@ class HomeScreen extends ConsumerWidget {
                           final img = loc.imageUrl ?? loc.bannerUrl ?? 'https://images.unsplash.com/photo-1590073844006-33379778ae09?w=800&q=80';
 
                           return GestureDetector(
-                            onTap: () => context.go('/discover'),
+                            onTap: () => context.push('/location/${loc.id}?name=${Uri.encodeComponent(name)}'),
                             child: Container(
                               width: 140,
                               decoration: BoxDecoration(

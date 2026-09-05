@@ -35,6 +35,76 @@ class FaqItem {
   }
 }
 
+class PersonTypeModel {
+  final String name;
+  final String? desc;
+  final String? nameAr;
+  final String? descAr;
+  final int min;
+  final int max;
+  final double price;
+
+  const PersonTypeModel({
+    required this.name,
+    this.desc,
+    this.nameAr,
+    this.descAr,
+    this.min = 0,
+    this.max = 10,
+    required this.price,
+  });
+
+  String getDisplayName(bool isAr) {
+    if (isAr && nameAr != null && nameAr!.isNotEmpty) return nameAr!;
+    return name;
+  }
+
+  String? getDisplayDesc(bool isAr) {
+    if (isAr && descAr != null && descAr!.isNotEmpty) return descAr!;
+    return desc;
+  }
+
+  factory PersonTypeModel.fromJson(Map<String, dynamic> json) {
+    return PersonTypeModel(
+      name: json['name']?.toString() ?? 'تذكرة',
+      desc: json['desc']?.toString(),
+      nameAr: json['name_ar']?.toString(),
+      descAr: json['desc_ar']?.toString(),
+      min: int.tryParse(json['min']?.toString() ?? '0') ?? 0,
+      max: int.tryParse(json['max']?.toString() ?? '10') ?? 10,
+      price: double.tryParse(json['price']?.toString() ?? '0') ?? 0.0,
+    );
+  }
+}
+
+class ExtraPriceModel {
+  final String name;
+  final String? nameAr;
+  final double price;
+  final String type;
+
+  const ExtraPriceModel({
+    required this.name,
+    this.nameAr,
+    required this.price,
+    this.type = 'one_time',
+  });
+
+  String getDisplayName(bool isAr) {
+    if (isAr && nameAr != null && nameAr!.isNotEmpty) return nameAr!;
+    return name;
+  }
+
+  factory ExtraPriceModel.fromJson(Map<String, dynamic> json) {
+    return ExtraPriceModel(
+      name: json['name']?.toString() ?? 'خدمة إضافية',
+      nameAr: json['name_ar']?.toString(),
+      price: double.tryParse(json['price']?.toString() ?? '0') ?? 0.0,
+      type: json['type']?.toString() ?? 'one_time',
+    );
+  }
+}
+
 class TourModel {
   final int id;
   final String title;
@@ -58,6 +128,9 @@ class TourModel {
   final List<String> includes;
   final List<String> excludes;
   final List<FaqItem> faqs;
+  final List<PersonTypeModel> personTypes;
+  final List<ExtraPriceModel> extraPrices;
+  final Map<String, dynamic>? openHours;
 
   const TourModel({
     required this.id,
@@ -82,6 +155,9 @@ class TourModel {
     this.includes = const [],
     this.excludes = const [],
     this.faqs = const [],
+    this.personTypes = const [],
+    this.extraPrices = const [],
+    this.openHours,
   });
 
   String get formattedPrice => '${(salePrice ?? price).toStringAsFixed(0)} ر.س';
@@ -130,24 +206,18 @@ class TourModel {
     // Includes & Excludes
     List<String> parsedIncludes = [];
     if (json['include'] is List) {
-      for (var item in (json['include'] as List)) {
-        if (item is Map && item['title'] != null) {
-          parsedIncludes.add(item['title'].toString());
-        } else if (item is String) {
-          parsedIncludes.add(item);
-        }
-      }
+      parsedIncludes = (json['include'] as List)
+          .map((e) => e is Map ? e['title']?.toString() ?? '' : e.toString())
+          .where((e) => e.isNotEmpty)
+          .toList();
     }
 
     List<String> parsedExcludes = [];
     if (json['exclude'] is List) {
-      for (var item in (json['exclude'] as List)) {
-        if (item is Map && item['title'] != null) {
-          parsedExcludes.add(item['title'].toString());
-        } else if (item is String) {
-          parsedExcludes.add(item);
-        }
-      }
+      parsedExcludes = (json['exclude'] as List)
+          .map((e) => e is Map ? e['title']?.toString() ?? '' : e.toString())
+          .where((e) => e.isNotEmpty)
+          .toList();
     }
 
     // FAQs
@@ -160,29 +230,52 @@ class TourModel {
       }
     }
 
+    // Person Types
+    List<PersonTypeModel> parsedPersonTypes = [];
+    if (json['person_types'] is List) {
+      for (var item in (json['person_types'] as List)) {
+        if (item is Map<String, dynamic>) {
+          parsedPersonTypes.add(PersonTypeModel.fromJson(item));
+        }
+      }
+    }
+
+    // Extra Prices
+    List<ExtraPriceModel> parsedExtraPrices = [];
+    if (json['extra_price'] is List) {
+      for (var item in (json['extra_price'] as List)) {
+        if (item is Map<String, dynamic>) {
+          parsedExtraPrices.add(ExtraPriceModel.fromJson(item));
+        }
+      }
+    }
+
     return TourModel(
       id: json['id'] is int ? json['id'] : int.tryParse(json['id']?.toString() ?? '0') ?? 0,
-      title: json['title']?.toString() ?? '',
+      title: json['title']?.toString() ?? json['name']?.toString() ?? 'مسار سياحي',
       slug: json['slug']?.toString(),
       content: json['content']?.toString() ?? json['desc']?.toString(),
       imageUrl: img,
       bannerUrl: json['banner_image']?.toString(),
       gallery: parsedGallery,
       price: double.tryParse(json['price']?.toString() ?? '0') ?? 0.0,
-      salePrice: double.tryParse(json['sale_price']?.toString() ?? ''),
-      duration: json['duration']?.toString() ?? 'ساعتان',
+      salePrice: json['sale_price'] != null ? double.tryParse(json['sale_price'].toString()) : null,
+      duration: json['duration']?.toString() ?? (json['duration_hours'] != null ? '${json['duration_hours']} ساعات' : null),
       rating: parsedRating,
       reviewsCount: parsedReviews,
-      locationName: json['location'] is Map ? json['location']['name']?.toString() : (json['location']?.toString() ?? 'المملكة العربية السعودية'),
+      locationName: json['location'] is Map ? json['location']['name']?.toString() ?? json['location']['title']?.toString() : json['location']?.toString(),
       address: json['address']?.toString(),
-      mapLat: double.tryParse(json['map_lat']?.toString() ?? ''),
-      mapLng: double.tryParse(json['map_lng']?.toString() ?? ''),
-      categoryName: json['category'] is Map ? json['category']['name']?.toString() : (json['category']?.toString() ?? 'مسار سياحي'),
+      mapLat: json['map_lat'] != null ? double.tryParse(json['map_lat'].toString()) : null,
+      mapLng: json['map_lng'] != null ? double.tryParse(json['map_lng'].toString()) : null,
+      categoryName: json['category'] is Map ? json['category']['name']?.toString() : json['category']?.toString(),
       isFeatured: json['is_featured'] == 1 || json['is_featured'] == true,
       itinerary: parsedItinerary,
       includes: parsedIncludes,
       excludes: parsedExcludes,
       faqs: parsedFaqs,
+      personTypes: parsedPersonTypes,
+      extraPrices: parsedExtraPrices,
+      openHours: json['open_hours'] is Map<String, dynamic> ? json['open_hours'] as Map<String, dynamic> : null,
     );
   }
 }

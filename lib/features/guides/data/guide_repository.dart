@@ -6,7 +6,7 @@ import '../../../../core/network/api_endpoints.dart';
 import '../presentation/guide_list_screen.dart';
 
 abstract class GuideRepository {
-  Future<List<GuideModel>> searchGuides({String? search, int page = 1});
+  Future<List<GuideModel>> searchGuides({String? search, int? locationId, int page = 1});
   Future<GuideModel> getGuideDetail(dynamic id);
 }
 
@@ -16,12 +16,13 @@ class GuideRepositoryImpl implements GuideRepository {
   GuideRepositoryImpl(this._dio);
 
   @override
-  Future<List<GuideModel>> searchGuides({String? search, int page = 1}) async {
+  Future<List<GuideModel>> searchGuides({String? search, int? locationId, int page = 1}) async {
     try {
       final response = await _dio.get(
         ApiEndpoints.guideSearch,
         queryParameters: {
           if (search != null && search.isNotEmpty) 's': search,
+          if (locationId != null) 'location_id': locationId,
           'page': page,
           'limit': 10,
         },

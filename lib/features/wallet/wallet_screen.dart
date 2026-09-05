@@ -1,16 +1,197 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_typography.dart';
+import '../../core/localization/locale_provider.dart';
 import '../../core/widgets/custom_button.dart';
+import '../auth/auth_provider.dart';
 
-class WalletScreen extends StatelessWidget {
+class WalletTransaction {
+  final String id;
+  final String title;
+  final String date;
+  final double amount;
+  final bool isCredit;
+
+  const WalletTransaction({
+    required this.id,
+    required this.title,
+    required this.date,
+    required this.amount,
+    required this.isCredit,
+  });
+}
+
+class WalletState {
+  final double balance;
+  final List<WalletTransaction> transactions;
+
+  const WalletState({
+    this.balance = 0.0,
+    this.transactions = const [],
+  });
+
+  WalletState copyWith({
+    double? balance,
+    List<WalletTransaction>? transactions,
+  }) {
+    return WalletState(
+      balance: balance ?? this.balance,
+      transactions: transactions ?? this.transactions,
+    );
+  }
+}
+
+class WalletNotifier extends StateNotifier<WalletState> {
+  WalletNotifier() : super(const WalletState(balance: 0.0, transactions: []));
+
+  void addFunds(double amount, String paymentMethod, bool isAr) {
+    final now = DateTime.now();
+    final dateStr = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+    final newTx = WalletTransaction(
+      id: 'TX-${DateTime.now().millisecondsSinceEpoch}',
+      title: isAr ? 'شحن رصيد المحفظة ($paymentMethod)' : 'Wallet Top-up ($paymentMethod)',
+      date: dateStr,
+      amount: amount,
+      isCredit: true,
+    );
+
+    state = state.copyWith(
+      balance: state.balance + amount,
+      transactions: [newTx, ...state.transactions],
+    );
+  }
+}
+
+final walletProvider = StateNotifierProvider<WalletNotifier, WalletState>((ref) {
+  return WalletNotifier();
+});
+
+class WalletScreen extends ConsumerWidget {
   const WalletScreen({super.key});
 
+  void _showTopUpModal(BuildContext context, WidgetRef ref, bool isAr) {
+    double selectedAmount = 100.0;
+    String selectedMethod = 'Apple Pay';
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setModalState) {
+          final amounts = [50.0, 100.0, 250.0, 500.0, 1000.0];
+          final methods = ['Apple Pay', 'مدى (Mada)', 'Visa / MasterCard', 'stc pay'];
+
+          return Padding(
+            padding: EdgeInsets.only(
+              left: 20,
+              right: 20,
+              top: 20,
+              bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2)),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  isAr ? 'شحن رصيد المحفظة' : 'Top Up Wallet Balance',
+                  style: AppTypography.headingSmall,
+                ),
+                const SizedBox(height: 16),
+
+                // Amount Selection
+                Text(isAr ? 'اختر المبلغ (ر.س)' : 'Select Amount (SAR)', style: AppTypography.titleSmall),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: amounts.map((amt) {
+                    final isSel = selectedAmount == amt;
+                    return ChoiceChip(
+                      label: Text('${amt.toInt()} ${isAr ? 'ر.س' : 'SAR'}'),
+                      selected: isSel,
+                      onSelected: (val) => setModalState(() => selectedAmount = amt),
+                      selectedColor: AppColors.primaryGold,
+                      backgroundColor: AppColors.card,
+                      labelStyle: TextStyle(
+                        color: isSel ? AppColors.textDark : AppColors.textPrimary,
+                        fontWeight: isSel ? FontWeight.bold : FontWeight.normal,
+                      ),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 20),
+
+                // Payment Method
+                Text(isAr ? 'طريقة الدفع' : 'Payment Method', style: AppTypography.titleSmall),
+                const SizedBox(height: 10),
+                ...methods.map((method) {
+                  final isSel = selectedMethod == method;
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    decoration: BoxDecoration(
+                      color: AppColors.card,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: isSel ? AppColors.primaryGold : AppColors.border),
+                    ),
+                    child: RadioListTile<String>(
+                      title: Text(method, style: AppTypography.titleSmall.copyWith(fontSize: 14)),
+                      value: method,
+                      groupValue: selectedMethod,
+                      activeColor: AppColors.primaryGold,
+                      onChanged: (val) => setModalState(() => selectedMethod = val!),
+                    ),
+                  );
+                }),
+                const SizedBox(height: 20),
+
+                // Confirm button
+                CustomButton(
+                  text: isAr ? 'تأكيد وشحن الرصيد' : 'Confirm & Top Up',
+                  onPressed: () {
+                    ref.read(walletProvider.notifier).addFunds(selectedAmount, selectedMethod, isAr);
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(isAr ? 'تم شحن المحفظة بنجاح بمبلغ ${selectedAmount.toInt()} ر.س' : 'Successfully added ${selectedAmount.toInt()} SAR to wallet'),
+                        backgroundColor: AppColors.success,
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final walletState = ref.watch(walletProvider);
+    final authState = ref.watch(authProvider);
+    final currentLocale = ref.watch(localeProvider);
+    final isAr = currentLocale.languageCode == 'ar';
+
+    final userName = authState.user?.displayName ?? (isAr ? 'ضيف مُضيف' : 'Modeefe Guest');
+
     return Scaffold(
       appBar: AppBar(
-        title: Text('المحفظة', style: AppTypography.headingSmall),
+        title: Text(isAr ? 'المحفظة الرقمية' : 'Digital Wallet', style: AppTypography.headingSmall),
+        centerTitle: true,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -39,31 +220,41 @@ class WalletScreen extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('رصيد من المتعة', style: AppTypography.bodySmall.copyWith(color: AppColors.primaryGold)),
+                      Text(userName, style: AppTypography.bodySmall.copyWith(color: AppColors.primaryGold)),
                       const Icon(Icons.account_balance_wallet, color: AppColors.primaryGold, size: 24),
                     ],
                   ),
                   const SizedBox(height: 12),
-                  Text('الرصيد المتاح', style: AppTypography.bodySmall),
+                  Text(isAr ? 'الرصيد المتاح' : 'Available Balance', style: AppTypography.bodySmall),
                   const SizedBox(height: 4),
-                  Text('١,٢٤٠ ر.س', style: AppTypography.headingLarge.copyWith(color: AppColors.primaryGold, fontSize: 34)),
+                  Text(
+                    '${walletState.balance.toStringAsFixed(2)} ${isAr ? 'ر.س' : 'SAR'}',
+                    style: AppTypography.headingLarge.copyWith(color: AppColors.primaryGold, fontSize: 32),
+                  ),
                   const SizedBox(height: 24),
                   Row(
                     children: [
                       Expanded(
                         child: CustomButton(
-                          text: 'إضافة رصيد',
+                          text: isAr ? 'إضافة رصيد' : 'Top Up',
+                          icon: Icons.add,
                           height: 44,
-                          onPressed: () {},
+                          onPressed: () => _showTopUpModal(context, ref, isAr),
                         ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: CustomButton(
-                          text: 'تحويل',
+                          text: isAr ? 'استخدام في الحجز' : 'Use in Bookings',
                           isOutlined: true,
                           height: 44,
-                          onPressed: () {},
+                          onPressed: () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(isAr ? 'يمكنك اختيار الدفع عبر المحفظة مباشرة في شاشات الحجز' : 'You can choose Wallet Payment at checkout'),
+                              ),
+                            );
+                          },
                         ),
                       ),
                     ],
@@ -74,83 +265,85 @@ class WalletScreen extends StatelessWidget {
             const SizedBox(height: 28),
 
             // Transactions Header
-            Text('آخر العمليات', style: AppTypography.titleLarge),
+            Text(isAr ? 'سجل العمليات والتحويلات' : 'Transaction History', style: AppTypography.titleLarge),
             const SizedBox(height: 12),
 
-            _buildTransactionItem(
-              title: 'حجز تجربة مناطيد العُلا',
-              date: '٢ أكتوبر ٢٠٢٦',
-              amount: '-٣٤٠ ر.س',
-              isCredit: false,
-            ),
-            _buildTransactionItem(
-              title: 'إعادة شحن المحفظة (Apple Pay)',
-              date: '٢٨ سبتمبر ٢٠٢٦',
-              amount: '+١,٠٠٠ ر.س',
-              isCredit: true,
-            ),
-            _buildTransactionItem(
-              title: 'شراء من بازار مُضيف',
-              date: '١٥ سبتمبر ٢٠٢٦',
-              amount: '-١٩٠ ر.س',
-              isCredit: false,
-            ),
+            if (walletState.transactions.isEmpty)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(32),
+                decoration: BoxDecoration(
+                  color: AppColors.card,
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: Column(
+                  children: [
+                    const Icon(Icons.receipt_long_outlined, color: AppColors.textMuted, size: 48),
+                    const SizedBox(height: 12),
+                    Text(
+                      isAr ? 'لا توجد عمليات سابقة في المحفظة' : 'No previous transactions found',
+                      style: AppTypography.titleSmall.copyWith(color: AppColors.textMuted),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      isAr ? 'ستظهر هنا كافة عمليات الشحن والمدفوعات فور إجرائها' : 'All top-ups and booking payments will appear here',
+                      style: AppTypography.bodySmall.copyWith(color: AppColors.textMuted, fontSize: 11),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              )
+            else
+              ...walletState.transactions.map((tx) => Container(
+                    margin: const EdgeInsets.only(bottom: 10),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppColors.card,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: AppColors.border),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: tx.isCredit ? AppColors.success.withOpacity(0.15) : AppColors.surface,
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                tx.isCredit ? Icons.arrow_downward : Icons.arrow_upward,
+                                color: tx.isCredit ? AppColors.success : AppColors.primaryGold,
+                                size: 18,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(tx.title, style: AppTypography.titleSmall),
+                                const SizedBox(height: 2),
+                                Text(tx.date, style: AppTypography.bodySmall.copyWith(fontSize: 11)),
+                              ],
+                            ),
+                          ],
+                        ),
+                        Text(
+                          '${tx.isCredit ? '+' : '-'}${tx.amount.toStringAsFixed(0)} ${isAr ? 'ر.س' : 'SAR'}',
+                          style: TextStyle(
+                            color: tx.isCredit ? AppColors.success : AppColors.error,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildTransactionItem({
-    required String title,
-    required String date,
-    required String amount,
-    required bool isCredit,
-  }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: isCredit ? AppColors.success.withOpacity(0.15) : AppColors.surface,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  isCredit ? Icons.arrow_downward : Icons.arrow_upward,
-                  color: isCredit ? AppColors.success : AppColors.primaryGold,
-                  size: 18,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title, style: AppTypography.titleSmall),
-                  const SizedBox(height: 2),
-                  Text(date, style: AppTypography.bodySmall),
-                ],
-              ),
-            ],
-          ),
-          Text(
-            amount,
-            style: AppTypography.titleSmall.copyWith(
-              color: isCredit ? AppColors.success : AppColors.textPrimary,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
       ),
     );
   }

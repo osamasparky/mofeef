@@ -15,6 +15,8 @@ import '../../features/shop/store_screen.dart';
 import '../../features/shop/product_details_screen.dart';
 import '../../features/shop/cart_screen.dart';
 import '../../features/experiences/experience_details_screen.dart';
+import '../../features/locations/presentation/locations_list_screen.dart';
+import '../../features/locations/presentation/destination_detail_screen.dart';
 import '../../features/tours/presentation/tourist_trails_screen.dart';
 import '../../features/museums/presentation/museum_list_screen.dart';
 import '../../features/museums/presentation/museum_detail_screen.dart';
@@ -117,6 +119,20 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/trails',
         parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) => const TouristTrailsScreen(),
+      ),
+      GoRoute(
+        path: '/locations',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const LocationsListScreen(),
+      ),
+      GoRoute(
+        path: '/location/:id',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) {
+          final id = int.tryParse(state.pathParameters['id'] ?? '1') ?? 1;
+          final name = state.uri.queryParameters['name'];
+          return DestinationDetailScreen(locationId: id, initialName: name);
+        },
       ),
       GoRoute(
         path: '/museums',

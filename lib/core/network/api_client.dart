@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../config/app_config.dart';
+import '../localization/locale_provider.dart';
 import 'mock_api_interceptor.dart';
 
 final secureStorageProvider = Provider<FlutterSecureStorage>((ref) {
@@ -10,6 +11,8 @@ final secureStorageProvider = Provider<FlutterSecureStorage>((ref) {
 
 final dioProvider = Provider<Dio>((ref) {
   final storage = ref.watch(secureStorageProvider);
+  final currentLocale = ref.watch(localeProvider);
+  final langCode = currentLocale.languageCode;
 
   final dio = Dio(
     BaseOptions(
@@ -19,6 +22,8 @@ final dioProvider = Provider<Dio>((ref) {
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
+        'Accept-Language': langCode,
+        'X-Locale': langCode,
       },
     ),
   );
@@ -26,6 +31,13 @@ final dioProvider = Provider<Dio>((ref) {
   dio.interceptors.add(
     InterceptorsWrapper(
       onRequest: (options, handler) async {
+        // Automatically inject current language code into query parameters if not present
+        if (!options.queryParameters.containsKey('lang')) {
+          options.queryParameters['lang'] = langCode;
+        }
+        options.headers['Accept-Language'] = langCode;
+        options.headers['X-Locale'] = langCode;
+
         final token = await storage.read(key: 'auth_token');
         if (token != null && token.isNotEmpty) {
           options.headers['Authorization'] = 'Bearer $token';
@@ -33,15 +45,12 @@ final dioProvider = Provider<Dio>((ref) {
         return handler.next(options);
       },
       onError: (DioException error, handler) {
-        // Continue to mock interceptor for graceful offline fallback
         return handler.next(error);
       },
     ),
   );
 
-  // Add MockApiInterceptor to guarantee rich data on physical devices when backend is offline
   dio.interceptors.add(MockApiInterceptor());
 
   return dio;
 });
-
