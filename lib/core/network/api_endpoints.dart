@@ -1,59 +1,108 @@
 class ApiEndpoints {
   ApiEndpoints._();
 
+  // Base URL (Laravel API)
   static const String baseUrl = 'http://127.0.0.1:8000/api';
 
-  // Auth
-  static const String login = '/auth/login';
+  // ==================== 1. AUTH ====================
   static const String register = '/auth/register';
+  static const String login = '/auth/login';
   static const String me = '/auth/me';
   static const String updateProfile = '/auth/me';
   static const String changePassword = '/auth/change-password';
   static const String logout = '/auth/logout';
-  static const String refreshToken = '/auth/refresh-token';
-  static const String forgotPassword = '/auth/forgot-password';
-  static const String resetPassword = '/auth/reset-password';
+  static const String refreshToken = '/auth/refresh';
+  static const String forgotPassword = '/forgot-password';
+  static const String resetPassword = '/reset-password';
+  static const String verifyEmail = '/auth/email/verify';
+  static const String resendVerification = '/auth/email/resend';
 
-  // Account
-  static const String uploadMedia = '/account/upload-media';
-  static const String deleteAccount = '/account/delete';
+  // ==================== 2. ACCOUNT & MEDIA ====================
+  static const String currentUser = '/user';
+  static const String deleteAccount = '/user/permanently_delete';
+  static const String uploadMedia = '/media/store';
 
-  // Discovery & Content
-  static const String homeLayout = '/content/home';
-  static const String services = '/content/services';
-  static const String locations = '/content/locations';
-  static const String news = '/content/news';
+  // ==================== 3. WISHLIST ====================
+  static const String wishlist = '/user/wishlist';
+  static String addToWishlist(String serviceType, dynamic id) => '/user/wishlist/$serviceType/$id';
+  static String removeFromWishlist(String serviceType, dynamic id) => '/user/wishlist/$serviceType/$id';
 
-  // Tours & Experiences
-  static const String tours = '/tours';
-  static const String tourDetail = '/tours/{id}';
+  // ==================== 4. BOOKING HISTORY & TICKETS ====================
+  static const String bookingHistory = '/user/booking-history';
+  static const String myTickets = '/user/ticket';
+  static String ticketQrImage(dynamic ticketId) => '/user/ticket/qr-image/$ticketId';
+  static const String manageTickets = '/user/booking/ticket';
+  static String scanTicket(dynamic bookingId, dynamic ticketId) => '/user/booking/ticket/scan/$bookingId/$ticketId';
+  static const String generateQr = '/user/qr-code';
 
-  // Museums
-  static const String museums = '/museums';
-  static const String museumDetail = '/museums/{id}';
+  // ==================== 5. CONTENT & DISCOVERY ====================
+  static const String homeLayout = '/home-page';
+  static const String services = '/services';
+  static const String locations = '/locations';
+  static String locationDetail(dynamic id) => '/location/$id';
+  static const String news = '/news';
+  static const String newsCategories = '/news/category';
+  static String newsDetail(dynamic id) => '/news/$id';
+  static const String countries = '/configs/countries';
 
-  // Events
-  static const String events = '/events';
-  static const String eventDetail = '/events/{id}';
+  // ==================== 6. TOURS ====================
+  static const String tourSearch = '/tour/search';
+  static const String tourFilters = '/tour/filters';
+  static const String tourFormSearch = '/tour/form-search';
+  static String tourDetail(dynamic id) => '/tour/detail/$id';
+  static String tourAvailability(dynamic id) => '/tour/availability/$id';
+  static String tourWriteReview(dynamic id) => '/tour/write-review/$id';
 
-  // Guides
-  static const String guides = '/guides';
+  // ==================== 7. GUIDES ====================
+  static const String guideSearch = '/guide/search';
+  static const String guideFilters = '/guide/filters';
+  static String guideDetail(dynamic id) => '/guide/detail/$id';
 
-  // Shop & Bazaar
-  static const String products = '/shop/products';
-  static const String productDetail = '/shop/products/{id}';
+  // ==================== 8. CARS ====================
+  static const String carSearch = '/car/search';
+  static const String carFilters = '/car/filters';
+  static const String carFormSearch = '/car/form-search';
+  static String carDetail(dynamic id) => '/car/detail/$id';
+  static String carAvailability(dynamic id) => '/car/availability/$id';
+  static String carWriteReview(dynamic id) => '/car/write-review/$id';
+
+  // ==================== 9. EVENTS ====================
+  static const String eventSearch = '/event/search';
+  static const String eventFilters = '/event/filters';
+  static const String eventFormSearch = '/event/form-search';
+  static String eventDetail(dynamic id) => '/event/detail/$id';
+  static String eventAvailability(dynamic id) => '/event/availability/$id';
+  static String eventWriteReview(dynamic id) => '/event/write-review/$id';
+
+  // ==================== 10. MUSEUMS ====================
+  static const String museumSearch = '/museum/search';
+  static const String museumFilters = '/museum/filters';
+  static const String museumFormSearch = '/museum/form-search';
+  static String museumDetail(dynamic id) => '/museum/detail/$id';
+  static String museumAvailability(dynamic id) => '/museum/availability/$id';
+  static String museumWriteReview(dynamic id) => '/museum/write-review/$id';
+
+  // ==================== 11. SHOP (BAZAAR) ====================
+  static const String productSearch = '/product/search';
+  static const String productFilters = '/product/filters';
+  static String productDetail(dynamic id) => '/product/detail/$id';
+  static String productWriteReview(dynamic id) => '/product/write-review/$id';
+
+  // ==================== 12. BOOKING SERVICE ====================
+  static const String configs = '/configs';
+  static const String paymentGateways = '/gateways';
+  static const String addToCartBooking = '/booking/addToCart';
+  static const String addEnquiry = '/booking/addEnquiry';
+  static const String doCheckout = '/booking/doCheckout';
+  static String bookingDetail(String code) => '/booking/$code';
+  static String checkBookingStatus(String code) => '/booking/$code/check-status';
+
+  // ==================== 13. CART & SHOP ORDERS ====================
   static const String cart = '/cart';
-  static const String applyCoupon = '/cart/apply-coupon';
+  static const String applyCoupon = '/cart/coupon/apply';
+  static const String updateCartItem = '/cart/update';
+  static const String removeCartItem = '/cart/remove';
   static const String cartCheckout = '/cart/checkout';
-  static const String myOrders = '/cart/orders';
-
-  // Bookings & Tickets
-  static const String addToCartBooking = '/booking/add-to-cart';
-  static const String bookingCheckout = '/booking/checkout';
-  static const String bookingHistory = '/booking/history';
-  static const String myTickets = '/tickets/my-tickets';
-  static const String scanTicket = '/tickets/scan';
-
-  // Wishlist
-  static const String wishlist = '/wishlist';
+  static String orderDetail(String id) => '/cart-order/$id';
+  static const String myOrders = '/my-orders';
 }
