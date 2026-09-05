@@ -43,9 +43,17 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       'phone': _phoneController.text.trim(),
       'password': _passwordController.text,
       'password_confirmation': _passwordController.text,
+      'term': 1,
+      'term_conditions': 1,
     });
 
     if (success && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('مرحباً بك في مُضيف! تم إنشاء حسابك بنجاح.'),
+          backgroundColor: AppColors.success,
+        ),
+      );
       context.go('/home');
     } else if (mounted) {
       final error = ref.read(authProvider).errorMessage;

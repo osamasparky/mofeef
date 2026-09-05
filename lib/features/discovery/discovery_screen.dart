@@ -350,10 +350,394 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
         return _buildCarsList(isAr, search);
       case 6: // المتجر التراثي
         return _buildProductsList(isAr, search);
-      case 0: // الكل
+      case 0: // الكل (كل التصنيفات فيما عدا المتجر)
       default:
-        return _buildToursList(isAr, search);
+        return _buildAllCombinedList(isAr, search);
     }
+  }
+
+  Widget _buildAllCombinedList(bool isAr, String search) {
+    final toursAsync = ref.watch(toursListProvider(search.isEmpty ? null : search));
+    final museumsAsync = ref.watch(museumsListProvider);
+    final eventsAsync = ref.watch(eventsListProvider);
+    final guidesAsync = ref.watch(guidesListProvider);
+    final carsAsync = ref.watch(carsListProvider);
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.only(bottom: 32),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 1. المسارات السياحية
+          _buildSectionHeader(
+            title: isAr ? 'المسارات السياحية' : 'Tourist Trails',
+            onTapMore: () => setState(() => _selectedCategoryIndex = 1),
+            isAr: isAr,
+          ),
+          toursAsync.when(
+            data: (tours) {
+              final list = tours.take(6).toList();
+              if (list.isEmpty) return const SizedBox.shrink();
+              return SizedBox(
+                height: 220,
+                child: ListView.separated(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  scrollDirection: Axis.horizontal,
+                  itemCount: list.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 14),
+                  itemBuilder: (context, index) {
+                    final tour = list[index];
+                    return GestureDetector(
+                      onTap: () => context.push('/experience/${tour.id}'),
+                      child: Container(
+                        width: 220,
+                        decoration: BoxDecoration(
+                          color: AppColors.card,
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(color: AppColors.border),
+                        ),
+                        clipBehavior: Clip.antiAlias,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            CachedNetworkImage(
+                              imageUrl: tour.imageUrl ?? 'https://images.unsplash.com/photo-1590073844006-33379778ae09?w=800&q=80',
+                              height: 120,
+                              width: double.infinity,
+                              fit: BoxFit.cover,
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.all(10),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(tour.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppTypography.titleSmall),
+                                  const SizedBox(height: 4),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          const Icon(Icons.star, color: AppColors.primaryGold, size: 14),
+                                          const SizedBox(width: 4),
+                                          Text('${tour.rating}', style: AppTypography.bodySmall.copyWith(fontWeight: FontWeight.bold)),
+                                        ],
+                                      ),
+                                      Text(tour.formattedPrice, style: AppTypography.price.copyWith(fontSize: 13)),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              );
+            },
+            loading: () => const Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator(color: AppColors.primaryGold))),
+            error: (_, __) => const SizedBox.shrink(),
+          ),
+          const SizedBox(height: 24),
+
+          // 2. المتاحف والمعالم
+          _buildSectionHeader(
+            title: isAr ? 'المتاحف والمعالم' : 'Museums & Landmarks',
+            onTapMore: () => setState(() => _selectedCategoryIndex = 2),
+            isAr: isAr,
+          ),
+          museumsAsync.when(
+            data: (museums) {
+              final list = museums.take(6).toList();
+              if (list.isEmpty) return const SizedBox.shrink();
+              return SizedBox(
+                height: 210,
+                child: ListView.separated(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  scrollDirection: Axis.horizontal,
+                  itemCount: list.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 14),
+                  itemBuilder: (context, index) {
+                    final m = list[index];
+                    return GestureDetector(
+                      onTap: () => context.push('/museum/${m.id}'),
+                      child: Container(
+                        width: 210,
+                        decoration: BoxDecoration(
+                          color: AppColors.card,
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(color: AppColors.border),
+                        ),
+                        clipBehavior: Clip.antiAlias,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            CachedNetworkImage(
+                              imageUrl: m.imageUrl ?? 'https://images.unsplash.com/photo-1566127444979-b3d2b654e3d7?w=800&q=80',
+                              height: 120,
+                              width: double.infinity,
+                              fit: BoxFit.cover,
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.all(10),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(m.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppTypography.titleSmall),
+                                  const SizedBox(height: 4),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(m.locationName ?? (isAr ? 'الرياض' : 'Riyadh'), style: AppTypography.bodySmall),
+                                      Text(m.formattedPrice, style: AppTypography.price.copyWith(fontSize: 13)),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              );
+            },
+            loading: () => const SizedBox.shrink(),
+            error: (_, __) => const SizedBox.shrink(),
+          ),
+          const SizedBox(height: 24),
+
+          // 3. الفعاليات والمواسم
+          _buildSectionHeader(
+            title: isAr ? 'الفعاليات والمواسم' : 'Events & Seasons',
+            onTapMore: () => setState(() => _selectedCategoryIndex = 3),
+            isAr: isAr,
+          ),
+          eventsAsync.when(
+            data: (events) {
+              final list = events.take(6).toList();
+              if (list.isEmpty) return const SizedBox.shrink();
+              return SizedBox(
+                height: 210,
+                child: ListView.separated(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  scrollDirection: Axis.horizontal,
+                  itemCount: list.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 14),
+                  itemBuilder: (context, index) {
+                    final ev = list[index];
+                    return GestureDetector(
+                      onTap: () => context.push('/event/${ev.id}'),
+                      child: Container(
+                        width: 210,
+                        decoration: BoxDecoration(
+                          color: AppColors.card,
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(color: AppColors.border),
+                        ),
+                        clipBehavior: Clip.antiAlias,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            CachedNetworkImage(
+                              imageUrl: ev.imageUrl,
+                              height: 120,
+                              width: double.infinity,
+                              fit: BoxFit.cover,
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.all(10),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(ev.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppTypography.titleSmall),
+                                  const SizedBox(height: 4),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(ev.location, style: AppTypography.bodySmall),
+                                      Text(ev.price, style: AppTypography.price.copyWith(fontSize: 13)),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              );
+            },
+            loading: () => const SizedBox.shrink(),
+            error: (_, __) => const SizedBox.shrink(),
+          ),
+          const SizedBox(height: 24),
+
+          // 4. المرشدون السياحيون
+          _buildSectionHeader(
+            title: isAr ? 'نخبة المرشدين السياحيين' : 'Tour Guides',
+            onTapMore: () => setState(() => _selectedCategoryIndex = 4),
+            isAr: isAr,
+          ),
+          guidesAsync.when(
+            data: (guides) {
+              final list = guides.take(6).toList();
+              if (list.isEmpty) return const SizedBox.shrink();
+              return SizedBox(
+                height: 130,
+                child: ListView.separated(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  scrollDirection: Axis.horizontal,
+                  itemCount: list.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 14),
+                  itemBuilder: (context, index) {
+                    final g = list[index];
+                    return GestureDetector(
+                      onTap: () => context.push('/guide/${g.id}'),
+                      child: Container(
+                        width: 240,
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: AppColors.card,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: AppColors.border),
+                        ),
+                        child: Row(
+                          children: [
+                            CircleAvatar(
+                              radius: 28,
+                              backgroundImage: CachedNetworkImageProvider(g.imageUrl),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(g.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppTypography.titleSmall),
+                                  const SizedBox(height: 2),
+                                  Text(g.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppTypography.bodySmall.copyWith(fontSize: 11)),
+                                  const SizedBox(height: 4),
+                                  Text(g.hourlyRate, style: AppTypography.price.copyWith(fontSize: 12)),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              );
+            },
+            loading: () => const SizedBox.shrink(),
+            error: (_, __) => const SizedBox.shrink(),
+          ),
+          const SizedBox(height: 24),
+
+          // 5. السيارات والتنقل
+          _buildSectionHeader(
+            title: isAr ? 'السيارات والتنقل الفاخر' : 'Cars & Transport',
+            onTapMore: () => setState(() => _selectedCategoryIndex = 5),
+            isAr: isAr,
+          ),
+          carsAsync.when(
+            data: (cars) {
+              final list = cars.take(6).toList();
+              if (list.isEmpty) return const SizedBox.shrink();
+              return SizedBox(
+                height: 210,
+                child: ListView.separated(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  scrollDirection: Axis.horizontal,
+                  itemCount: list.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 14),
+                  itemBuilder: (context, index) {
+                    final car = list[index];
+                    return GestureDetector(
+                      onTap: () => context.push('/car/${car.id}'),
+                      child: Container(
+                        width: 220,
+                        decoration: BoxDecoration(
+                          color: AppColors.card,
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(color: AppColors.border),
+                        ),
+                        clipBehavior: Clip.antiAlias,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            CachedNetworkImage(
+                              imageUrl: car.imageUrl,
+                              height: 120,
+                              width: double.infinity,
+                              fit: BoxFit.cover,
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.all(10),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(car.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppTypography.titleSmall),
+                                  const SizedBox(height: 4),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text('${car.passengerCount} ${isAr ? 'ركاب' : 'passengers'}', style: AppTypography.bodySmall),
+                                      Text(car.pricePerDay, style: AppTypography.price.copyWith(fontSize: 13)),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              );
+            },
+            loading: () => const SizedBox.shrink(),
+            error: (_, __) => const SizedBox.shrink(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader({
+    required String title,
+    required VoidCallback onTapMore,
+    required bool isAr,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(title, style: AppTypography.titleMedium.copyWith(fontWeight: FontWeight.bold)),
+          GestureDetector(
+            onTap: onTapMore,
+            child: Row(
+              children: [
+                Text(
+                  isAr ? 'عرض الكل' : 'View All',
+                  style: AppTypography.bodySmall.copyWith(color: AppColors.primaryGold, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(width: 4),
+                const Icon(Icons.arrow_forward_ios, size: 12, color: AppColors.primaryGold),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildToursList(bool isAr, String search) {

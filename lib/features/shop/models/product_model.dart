@@ -108,12 +108,43 @@ class ProductModel {
       parsedRating = double.tryParse(json['review_score'].toString()) ?? 5.0;
     }
 
+    final titleStr = json['title']?.toString() ?? json['name']?.toString() ?? '';
+    String? rawImg = json['image_url']?.toString() ?? json['image']?.toString();
+    if (rawImg != null && (rawImg.isEmpty || rawImg.contains('127.0.0.1') || rawImg == 'null')) {
+      rawImg = null;
+    }
+
+    String chosenImg;
+    if (rawImg != null && rawImg.isNotEmpty) {
+      chosenImg = rawImg;
+    } else if (gal.isNotEmpty) {
+      chosenImg = gal.first;
+    } else if (titleStr.contains('تمر') || titleStr.contains('عجوة')) {
+      chosenImg = 'https://staging.modeefe.com/uploads/0000/6/2026/06/13/59d5a114-b797-46a0-ab4b-105e3d06f637.jpg';
+    } else if (titleStr.contains('عسل')) {
+      chosenImg = 'https://staging.modeefe.com/uploads/0000/6/2026/06/13/e1cca3ea-806b-4c5b-8cd4-fd5ce5135344.jpg';
+    } else if (titleStr.contains('مبخرة') || titleStr.contains('بخور')) {
+      chosenImg = 'https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?w=800&q=80';
+    } else if (titleStr.contains('مسك') || titleStr.contains('عطر')) {
+      chosenImg = 'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?w=800&q=80';
+    } else if (titleStr.contains('كعبة') || titleStr.contains('الكعبه') || titleStr.contains('مفتاح')) {
+      chosenImg = 'https://images.unsplash.com/photo-1564769625905-50e93615e769?w=800&q=80';
+    } else if (titleStr.contains('مجسم') || titleStr.contains('الواجهه')) {
+      chosenImg = 'https://images.unsplash.com/photo-1580418827493-f2b22c0a76cb?w=800&q=80';
+    } else if (titleStr.contains('تيشرت') || titleStr.contains('قميص')) {
+      chosenImg = 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=800&q=80';
+    } else if (titleStr.contains('كوب') || titleStr.contains('حراري')) {
+      chosenImg = 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=800&q=80';
+    } else {
+      chosenImg = 'https://images.unsplash.com/photo-1580418827493-f2b22c0a76cb?w=800&q=80';
+    }
+
     final rawDesc = json['content']?.toString() ?? json['desc']?.toString() ?? '';
     final cleanDesc = HtmlUtils.stripHtml(rawDesc);
 
     return ProductModel(
       id: json['id']?.toString() ?? '0',
-      title: json['title']?.toString() ?? json['name']?.toString() ?? 'منتج تراثي فاخر',
+      title: titleStr.isNotEmpty ? titleStr : 'منتج تراثي فاخر',
       category: json['category'] is Map ? json['category']['name']?.toString() ?? 'مقتنيات' : (json['category']?.toString() ?? 'مقتنيات'),
       storeName: json['store'] is Map ? json['store']['name']?.toString() ?? 'بازار مُضيف للمقتنيات' : 'بازار مُضيف للمقتنيات',
       price: displayPrice.contains('ر.س') || displayPrice.contains('﷼') ? displayPrice : '$displayPrice ر.س',
@@ -122,13 +153,13 @@ class ProductModel {
       discountPercent: json['discount_percent']?.toString(),
       rating: parsedRating,
       reviewsCount: parsedReviews > 0 ? parsedReviews : 10,
-      imageUrl: json['image_url']?.toString() ?? json['image']?.toString() ?? (gal.isNotEmpty ? gal.first : 'https://images.unsplash.com/photo-1590073844006-33379778ae09?w=800&q=80'),
+      imageUrl: chosenImg,
       description: cleanDesc.isNotEmpty ? cleanDesc : 'منتج سعودي أصيل من بازار مُضيف، منتقى بعناية ليعكس عراقة الهوية الوطنية.',
       sku: json['sku']?.toString(),
       stockStatus: json['stock_status']?.toString() ?? 'in',
       inStock: json['in_stock'] == true || json['stock_status'] == 'in' || (json['quantity'] is int && (json['quantity'] as int) > 0),
       quantity: json['quantity'] is int ? json['quantity'] as int : int.tryParse(json['quantity']?.toString() ?? '10') ?? 10,
-      gallery: gal,
+      gallery: gal.isNotEmpty ? gal : [chosenImg],
       specifications: specs,
       related: rel,
     );

@@ -7,28 +7,9 @@ import '../../../core/constants/app_typography.dart';
 import '../../../core/widgets/custom_button.dart';
 import '../data/car_repository.dart';
 
-class CarModel {
-  final String id;
-  final String title;
-  final String category;
-  final String pricePerDay;
-  final int passengerCount;
-  final String transmission;
-  final String imageUrl;
-
-  const CarModel({
-    required this.id,
-    required this.title,
-    required this.category,
-    required this.pricePerDay,
-    required this.passengerCount,
-    required this.transmission,
-    required this.imageUrl,
-  });
-}
-
 class CarListScreen extends ConsumerWidget {
   const CarListScreen({super.key});
+
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -101,14 +82,10 @@ class CarListScreen extends ConsumerWidget {
                             children: [
                               Text(car.pricePerDay, style: AppTypography.price),
                               CustomButton(
-                                text: 'حجز السيارة',
-                                width: 130,
+                                text: 'عرض التفاصيل والحجز',
+                                width: 155,
                                 height: 42,
-                                onPressed: () {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('تم فتح طلب حجز السيارة بنجاح!'), backgroundColor: AppColors.success),
-                                  );
-                                },
+                                onPressed: () => context.push('/car/${car.id}'),
                               ),
                             ],
                           ),
