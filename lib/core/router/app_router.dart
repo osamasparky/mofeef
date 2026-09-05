@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../features/auth/login_screen.dart';
+import '../../features/auth/register_screen.dart';
 import '../../features/home/home_screen.dart';
 import '../../features/discovery/discovery_screen.dart';
 import '../../features/booking/my_reservations_screen.dart';
@@ -14,6 +15,9 @@ import '../../features/shop/store_screen.dart';
 import '../../features/shop/product_details_screen.dart';
 import '../../features/shop/cart_screen.dart';
 import '../../features/experiences/experience_details_screen.dart';
+import '../../features/guides/presentation/guide_list_screen.dart';
+import '../../features/cars/presentation/car_list_screen.dart';
+import '../../features/events/presentation/event_list_screen.dart';
 import '../constants/app_colors.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -27,6 +31,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/login',
         builder: (context, state) => const LoginScreen(),
+      ),
+      GoRoute(
+        path: '/register',
+        builder: (context, state) => const RegisterScreen(),
       ),
       ShellRoute(
         navigatorKey: _shellNavigatorKey,
@@ -97,6 +105,21 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/notifications',
         parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) => const NotificationsScreen(),
+      ),
+      GoRoute(
+        path: '/guides',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const GuideListScreen(),
+      ),
+      GoRoute(
+        path: '/cars',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const CarListScreen(),
+      ),
+      GoRoute(
+        path: '/events',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const EventListScreen(),
       ),
     ],
   );
