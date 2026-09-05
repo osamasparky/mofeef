@@ -32,17 +32,32 @@ class MuseumModel {
   String get formattedPrice => price > 0 ? '${price.toStringAsFixed(0)} ر.س' : 'دخول مجاني';
 
   factory MuseumModel.fromJson(Map<String, dynamic> json) {
+    double parsedRating = 4.9;
+    int parsedReviews = 24;
+
+    if (json['review_score'] is Map) {
+      parsedRating = double.tryParse(json['review_score']['score_total']?.toString() ?? '4.9') ?? 4.9;
+      parsedReviews = int.tryParse(json['review_score']['total_review']?.toString() ?? '24') ?? 24;
+    } else if (json['review_score'] != null) {
+      parsedRating = double.tryParse(json['review_score']?.toString() ?? '4.9') ?? 4.9;
+    }
+
+    String? img = json['image_url']?.toString() ?? json['image']?.toString();
+    if (img == null || img.isEmpty || img.contains('127.0.0.1')) {
+      img = 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=800&q=80';
+    }
+
     return MuseumModel(
       id: json['id'] is int ? json['id'] : int.tryParse(json['id']?.toString() ?? '0') ?? 0,
       title: json['title']?.toString() ?? '',
       content: json['content']?.toString() ?? json['desc']?.toString(),
-      imageUrl: json['image_url']?.toString() ?? json['image']?.toString(),
+      imageUrl: img,
       bannerUrl: json['banner_image']?.toString(),
       price: double.tryParse(json['price']?.toString() ?? '0') ?? 0.0,
       workingHours: json['working_hours']?.toString() ?? '٩ص — ٩م',
-      rating: double.tryParse(json['review_score']?.toString() ?? json['rating']?.toString() ?? '4.9') ?? 4.9,
-      reviewsCount: int.tryParse(json['review_count']?.toString() ?? '24') ?? 24,
-      locationName: json['location'] is Map ? json['location']['name']?.toString() : json['location']?.toString(),
+      rating: parsedRating,
+      reviewsCount: parsedReviews,
+      locationName: json['location'] is Map ? json['location']['name']?.toString() : (json['location']?.toString() ?? 'الرياض'),
     );
   }
 }

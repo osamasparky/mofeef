@@ -31,11 +31,12 @@ class UserModel {
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
     // Handle nested user/data if present
-    final data = json['data'] is Map<String, dynamic> ? json['data'] as Map<String, dynamic> : json;
+    final dynamic nested = json['user'] ?? json['data'];
+    final data = nested is Map<String, dynamic> ? nested : json;
 
     return UserModel(
       id: data['id'] is int ? data['id'] : int.tryParse(data['id']?.toString() ?? '0') ?? 0,
-      name: data['name']?.toString(),
+      name: data['name']?.toString() ?? data['display_name']?.toString(),
       firstName: data['first_name']?.toString(),
       lastName: data['last_name']?.toString(),
       email: data['email']?.toString() ?? '',

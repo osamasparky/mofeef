@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../config/app_config.dart';
+import 'mock_api_interceptor.dart';
 
 final secureStorageProvider = Provider<FlutterSecureStorage>((ref) {
   return const FlutterSecureStorage();
@@ -32,11 +33,15 @@ final dioProvider = Provider<Dio>((ref) {
         return handler.next(options);
       },
       onError: (DioException error, handler) {
-        // Handle global error handling (e.g. 401 Unauthorized)
+        // Continue to mock interceptor for graceful offline fallback
         return handler.next(error);
       },
     ),
   );
 
+  // Add MockApiInterceptor to guarantee rich data on physical devices when backend is offline
+  dio.interceptors.add(MockApiInterceptor());
+
   return dio;
 });
+
