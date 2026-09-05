@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_typography.dart';
 import '../../../core/widgets/custom_button.dart';
@@ -48,16 +49,19 @@ class EventListScreen extends ConsumerWidget {
             separatorBuilder: (context, index) => const SizedBox(height: 16),
             itemBuilder: (context, index) {
               final ev = events[index];
-              return Container(
-                decoration: BoxDecoration(
-                  color: AppColors.card,
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: AppColors.border),
-                ),
-                clipBehavior: Clip.antiAlias,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+              return GestureDetector(
+                onTap: () => context.push('/event/${ev.id}'),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.card,
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+
                     CachedNetworkImage(
                       imageUrl: ev.imageUrl,
                       height: 160,
@@ -120,9 +124,11 @@ class EventListScreen extends ConsumerWidget {
                     ),
                   ],
                 ),
-              );
-            },
-          );
+              ),
+            );
+          },
+        );
+
         },
         loading: () => const Center(child: CircularProgressIndicator(color: AppColors.primaryGold)),
         error: (_, __) => Center(

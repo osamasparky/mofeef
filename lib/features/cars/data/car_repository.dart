@@ -72,3 +72,8 @@ final carRepositoryProvider = Provider<CarRepository>((ref) {
 final carsListProvider = FutureProvider<List<CarModel>>((ref) async {
   return ref.watch(carRepositoryProvider).searchCars();
 });
+
+final carDetailProvider = FutureProvider.family<CarModel, dynamic>((ref, id) async {
+  return ref.watch(carRepositoryProvider).getCarDetail(id);
+});
+

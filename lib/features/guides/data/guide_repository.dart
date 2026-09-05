@@ -74,3 +74,8 @@ final guideRepositoryProvider = Provider<GuideRepository>((ref) {
 final guidesListProvider = FutureProvider<List<GuideModel>>((ref) async {
   return ref.watch(guideRepositoryProvider).searchGuides();
 });
+
+final guideDetailProvider = FutureProvider.family<GuideModel, dynamic>((ref, id) async {
+  return ref.watch(guideRepositoryProvider).getGuideDetail(id);
+});
+

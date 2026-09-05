@@ -4,6 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_typography.dart';
+import '../../core/utils/html_utils.dart';
 import '../../core/widgets/custom_button.dart';
 import '../cart/data/cart_repository.dart';
 import 'data/shop_repository.dart';
@@ -109,7 +110,13 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
                           const SizedBox(height: 16),
                           Text('تفاصيل المنتج', style: AppTypography.titleLarge),
                           const SizedBox(height: 8),
-                          Text(prod.description, style: AppTypography.bodyLarge),
+                          Text(
+                            HtmlUtils.stripHtml(prod.description).isNotEmpty
+                                ? HtmlUtils.stripHtml(prod.description)
+                                : 'مقتنى تراثي أصيل يحمل عبق التاريخ وأصالة الهوية السعودية.',
+                            style: AppTypography.bodyLarge.copyWith(height: 1.6),
+                          ),
+
                           const SizedBox(height: 20),
 
                           Container(

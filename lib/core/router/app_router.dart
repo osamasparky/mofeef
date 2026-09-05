@@ -15,9 +15,14 @@ import '../../features/shop/store_screen.dart';
 import '../../features/shop/product_details_screen.dart';
 import '../../features/shop/cart_screen.dart';
 import '../../features/experiences/experience_details_screen.dart';
+import '../../features/museums/presentation/museum_list_screen.dart';
+import '../../features/museums/presentation/museum_detail_screen.dart';
 import '../../features/guides/presentation/guide_list_screen.dart';
+import '../../features/guides/presentation/guide_detail_screen.dart';
 import '../../features/cars/presentation/car_list_screen.dart';
+import '../../features/cars/presentation/car_detail_screen.dart';
 import '../../features/events/presentation/event_list_screen.dart';
+import '../../features/events/presentation/event_detail_screen.dart';
 import '../constants/app_colors.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -66,7 +71,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/experience/:id',
         parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) {
-          final id = state.pathParameters['id'] ?? 'exp_1';
+          final id = state.pathParameters['id'] ?? '17';
           return ExperienceDetailsScreen(experienceId: id);
         },
       ),
@@ -74,7 +79,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/checkout/:id',
         parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) {
-          final id = state.pathParameters['id'] ?? 'exp_1';
+          final id = state.pathParameters['id'] ?? '17';
           return CheckoutScreen(experienceId: id);
         },
       ),
@@ -87,7 +92,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/product/:id',
         parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) {
-          final id = state.pathParameters['id'] ?? 'prod_1';
+          final id = state.pathParameters['id'] ?? '11';
           return ProductDetailsScreen(productId: id);
         },
       ),
@@ -107,9 +112,30 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const NotificationsScreen(),
       ),
       GoRoute(
+        path: '/museums',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const MuseumListScreen(),
+      ),
+      GoRoute(
+        path: '/museum/:id',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) {
+          final id = state.pathParameters['id'] ?? '1';
+          return MuseumDetailScreen(museumId: id);
+        },
+      ),
+      GoRoute(
         path: '/guides',
         parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) => const GuideListScreen(),
+      ),
+      GoRoute(
+        path: '/guide/:id',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) {
+          final id = state.pathParameters['id'] ?? '61';
+          return GuideDetailScreen(guideId: id);
+        },
       ),
       GoRoute(
         path: '/cars',
@@ -117,13 +143,30 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const CarListScreen(),
       ),
       GoRoute(
+        path: '/car/:id',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) {
+          final id = state.pathParameters['id'] ?? '3';
+          return CarDetailScreen(carId: id);
+        },
+      ),
+      GoRoute(
         path: '/events',
         parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) => const EventListScreen(),
       ),
+      GoRoute(
+        path: '/event/:id',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) {
+          final id = state.pathParameters['id'] ?? '12';
+          return EventDetailScreen(eventId: id);
+        },
+      ),
     ],
   );
 });
+
 
 class ScaffoldWithNavBar extends StatelessWidget {
   final Widget child;

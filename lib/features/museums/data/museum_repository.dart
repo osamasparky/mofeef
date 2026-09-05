@@ -111,3 +111,9 @@ final museumRepositoryProvider = Provider<MuseumRepository>((ref) {
 final museumsListProvider = FutureProvider<List<MuseumModel>>((ref) async {
   return ref.watch(museumRepositoryProvider).searchMuseums();
 });
+
+final museumDetailProvider = FutureProvider.family<MuseumModel, dynamic>((ref, id) async {
+  return ref.watch(museumRepositoryProvider).getMuseumDetail(id);
+});
+
+

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_typography.dart';
 import '../../../core/widgets/custom_button.dart';
@@ -52,13 +53,16 @@ class GuideListScreen extends ConsumerWidget {
             separatorBuilder: (context, index) => const SizedBox(height: 14),
             itemBuilder: (context, index) {
               final guide = guides[index];
-              return Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppColors.card,
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: AppColors.border),
-                ),
+              return GestureDetector(
+                onTap: () => context.push('/guide/${guide.id}'),
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppColors.card,
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: AppColors.border),
+                  ),
+
                 child: Row(
                   children: [
                     ClipRRect(
@@ -118,9 +122,11 @@ class GuideListScreen extends ConsumerWidget {
                     ),
                   ],
                 ),
-              );
-            },
-          );
+              ),
+            );
+          },
+        );
+
         },
         loading: () => const Center(child: CircularProgressIndicator(color: AppColors.primaryGold)),
         error: (_, __) => Center(

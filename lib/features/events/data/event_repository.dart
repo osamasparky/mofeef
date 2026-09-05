@@ -70,3 +70,8 @@ final eventRepositoryProvider = Provider<EventRepository>((ref) {
 final eventsListProvider = FutureProvider<List<EventItemModel>>((ref) async {
   return ref.watch(eventRepositoryProvider).searchEvents();
 });
+
+final eventDetailProvider = FutureProvider.family<EventItemModel, dynamic>((ref, id) async {
+  return ref.watch(eventRepositoryProvider).getEventDetail(id);
+});
+

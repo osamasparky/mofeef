@@ -181,7 +181,7 @@ class HomeScreen extends ConsumerWidget {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          _buildCategoryIcon(context, 'المتاحف', Icons.museum_outlined, () => context.push('/discover')),
+                          _buildCategoryIcon(context, 'المتاحف', Icons.museum_outlined, () => context.push('/museums')),
                           _buildCategoryIcon(context, 'الفعاليات', Icons.festival_outlined, () => context.push('/events')),
                           _buildCategoryIcon(context, 'الأدلاء', Icons.person_pin_outlined, () => context.push('/guides')),
                           _buildCategoryIcon(context, 'السيارات', Icons.directions_car_outlined, () => context.push('/cars')),
@@ -199,7 +199,7 @@ class HomeScreen extends ConsumerWidget {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        _buildCategoryIcon(context, 'المتاحف', Icons.museum_outlined, () => context.push('/discover')),
+                        _buildCategoryIcon(context, 'المتاحف', Icons.museum_outlined, () => context.push('/museums')),
                         _buildCategoryIcon(context, 'الفعاليات', Icons.festival_outlined, () => context.push('/events')),
                         _buildCategoryIcon(context, 'الأدلاء', Icons.person_pin_outlined, () => context.push('/guides')),
                         _buildCategoryIcon(context, 'السيارات', Icons.directions_car_outlined, () => context.push('/cars')),

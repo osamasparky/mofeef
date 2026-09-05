@@ -2,29 +2,26 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:go_router/go_router.dart';
-import '../../core/constants/app_colors.dart';
-import '../../core/constants/app_typography.dart';
-import '../../core/utils/html_utils.dart';
-import '../../core/widgets/custom_button.dart';
-import '../tours/data/models/tour_model.dart';
-import '../tours/data/repositories/tour_repository.dart';
+import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_typography.dart';
+import '../../../core/utils/html_utils.dart';
+import '../../../core/widgets/custom_button.dart';
+import '../data/museum_repository.dart';
 
-final tourDetailProvider = FutureProvider.family<TourModel, String>((ref, id) async {
-  return ref.watch(tourRepositoryProvider).getTourDetail(id);
-});
+class MuseumDetailScreen extends ConsumerWidget {
+  final dynamic museumId;
 
-class ExperienceDetailsScreen extends ConsumerWidget {
-  final String experienceId;
-
-  const ExperienceDetailsScreen({super.key, required this.experienceId});
+  const MuseumDetailScreen({super.key, required this.museumId});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final tourAsync = ref.watch(tourDetailProvider(experienceId));
+    final museumAsync = ref.watch(museumDetailProvider(museumId));
 
     return Scaffold(
-      body: tourAsync.when(
-        data: (tour) {
+      body: museumAsync.when(
+        data: (museum) {
+          final cleanContent = HtmlUtils.stripHtml(museum.content);
+
           return Stack(
             children: [
               CustomScrollView(
@@ -43,33 +40,20 @@ class ExperienceDetailsScreen extends ConsumerWidget {
                         ),
                       ),
                     ),
-                    actions: [
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: CircleAvatar(
-                          backgroundColor: Colors.black.withOpacity(0.5),
-                          child: IconButton(
-                            icon: const Icon(Icons.favorite_border, color: Colors.white),
-                            onPressed: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('تمت الإضافة إلى المفضلة!'), backgroundColor: AppColors.success),
-                              );
-                            },
-                          ),
-                        ),
-                      ),
-                    ],
                     flexibleSpace: FlexibleSpaceBar(
                       background: CachedNetworkImage(
-                        imageUrl: tour.imageUrl ?? 'https://images.unsplash.com/photo-1590073844006-33379778ae09?w=800&q=80',
+                        imageUrl: museum.imageUrl ?? 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=800&q=80',
                         fit: BoxFit.cover,
+                        errorWidget: (context, url, error) => Container(
+                          color: AppColors.surface,
+                          child: const Icon(Icons.museum_outlined, color: AppColors.primaryGold, size: 60),
+                        ),
                       ),
                     ),
                   ),
-
                   SliverToBoxAdapter(
                     child: Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 20, 16, 100),
+                      padding: const EdgeInsets.fromLTRB(16, 20, 16, 120),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -83,7 +67,7 @@ class ExperienceDetailsScreen extends ConsumerWidget {
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Text(
-                                  tour.categoryName ?? 'تجربة سياحية',
+                                  'متحف ومعلم ثقافي',
                                   style: AppTypography.bodySmall.copyWith(
                                     color: AppColors.primaryGold,
                                     fontWeight: FontWeight.bold,
@@ -95,7 +79,7 @@ class ExperienceDetailsScreen extends ConsumerWidget {
                                   const Icon(Icons.star, color: AppColors.primaryGold, size: 18),
                                   const SizedBox(width: 4),
                                   Text(
-                                    '${tour.rating} (${tour.reviewsCount} تقييم)',
+                                    '${museum.rating} (${museum.reviewsCount} تقييم)',
                                     style: AppTypography.titleSmall,
                                   ),
                                 ],
@@ -103,21 +87,18 @@ class ExperienceDetailsScreen extends ConsumerWidget {
                             ],
                           ),
                           const SizedBox(height: 12),
-
-                          Text(tour.title, style: AppTypography.headingMedium),
+                          Text(museum.title, style: AppTypography.headingMedium),
                           const SizedBox(height: 8),
-
                           Row(
                             children: [
                               const Icon(Icons.location_on_outlined, color: AppColors.primaryGold, size: 18),
                               const SizedBox(width: 6),
                               Expanded(
-                                child: Text(tour.locationName ?? 'المملكة العربية السعودية', style: AppTypography.bodyMedium),
+                                child: Text(museum.locationName ?? 'المملكة العربية السعودية', style: AppTypography.bodyMedium),
                               ),
                             ],
                           ),
                           const SizedBox(height: 20),
-
                           Container(
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
@@ -128,27 +109,21 @@ class ExperienceDetailsScreen extends ConsumerWidget {
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceAround,
                               children: [
-                                _buildInfoItem(Icons.access_time, 'ساعات العمل', '٩ص — ٩م'),
+                                _buildInfoItem(Icons.access_time, 'أوقات العمل', museum.workingHours ?? '٩ص — ٩م'),
                                 Container(width: 1, height: 40, color: AppColors.border),
-                                _buildInfoItem(Icons.timelapse, 'المدة', tour.duration ?? 'ساعتان'),
-                                Container(width: 1, height: 40, color: AppColors.border),
-                                _buildInfoItem(Icons.confirmation_number_outlined, 'التذكرة', tour.formattedPrice),
+                                _buildInfoItem(Icons.confirmation_number_outlined, 'رسوم الدخول', museum.formattedPrice),
                               ],
                             ),
                           ),
                           const SizedBox(height: 24),
-
-                          Text('نبذة عن التجربة', style: AppTypography.titleLarge),
+                          Text('نبذة عن المتحف', style: AppTypography.titleLarge),
                           const SizedBox(height: 8),
                           Text(
-                            HtmlUtils.stripHtml(tour.content).isNotEmpty
-                                ? HtmlUtils.stripHtml(tour.content)
-                                : 'استمتع بتجربة سياحية وثقافية فريدة من نوعها في المملكة العربية السعودية.',
+                            cleanContent.isNotEmpty ? cleanContent : 'صرح تراثي وثقافي عريق يروي تاريخ وأصالة المملكة العربية السعودية.',
                             style: AppTypography.bodyLarge.copyWith(height: 1.6),
                           ),
                           const SizedBox(height: 24),
-
-                          Text('الموقع على الخريطة', style: AppTypography.titleLarge),
+                          Text('الموقع الجغرافي', style: AppTypography.titleLarge),
                           const SizedBox(height: 8),
                           Container(
                             height: 140,
@@ -164,7 +139,7 @@ class ExperienceDetailsScreen extends ConsumerWidget {
                                 children: [
                                   Icon(Icons.map_outlined, color: AppColors.primaryGold, size: 36),
                                   SizedBox(height: 8),
-                                  Text('عرض على خرائط Google', style: TextStyle(color: AppColors.textPrimary)),
+                                  Text('عرض الموقع على الخريطة', style: TextStyle(color: AppColors.textPrimary)),
                                 ],
                               ),
                             ),
@@ -175,7 +150,6 @@ class ExperienceDetailsScreen extends ConsumerWidget {
                   ),
                 ],
               ),
-
               Positioned(
                 left: 0,
                 right: 0,
@@ -193,15 +167,15 @@ class ExperienceDetailsScreen extends ConsumerWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Text('السعر يبدأ من', style: AppTypography.bodySmall),
-                            Text(tour.formattedPrice, style: AppTypography.price),
+                            Text('سعر الدخول', style: AppTypography.bodySmall),
+                            Text(museum.formattedPrice, style: AppTypography.price),
                           ],
                         ),
                         const SizedBox(width: 24),
                         Expanded(
                           child: CustomButton(
-                            text: 'حجز التذكرة',
-                            onPressed: () => context.push('/checkout/${tour.id}'),
+                            text: 'حجز تذكرة الدخول',
+                            onPressed: () => context.push('/checkout/${museum.id}'),
                           ),
                         ),
                       ],
@@ -212,25 +186,18 @@ class ExperienceDetailsScreen extends ConsumerWidget {
             ],
           );
         },
-        loading: () => const Scaffold(
-          body: Center(child: CircularProgressIndicator(color: AppColors.primaryGold)),
-        ),
-        error: (err, _) => Scaffold(
-          appBar: AppBar(),
-          body: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.error_outline, size: 54, color: AppColors.error),
-                const SizedBox(height: 16),
-                Text('تعذر تحميل تفاصيل التجربة', style: AppTypography.titleLarge),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () => ref.refresh(tourDetailProvider(experienceId)),
-                  child: const Text('إعادة المحاولة'),
-                ),
-              ],
-            ),
+        loading: () => const Center(child: CircularProgressIndicator(color: AppColors.primaryGold)),
+        error: (err, _) => Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text('تعذر تحميل تفاصيل المتحف', style: AppTypography.titleLarge),
+              const SizedBox(height: 12),
+              ElevatedButton(
+                onPressed: () => ref.refresh(museumDetailProvider(museumId)),
+                child: const Text('إعادة المحاولة'),
+              ),
+            ],
           ),
         ),
       ),
