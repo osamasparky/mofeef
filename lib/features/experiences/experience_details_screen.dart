@@ -13,30 +13,49 @@ final tourDetailProvider = FutureProvider.family<TourModel, String>((ref, id) as
   return ref.watch(tourRepositoryProvider).getTourDetail(id);
 });
 
-class ExperienceDetailsScreen extends ConsumerWidget {
+class ExperienceDetailsScreen extends ConsumerStatefulWidget {
   final String experienceId;
 
   const ExperienceDetailsScreen({super.key, required this.experienceId});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final tourAsync = ref.watch(tourDetailProvider(experienceId));
+  ConsumerState<ExperienceDetailsScreen> createState() => _ExperienceDetailsScreenState();
+}
+
+class _ExperienceDetailsScreenState extends ConsumerState<ExperienceDetailsScreen> {
+  int _currentGalleryIndex = 0;
+  final PageController _pageController = PageController();
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tourAsync = ref.watch(tourDetailProvider(widget.experienceId));
 
     return Scaffold(
       body: tourAsync.when(
         data: (tour) {
+          final gallery = tour.gallery.isNotEmpty
+              ? tour.gallery
+              : [tour.imageUrl ?? 'https://images.unsplash.com/photo-1590073844006-33379778ae09?w=800&q=80'];
+
           return Stack(
             children: [
               CustomScrollView(
                 slivers: [
+                  // Multi-Image Gallery SliverAppBar
                   SliverAppBar(
-                    expandedHeight: 320,
+                    expandedHeight: 340,
                     pinned: true,
                     backgroundColor: AppColors.background,
                     leading: Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: CircleAvatar(
-                        backgroundColor: Colors.black.withOpacity(0.5),
+                        backgroundColor: Colors.black.withOpacity(0.6),
                         child: IconButton(
                           icon: const Icon(Icons.arrow_back, color: Colors.white),
                           onPressed: () => context.pop(),
@@ -47,7 +66,7 @@ class ExperienceDetailsScreen extends ConsumerWidget {
                       Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: CircleAvatar(
-                          backgroundColor: Colors.black.withOpacity(0.5),
+                          backgroundColor: Colors.black.withOpacity(0.6),
                           child: IconButton(
                             icon: const Icon(Icons.favorite_border, color: Colors.white),
                             onPressed: () {
@@ -58,32 +77,105 @@ class ExperienceDetailsScreen extends ConsumerWidget {
                           ),
                         ),
                       ),
+                      Padding(
+                        padding: const EdgeInsets.only(left: 8.0, top: 8.0, bottom: 8.0),
+                        child: CircleAvatar(
+                          backgroundColor: Colors.black.withOpacity(0.6),
+                          child: IconButton(
+                            icon: const Icon(Icons.share_outlined, color: Colors.white),
+                            onPressed: () {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('تم نسخ رابط التجربة للمشاركة'), backgroundColor: AppColors.primaryGold),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
                     ],
                     flexibleSpace: FlexibleSpaceBar(
-                      background: CachedNetworkImage(
-                        imageUrl: tour.imageUrl ?? 'https://images.unsplash.com/photo-1590073844006-33379778ae09?w=800&q=80',
-                        fit: BoxFit.cover,
+                      background: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          PageView.builder(
+                            controller: _pageController,
+                            itemCount: gallery.length,
+                            onPageChanged: (index) => setState(() => _currentGalleryIndex = index),
+                            itemBuilder: (context, index) {
+                              return CachedNetworkImage(
+                                imageUrl: gallery[index],
+                                fit: BoxFit.cover,
+                                errorWidget: (_, __, ___) => Image.network(
+                                  'https://images.unsplash.com/photo-1590073844006-33379778ae09?w=800&q=80',
+                                  fit: BoxFit.cover,
+                                ),
+                              );
+                            },
+                          ),
+                          // Dark gradient overlay
+                          Positioned.fill(
+                            child: DecoratedBox(
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  colors: [
+                                    Colors.black.withOpacity(0.4),
+                                    Colors.transparent,
+                                    Colors.black.withOpacity(0.8),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                          // Image counter badge
+                          if (gallery.length > 1)
+                            Positioned(
+                              bottom: 16,
+                              left: 16,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withOpacity(0.7),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: Colors.white24),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.photo_library_outlined, color: AppColors.primaryGold, size: 14),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      '${_currentGalleryIndex + 1} / ${gallery.length}',
+                                      style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
                     ),
                   ),
 
+                  // Content Body
                   SliverToBoxAdapter(
                     child: Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 20, 16, 100),
+                      padding: const EdgeInsets.fromLTRB(16, 20, 16, 110),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          // Category and Rating
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
                                 decoration: BoxDecoration(
                                   color: AppColors.goldGlow,
-                                  borderRadius: BorderRadius.circular(8),
+                                  borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: Text(
-                                  tour.categoryName ?? 'تجربة سياحية',
+                                  tour.categoryName ?? 'مسار سياحي',
                                   style: AppTypography.bodySmall.copyWith(
                                     color: AppColors.primaryGold,
                                     fontWeight: FontWeight.bold,
@@ -104,20 +196,26 @@ class ExperienceDetailsScreen extends ConsumerWidget {
                           ),
                           const SizedBox(height: 12),
 
+                          // Main Title
                           Text(tour.title, style: AppTypography.headingMedium),
                           const SizedBox(height: 8),
 
+                          // Location Address
                           Row(
                             children: [
                               const Icon(Icons.location_on_outlined, color: AppColors.primaryGold, size: 18),
                               const SizedBox(width: 6),
                               Expanded(
-                                child: Text(tour.locationName ?? 'المملكة العربية السعودية', style: AppTypography.bodyMedium),
+                                child: Text(
+                                  tour.address ?? tour.locationName ?? 'المملكة العربية السعودية',
+                                  style: AppTypography.bodyMedium,
+                                ),
                               ),
                             ],
                           ),
                           const SizedBox(height: 20),
 
+                          // Quick Info Highlights Bar
                           Container(
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
@@ -128,9 +226,9 @@ class ExperienceDetailsScreen extends ConsumerWidget {
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceAround,
                               children: [
-                                _buildInfoItem(Icons.access_time, 'ساعات العمل', '٩ص — ٩م'),
+                                _buildInfoItem(Icons.timelapse, 'مدة المسار', tour.duration ?? 'ساعتان'),
                                 Container(width: 1, height: 40, color: AppColors.border),
-                                _buildInfoItem(Icons.timelapse, 'المدة', tour.duration ?? 'ساعتان'),
+                                _buildInfoItem(Icons.people_outline, 'المجموعة', '١ — ١٠ أفراد'),
                                 Container(width: 1, height: 40, color: AppColors.border),
                                 _buildInfoItem(Icons.confirmation_number_outlined, 'التذكرة', tour.formattedPrice),
                               ],
@@ -138,17 +236,215 @@ class ExperienceDetailsScreen extends ConsumerWidget {
                           ),
                           const SizedBox(height: 24),
 
-                          Text('نبذة عن التجربة', style: AppTypography.titleLarge),
+                          // Gallery Thumbnails Preview
+                          if (gallery.length > 1) ...[
+                            Text('معرض الصور والمشاهد', style: AppTypography.titleLarge),
+                            const SizedBox(height: 10),
+                            SizedBox(
+                              height: 70,
+                              child: ListView.separated(
+                                scrollDirection: Axis.horizontal,
+                                itemCount: gallery.length,
+                                separatorBuilder: (_, __) => const SizedBox(width: 10),
+                                itemBuilder: (context, index) {
+                                  final isSelected = index == _currentGalleryIndex;
+                                  return GestureDetector(
+                                    onTap: () {
+                                      setState(() => _currentGalleryIndex = index);
+                                      _pageController.animateToPage(
+                                        index,
+                                        duration: const Duration(milliseconds: 300),
+                                        curve: Curves.easeInOut,
+                                      );
+                                    },
+                                    child: Container(
+                                      width: 70,
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(12),
+                                        border: Border.all(
+                                          color: isSelected ? AppColors.primaryGold : Colors.transparent,
+                                          width: 2,
+                                        ),
+                                      ),
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(10),
+                                        child: CachedNetworkImage(
+                                          imageUrl: gallery[index],
+                                          fit: BoxFit.cover,
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+                          ],
+
+                          // Overview / About
+                          Text('عن المسار السياحي', style: AppTypography.titleLarge),
                           const SizedBox(height: 8),
                           Text(
                             HtmlUtils.stripHtml(tour.content).isNotEmpty
                                 ? HtmlUtils.stripHtml(tour.content)
-                                : 'استمتع بتجربة سياحية وثقافية فريدة من نوعها في المملكة العربية السعودية.',
+                                : 'استمتع بتجربة سياحية وثقافية متكاملة تأخذك في جولة حية بين أحضان المعالم التاريخية والتراثية الأصيلة في المملكة العربية السعودية.',
                             style: AppTypography.bodyLarge.copyWith(height: 1.6),
                           ),
                           const SizedBox(height: 24),
 
-                          Text('الموقع على الخريطة', style: AppTypography.titleLarge),
+                          // Itinerary & Stages (محطات المسار)
+                          if (tour.itinerary.isNotEmpty) ...[
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text('محطات وجدول المسار', style: AppTypography.titleLarge),
+                                Text('${tour.itinerary.length} محطات', style: AppTypography.bodySmall.copyWith(color: AppColors.primaryGold)),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            ListView.separated(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount: tour.itinerary.length,
+                              separatorBuilder: (_, __) => const SizedBox(height: 12),
+                              itemBuilder: (context, index) {
+                                final stage = tour.itinerary[index];
+                                return Container(
+                                  padding: const EdgeInsets.all(14),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.card,
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(color: AppColors.border),
+                                  ),
+                                  child: Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(10),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.goldGlow,
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                        child: Text(
+                                          '${index + 1}',
+                                          style: const TextStyle(color: AppColors.primaryGold, fontWeight: FontWeight.bold, fontSize: 16),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 14),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(stage.title, style: AppTypography.titleMedium),
+                                            if (stage.desc != null && stage.desc!.isNotEmpty) ...[
+                                              const SizedBox(height: 2),
+                                              Text(stage.desc!, style: AppTypography.bodySmall.copyWith(color: AppColors.primaryGold)),
+                                            ],
+                                            if (stage.content != null && stage.content!.isNotEmpty) ...[
+                                              const SizedBox(height: 6),
+                                              Text(HtmlUtils.stripHtml(stage.content!), style: AppTypography.bodyMedium),
+                                            ],
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
+                            ),
+                            const SizedBox(height: 24),
+                          ],
+
+                          // Included & Excluded Services
+                          if (tour.includes.isNotEmpty || tour.excludes.isNotEmpty) ...[
+                            Text('ما تشمله التجربة', style: AppTypography.titleLarge),
+                            const SizedBox(height: 12),
+                            Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: AppColors.surface,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(color: AppColors.border),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  if (tour.includes.isNotEmpty) ...[
+                                    Text('مشمول في الباقة', style: AppTypography.titleSmall.copyWith(color: AppColors.success)),
+                                    const SizedBox(height: 8),
+                                    ...tour.includes.map(
+                                      (inc) => Padding(
+                                        padding: const EdgeInsets.only(bottom: 6),
+                                        child: Row(
+                                          children: [
+                                            const Icon(Icons.check_circle, color: AppColors.success, size: 16),
+                                            const SizedBox(width: 10),
+                                            Expanded(child: Text(inc, style: AppTypography.bodyMedium)),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                  if (tour.includes.isNotEmpty && tour.excludes.isNotEmpty)
+                                    const Divider(color: AppColors.border, height: 20),
+                                  if (tour.excludes.isNotEmpty) ...[
+                                    Text('غير مشمول في الباقة', style: AppTypography.titleSmall.copyWith(color: AppColors.error)),
+                                    const SizedBox(height: 8),
+                                    ...tour.excludes.map(
+                                      (exc) => Padding(
+                                        padding: const EdgeInsets.only(bottom: 6),
+                                        child: Row(
+                                          children: [
+                                            const Icon(Icons.cancel, color: AppColors.error, size: 16),
+                                            const SizedBox(width: 10),
+                                            Expanded(child: Text(exc, style: AppTypography.bodyMedium)),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+                          ],
+
+                          // FAQs
+                          if (tour.faqs.isNotEmpty) ...[
+                            Text('الأسئلة الشائعة', style: AppTypography.titleLarge),
+                            const SizedBox(height: 12),
+                            ListView.separated(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount: tour.faqs.length,
+                              separatorBuilder: (_, __) => const SizedBox(height: 8),
+                              itemBuilder: (context, index) {
+                                final faq = tour.faqs[index];
+                                return Container(
+                                  decoration: BoxDecoration(
+                                    color: AppColors.card,
+                                    borderRadius: BorderRadius.circular(14),
+                                    border: Border.all(color: AppColors.border),
+                                  ),
+                                  child: ExpansionTile(
+                                    iconColor: AppColors.primaryGold,
+                                    collapsedIconColor: AppColors.textSecondary,
+                                    title: Text(faq.title, style: AppTypography.titleSmall),
+                                    children: [
+                                      Padding(
+                                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
+                                        child: Text(HtmlUtils.stripHtml(faq.content), style: AppTypography.bodyMedium.copyWith(height: 1.5)),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
+                            ),
+                            const SizedBox(height: 24),
+                          ],
+
+                          // Map Section
+                          Text('الموقع الجغرافي والوصول', style: AppTypography.titleLarge),
                           const SizedBox(height: 8),
                           Container(
                             height: 140,
@@ -158,13 +454,18 @@ class ExperienceDetailsScreen extends ConsumerWidget {
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(color: AppColors.border),
                             ),
-                            child: const Center(
+                            child: Center(
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(Icons.map_outlined, color: AppColors.primaryGold, size: 36),
-                                  SizedBox(height: 8),
-                                  Text('عرض على خرائط Google', style: TextStyle(color: AppColors.textPrimary)),
+                                  const Icon(Icons.map_outlined, color: AppColors.primaryGold, size: 36),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    tour.address ?? tour.locationName ?? 'عرض الموقع على الخريطة',
+                                    style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  const Text('انقر لفتح الاتجاهات عبر خرائط Google', style: TextStyle(color: AppColors.textMuted, fontSize: 11)),
                                 ],
                               ),
                             ),
@@ -176,6 +477,7 @@ class ExperienceDetailsScreen extends ConsumerWidget {
                 ],
               ),
 
+              // Bottom Sticky Booking Bar
               Positioned(
                 left: 0,
                 right: 0,
@@ -193,14 +495,14 @@ class ExperienceDetailsScreen extends ConsumerWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Text('السعر يبدأ من', style: AppTypography.bodySmall),
+                            Text('السعر الإجمالي يبدأ من', style: AppTypography.bodySmall),
                             Text(tour.formattedPrice, style: AppTypography.price),
                           ],
                         ),
                         const SizedBox(width: 24),
                         Expanded(
                           child: CustomButton(
-                            text: 'حجز التذكرة',
+                            text: 'حجز التذكرة والموعد',
                             onPressed: () => _showBookingModal(context, tour),
                           ),
                         ),
@@ -226,7 +528,7 @@ class ExperienceDetailsScreen extends ConsumerWidget {
                 Text('تعذر تحميل تفاصيل التجربة', style: AppTypography.titleLarge),
                 const SizedBox(height: 16),
                 ElevatedButton(
-                  onPressed: () => ref.refresh(tourDetailProvider(experienceId)),
+                  onPressed: () => ref.refresh(tourDetailProvider(widget.experienceId)),
                   child: const Text('إعادة المحاولة'),
                 ),
               ],

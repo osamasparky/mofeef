@@ -552,17 +552,17 @@ class MockApiInterceptor extends Interceptor {
       return {
         'status': 'processing',
         'message': 'تم تأكيد حجزك وطلبك بنجاح!',
-        'order_code': 'MDF-2026-98124',
-        'subtotal': 495,
+        'order_code': 'MDF-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}',
+        'subtotal': 0,
         'discount': 0,
-        'total': 495
+        'total': 0
       };
     }
     if (path.contains('/booking/addToCart')) {
-      return {'status': 1, 'booking_code': 'BK-99120', 'message': 'تمت الإضافة إلى السلة بنجاح'};
+      return {'status': 1, 'booking_code': 'BK-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}', 'message': 'تمت الإضافة إلى السلة بنجاح'};
     }
     if (path.contains('/cart/coupon/apply')) {
-      return {'status': 1, 'message': 'تم تطبيق كود الخصم بنجاح', 'discount': 50, 'total': 445};
+      return {'status': 1, 'message': 'تم تطبيق كود الخصم بنجاح', 'discount': 50, 'total': 0};
     }
     if (path.contains('/cart/remove')) {
       return {'status': 1, 'removed': true, 'message': 'تم حذف العنصر'};
@@ -570,102 +570,42 @@ class MockApiInterceptor extends Interceptor {
     if (path.contains('/cart')) {
       return {
         'status': 1,
-        'count': 2,
-        'subtotal': 495,
+        'count': 0,
+        'subtotal': 0,
         'discount': 0,
-        'total': 495,
-        'items': [
-          {
-            'id': 31,
-            'code': 'item_tour_16',
-            'object_model': 'tour',
-            'object_id': 16,
-            'total': 380,
-            'service': {
-              'id': 16,
-              'title': 'جولة الحِجر الأثرية واستكشاف مدائن صالح',
-              'price': '380.00'
-            }
-          },
-          {
-            'id': 32,
-            'code': 'item_prod_22',
-            'object_model': 'product',
-            'object_id': 22,
-            'total': 115,
-            'service': {
-              'id': 22,
-              'title': 'تمر عجوة المدينة الملكي الفاخر',
-              'price': '115.00'
-            }
-          }
-        ]
+        'total': 0,
+        'items': []
       };
     }
 
-    // 10. WISHLIST & BOOKING HISTORY
+    // 10. WISHLIST & BOOKING HISTORY & NOTIFICATIONS
     if (path.contains('/user/wishlist')) {
       return {
         'status': 1,
-        'total': 2,
+        'total': 0,
         'total_pages': 1,
-        'data': [
-          {
-            'id': 1,
-            'object_id': 16,
-            'object_model': 'tour',
-            'service': {
-              'id': 16,
-              'title': 'جولة الحِجر الأثرية واستكشاف مدائن صالح',
-              'price': 380,
-              'image': 'https://images.unsplash.com/photo-1590073844006-33379778ae09?w=800&q=80',
-              'location': {'name': 'العُلا'}
-            }
-          },
-          {
-            'id': 2,
-            'object_id': 22,
-            'object_model': 'product',
-            'service': {
-              'id': 22,
-              'title': 'تمر عجوة المدينة الملكي الفاخر',
-              'price': 115,
-              'image': 'https://images.unsplash.com/photo-1596797882870-8c33deeac224?w=800&q=80'
-            }
-          }
-        ]
+        'data': []
       };
     }
     if (path.contains('/user/booking-history') || path.contains('/my-orders')) {
       return {
         'status': 1,
-        'total': 2,
-        'data': [
-          {
-            'id': 501,
-            'code': 'MDF-BK-88219',
-            'status': 'paid',
-            'status_text': 'مؤكد ومدفوع',
-            'total': 380,
-            'created_at': '2026-09-04 14:30',
-            'service': {
-              'title': 'جولة الحِجر الأثرية واستكشاف مدائن صالح',
-              'image': 'https://images.unsplash.com/photo-1590073844006-33379778ae09?w=800&q=80'
-            }
-          },
-          {
-            'id': 502,
-            'code': 'MDF-BK-77102',
-            'status': 'completed',
-            'status_text': 'مكتمل',
-            'total': 250,
-            'created_at': '2026-08-20 19:15',
-            'service': {
-              'title': 'جولة الطريف المسائية وعبق تأسيس الدولة',
-              'image': 'https://images.unsplash.com/photo-1586724237569-f3d0c1dee8c6?w=800&q=80'
-            }
-          }
-        ]
+        'total': 0,
+        'data': []
+      };
+    }
+    if (path.contains('/user/tickets') || path.contains('/my-tickets')) {
+      return {
+        'status': 1,
+        'total': 0,
+        'data': []
+      };
+    }
+    if (path.contains('/notifications')) {
+      return {
+        'status': 1,
+        'total': 0,
+        'data': []
       };
     }
 

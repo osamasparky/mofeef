@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_typography.dart';
+import '../../core/localization/locale_provider.dart';
 import '../../core/widgets/custom_button.dart';
 import 'data/booking_repository.dart';
 
@@ -10,6 +12,8 @@ class MyReservationsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final currentLocale = ref.watch(localeProvider);
+    final isAr = currentLocale.languageCode == 'ar';
     final upcomingBookingsAsync = ref.watch(bookingHistoryProvider(''));
     final ticketsAsync = ref.watch(myTicketsProvider);
 
@@ -17,17 +21,17 @@ class MyReservationsScreen extends ConsumerWidget {
       length: 3,
       child: Scaffold(
         appBar: AppBar(
-          title: Text('حجوزاتي', style: AppTypography.headingSmall),
+          title: Text(isAr ? 'حجوزاتي' : 'My Reservations', style: AppTypography.headingSmall),
           bottom: TabBar(
             indicatorColor: AppColors.primaryGold,
             indicatorWeight: 3,
             labelColor: AppColors.primaryGold,
             unselectedLabelColor: AppColors.textSecondary,
             labelStyle: AppTypography.titleSmall,
-            tabs: const [
-              Tab(text: 'القادمة'),
-              Tab(text: 'المكتملة'),
-              Tab(text: 'الملغاة'),
+            tabs: [
+              Tab(text: isAr ? 'القادمة' : 'Upcoming'),
+              Tab(text: isAr ? 'المكتملة' : 'Completed'),
+              Tab(text: isAr ? 'الملغاة' : 'Cancelled'),
             ],
           ),
         ),
@@ -45,9 +49,23 @@ class MyReservationsScreen extends ConsumerWidget {
                         children: [
                           const Icon(Icons.confirmation_number_outlined, size: 54, color: AppColors.textMuted),
                           const SizedBox(height: 16),
-                          Text('لا توجد حجوزات قادمة', style: AppTypography.titleLarge),
+                          Text(
+                            isAr ? 'لا توجد حجوزات قادمة' : 'No upcoming bookings',
+                            style: AppTypography.titleLarge,
+                          ),
                           const SizedBox(height: 6),
-                          Text('استكشف التجارب والمتاحف واحجز رحلتك القادمة بكل سهولة', style: AppTypography.bodySmall, textAlign: TextAlign.center),
+                          Text(
+                            isAr
+                                ? 'استكشف التجارب والمتاحف واحجز رحلتك القادمة بكل سهولة.'
+                                : 'Explore tours and museums and book your next trip easily.',
+                            style: AppTypography.bodySmall,
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 24),
+                          ElevatedButton(
+                            onPressed: () => context.go('/discover'),
+                            child: Text(isAr ? 'استكشف التجارب الآن' : 'Explore Now'),
+                          ),
                         ],
                       ),
                     ),
@@ -56,19 +74,20 @@ class MyReservationsScreen extends ConsumerWidget {
                 return ListView.separated(
                   padding: const EdgeInsets.all(16),
                   itemCount: bookings.length,
-                  separatorBuilder: (context, index) => const SizedBox(height: 16),
+                  separatorBuilder: (_, __) => const SizedBox(height: 16),
                   itemBuilder: (context, index) {
                     final b = bookings[index];
                     return _buildTicketCard(
                       context,
+                      isAr: isAr,
                       title: b.serviceTitle,
-                      category: b.serviceType == 'tour' ? 'جولة سياحية' : 'تذكرة معلم',
+                      category: b.serviceType == 'tour' ? (isAr ? 'مسار سياحي' : 'Tourist Trail') : (isAr ? 'تذكرة معلم' : 'Ticket'),
                       bookingCode: b.code,
-                      date: b.startDate.isNotEmpty ? b.startDate : 'موعد الزيارة',
-                      time: '٠٩:٠٠ صباحاً',
+                      date: b.startDate.isNotEmpty ? b.startDate : (isAr ? 'موعد الزيارة' : 'Visit Date'),
+                      time: isAr ? 'تاريخ الحجز' : 'Booking Date',
                       ticketsCount: b.totalGuests,
-                      price: '${b.total.toStringAsFixed(0)} ر.س',
-                      status: b.status == 'confirmed' ? 'مؤكد' : b.status,
+                      price: '${b.total.toStringAsFixed(0)} ${isAr ? "ر.س" : "SAR"}',
+                      status: b.status == 'confirmed' ? (isAr ? 'مؤكد' : 'Confirmed') : b.status,
                       statusColor: AppColors.success,
                     );
                   },
@@ -81,11 +100,11 @@ class MyReservationsScreen extends ConsumerWidget {
                   children: [
                     const Icon(Icons.error_outline, size: 48, color: AppColors.error),
                     const SizedBox(height: 12),
-                    Text('تعذر تحميل سجل الحجوزات', style: AppTypography.titleMedium),
+                    Text(isAr ? 'تعذر تحميل سجل الحجوزات' : 'Failed to load bookings', style: AppTypography.titleMedium),
                     const SizedBox(height: 16),
                     ElevatedButton(
                       onPressed: () => ref.refresh(bookingHistoryProvider('')),
-                      child: const Text('إعادة المحاولة'),
+                      child: Text(isAr ? 'إعادة المحاولة' : 'Retry'),
                     ),
                   ],
                 ),
@@ -97,37 +116,58 @@ class MyReservationsScreen extends ConsumerWidget {
               data: (tickets) {
                 if (tickets.isEmpty) {
                   return Center(
-                    child: Text('لا توجد حجوزات سابقة مكتملة', style: AppTypography.bodyMedium),
+                    child: Padding(
+                      padding: const EdgeInsets.all(32.0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.history_outlined, size: 48, color: AppColors.textMuted),
+                          const SizedBox(height: 12),
+                          Text(isAr ? 'لا توجد حجوزات سابقة مكتملة' : 'No completed bookings', style: AppTypography.bodyMedium),
+                        ],
+                      ),
+                    ),
                   );
                 }
                 return ListView.separated(
                   padding: const EdgeInsets.all(16),
                   itemCount: tickets.length,
-                  separatorBuilder: (context, index) => const SizedBox(height: 16),
+                  separatorBuilder: (_, __) => const SizedBox(height: 16),
                   itemBuilder: (context, index) {
                     final t = tickets[index];
                     return _buildTicketCard(
                       context,
+                      isAr: isAr,
                       title: t.title,
-                      category: 'رحلة مكتملة',
+                      category: isAr ? 'رحلة مكتملة' : 'Completed Trip',
                       bookingCode: t.bookingCode,
                       date: t.date,
-                      time: 'مساءً',
+                      time: '',
                       ticketsCount: 1,
-                      price: 'مكتملة',
-                      status: 'مكتملة',
+                      price: isAr ? 'مكتملة' : 'Completed',
+                      status: isAr ? 'مكتملة' : 'Completed',
                       statusColor: AppColors.textSecondary,
                     );
                   },
                 );
               },
               loading: () => const Center(child: CircularProgressIndicator(color: AppColors.primaryGold)),
-              error: (_, __) => Center(child: Text('لا توجد حجوزات مكتملة', style: AppTypography.bodyMedium)),
+              error: (_, __) => Center(child: Text(isAr ? 'لا توجد حجوزات مكتملة' : 'No completed bookings', style: AppTypography.bodyMedium)),
             ),
 
             // Cancelled Tab
             Center(
-              child: Text('لا توجد حجوزات ملغاة', style: AppTypography.bodyMedium),
+              child: Padding(
+                padding: const EdgeInsets.all(32.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.cancel_outlined, size: 48, color: AppColors.textMuted),
+                    const SizedBox(height: 12),
+                    Text(isAr ? 'لا توجد حجوزات ملغاة' : 'No cancelled bookings', style: AppTypography.bodyMedium),
+                  ],
+                ),
+              ),
             ),
           ],
         ),
@@ -137,6 +177,7 @@ class MyReservationsScreen extends ConsumerWidget {
 
   Widget _buildTicketCard(
     BuildContext context, {
+    required bool isAr,
     required String title,
     required String category,
     required String bookingCode,
@@ -188,10 +229,6 @@ class MyReservationsScreen extends ConsumerWidget {
                     const Icon(Icons.calendar_today_outlined, size: 14, color: AppColors.primaryGold),
                     const SizedBox(width: 6),
                     Text(date, style: AppTypography.bodySmall),
-                    const SizedBox(width: 16),
-                    const Icon(Icons.access_time, size: 14, color: AppColors.primaryGold),
-                    const SizedBox(width: 6),
-                    Text(time, style: AppTypography.bodySmall),
                   ],
                 ),
               ],
@@ -251,16 +288,16 @@ class MyReservationsScreen extends ConsumerWidget {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('عدد التذاكر: $ticketsCount', style: AppTypography.bodyMedium),
+                    Text(isAr ? 'عدد التذاكر: $ticketsCount' : 'Tickets: $ticketsCount', style: AppTypography.bodyMedium),
                     const SizedBox(height: 4),
                     Text(price, style: AppTypography.price),
                   ],
                 ),
                 CustomButton(
-                  text: 'عرض التذكرة والـ QR',
-                  width: 160,
+                  text: isAr ? 'عرض التذكرة والـ QR' : 'Show Ticket & QR',
+                  width: 170,
                   height: 42,
-                  onPressed: () => _showQrModal(context, title, bookingCode),
+                  onPressed: () => _showQrModal(context, isAr, title, bookingCode),
                 ),
               ],
             ),
@@ -270,7 +307,7 @@ class MyReservationsScreen extends ConsumerWidget {
     );
   }
 
-  void _showQrModal(BuildContext context, String title, String code) {
+  void _showQrModal(BuildContext context, bool isAr, String title, String code) {
     showModalBottomSheet(
       context: context,
       backgroundColor: AppColors.surface,
@@ -286,7 +323,7 @@ class MyReservationsScreen extends ConsumerWidget {
             const SizedBox(height: 20),
             Text(title, style: AppTypography.titleLarge, textAlign: TextAlign.center),
             const SizedBox(height: 6),
-            Text('رمز الحجز: $code', style: AppTypography.bodySmall),
+            Text(isAr ? 'رمز الحجز: $code' : 'Booking Reference: $code', style: AppTypography.bodySmall),
             const SizedBox(height: 24),
             Container(
               padding: const EdgeInsets.all(16),
@@ -297,7 +334,10 @@ class MyReservationsScreen extends ConsumerWidget {
               child: const Icon(Icons.qr_code_2, size: 160, color: Colors.black),
             ),
             const SizedBox(height: 16),
-            Text('امسح الرمز عند بوابة الدخول للتحقق السريع', style: AppTypography.bodySmall),
+            Text(
+              isAr ? 'امسح الرمز عند بوابة الدخول للتحقق السريع' : 'Scan code at the entrance for verification',
+              style: AppTypography.bodySmall,
+            ),
             const SizedBox(height: 20),
           ],
         ),

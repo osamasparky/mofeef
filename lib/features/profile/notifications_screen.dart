@@ -1,41 +1,74 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_typography.dart';
+import '../../core/localization/locale_provider.dart';
+import '../booking/data/booking_repository.dart';
 
-class NotificationsScreen extends StatelessWidget {
+class NotificationsScreen extends ConsumerWidget {
   const NotificationsScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final currentLocale = ref.watch(localeProvider);
+    final isAr = currentLocale.languageCode == 'ar';
+    final bookingsAsync = ref.watch(bookingHistoryProvider(''));
+
     return Scaffold(
       appBar: AppBar(
-        title: Text('الإشعارات', style: AppTypography.headingSmall),
+        title: Text(isAr ? 'الإشعارات والتحديثات' : 'Notifications & Updates', style: AppTypography.headingSmall),
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          _buildNotificationItem(
-            title: 'تم تأكيد حجزك بنجاح',
-            description: 'تم تأكيد حجز المتحف الوطني السعودي ليوم السبت القادم.',
-            time: 'قبل ساعة',
-            icon: Icons.check_circle_outline,
-            iconColor: AppColors.success,
-          ),
-          _buildNotificationItem(
-            title: 'عرض خاص ٢٠٪ على التجارب',
-            description: 'خصم ٢٠٪ على جولات درب زبيدة هذا الأسبوع باستخدام كود SAUDI20.',
-            time: 'أمس',
-            icon: Icons.local_offer_outlined,
-            iconColor: AppColors.primaryGold,
-          ),
-          _buildNotificationItem(
-            title: 'تجربة جديدة في العُلا',
-            description: 'أضفنا تجربة صحراوية فاخرة في العُلا — استكشفها الآن واحجز مبكراً.',
-            time: 'قبل يومين',
-            icon: Icons.explore_outlined,
-            iconColor: AppColors.accentTeal,
-          ),
-        ],
+      body: bookingsAsync.when(
+        data: (bookings) {
+          if (bookings.isEmpty) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(32.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.notifications_none_outlined, size: 54, color: AppColors.textMuted),
+                    const SizedBox(height: 16),
+                    Text(
+                      isAr ? 'لا توجد إشعارات جديدة' : 'No new notifications',
+                      style: AppTypography.titleLarge,
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      isAr
+                          ? 'ستصلك هنا إشعارات تأكيد الحجوزات، العروض الترويجية، والتحديثات المهمة.'
+                          : 'Booking confirmations, promotions, and updates will appear here.',
+                      style: AppTypography.bodySmall,
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+
+          return ListView.separated(
+            padding: const EdgeInsets.all(16),
+            itemCount: bookings.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 12),
+            itemBuilder: (context, index) {
+              final b = bookings[index];
+              return _buildNotificationItem(
+                title: isAr ? 'تأكيد حجز ${b.serviceTitle}' : 'Booking Confirmed: ${b.serviceTitle}',
+                description: isAr
+                    ? 'رقم الحجز: ${b.code} • الموعد: ${b.startDate.isNotEmpty ? b.startDate : "مؤكد"}'
+                    : 'Booking Ref: ${b.code} • Date: ${b.startDate.isNotEmpty ? b.startDate : "Confirmed"}',
+                time: isAr ? 'حديث' : 'Recent',
+                icon: Icons.check_circle_outline,
+                iconColor: AppColors.success,
+              );
+            },
+          );
+        },
+        loading: () => const Center(child: CircularProgressIndicator(color: AppColors.primaryGold)),
+        error: (_, __) => Center(
+          child: Text(isAr ? 'لا توجد إشعارات' : 'No notifications', style: AppTypography.bodyMedium),
+        ),
       ),
     );
   }
@@ -48,7 +81,6 @@ class NotificationsScreen extends StatelessWidget {
     required Color iconColor,
   }) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.card,
@@ -74,7 +106,7 @@ class NotificationsScreen extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(title, style: AppTypography.titleSmall),
+                    Expanded(child: Text(title, style: AppTypography.titleSmall, maxLines: 1, overflow: TextOverflow.ellipsis)),
                     Text(time, style: AppTypography.bodySmall),
                   ],
                 ),

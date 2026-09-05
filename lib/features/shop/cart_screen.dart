@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_typography.dart';
+import '../../core/localization/locale_provider.dart';
 import '../../core/widgets/custom_button.dart';
 import '../../core/widgets/empty_state_view.dart';
 import '../cart/data/cart_repository.dart';
@@ -26,15 +27,19 @@ class _CartScreenState extends ConsumerState<CartScreen> {
   @override
   Widget build(BuildContext context) {
     final cartState = ref.watch(cartNotifierProvider);
+    final currentLocale = ref.watch(localeProvider);
+    final isAr = currentLocale.languageCode == 'ar';
 
     if (cartState.items.isEmpty) {
       return Scaffold(
-        appBar: AppBar(title: Text('السلة', style: AppTypography.headingSmall)),
+        appBar: AppBar(title: Text(isAr ? 'السلة' : 'Shopping Cart', style: AppTypography.headingSmall)),
         body: EmptyStateView(
           icon: Icons.shopping_bag_outlined,
-          title: 'سلتك فارغة',
-          message: 'اكتشف منتجات وتحف سعودية أصيلة من بازار مُضيف.',
-          buttonText: 'تسوّق الآن',
+          title: isAr ? 'سلتك فارغة' : 'Your cart is empty',
+          message: isAr
+              ? 'اكتشف منتجات وتحف سعودية أصيلة من بازار مُضيف.'
+              : 'Explore authentic Saudi handicrafts and gifts in Modeefe Bazaar.',
+          buttonText: isAr ? 'تسوّق الآن' : 'Shop Now',
           onButtonPressed: () => context.go('/store'),
         ),
       );
@@ -42,7 +47,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('السلة (${cartState.items.length} منتجات)', style: AppTypography.headingSmall),
+        title: Text('${isAr ? "السلة" : "Cart"} (${cartState.items.length})', style: AppTypography.headingSmall),
         actions: [
           IconButton(
             icon: const Icon(Icons.delete_outline, color: AppColors.error),
@@ -56,7 +61,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
             child: ListView.separated(
               padding: const EdgeInsets.all(16),
               itemCount: cartState.items.length,
-              separatorBuilder: (context, index) => const SizedBox(height: 12),
+              separatorBuilder: (_, __) => const SizedBox(height: 12),
               itemBuilder: (context, index) {
                 final item = cartState.items[index];
                 return Container(
@@ -116,15 +121,15 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                       Expanded(
                         child: TextField(
                           controller: _couponController,
-                          decoration: const InputDecoration(
-                            hintText: 'أدخل كود الخصم (مثل: SAUDI10)',
-                            contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          decoration: InputDecoration(
+                            hintText: isAr ? 'أدخل كود الخصم (مثل: MODEEFE)' : 'Enter coupon code (e.g. MODEEFE)',
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                           ),
                         ),
                       ),
                       const SizedBox(width: 10),
                       CustomButton(
-                        text: 'تطبيق',
+                        text: isAr ? 'تطبيق' : 'Apply',
                         width: 90,
                         height: 48,
                         onPressed: () async {
@@ -132,7 +137,10 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                             final success = await ref.read(cartNotifierProvider.notifier).applyCoupon(_couponController.text.trim());
                             if (success && context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('تم تطبيق كود الخصم بنجاح!'), backgroundColor: AppColors.success),
+                                SnackBar(
+                                  content: Text(isAr ? 'تم تطبيق كود الخصم بنجاح!' : 'Coupon applied successfully!'),
+                                  backgroundColor: AppColors.success,
+                                ),
                               );
                             }
                           }
@@ -145,8 +153,8 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('المجموع الفرعي', style: AppTypography.bodyMedium),
-                      Text('${cartState.subtotal.toStringAsFixed(0)} ر.س', style: AppTypography.titleSmall),
+                      Text(isAr ? 'المجموع الفرعي' : 'Subtotal', style: AppTypography.bodyMedium),
+                      Text('${cartState.subtotal.toStringAsFixed(0)} ${isAr ? "ر.س" : "SAR"}', style: AppTypography.titleSmall),
                     ],
                   ),
                   if (cartState.discount > 0) ...[
@@ -154,8 +162,8 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('خصم الكوبون', style: AppTypography.bodyMedium.copyWith(color: AppColors.success)),
-                        Text('-${cartState.discount.toStringAsFixed(0)} ر.س', style: AppTypography.titleSmall.copyWith(color: AppColors.success)),
+                        Text(isAr ? 'خصم الكوبون' : 'Coupon Discount', style: AppTypography.bodyMedium.copyWith(color: AppColors.success)),
+                        Text('-${cartState.discount.toStringAsFixed(0)} ${isAr ? "ر.س" : "SAR"}', style: AppTypography.titleSmall.copyWith(color: AppColors.success)),
                       ],
                     ),
                   ],
@@ -163,22 +171,22 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('الشحن والتوصيل', style: AppTypography.bodyMedium),
-                      Text('مجاني', style: AppTypography.titleSmall.copyWith(color: AppColors.primaryGold)),
+                      Text(isAr ? 'الشحن والتوصيل' : 'Shipping', style: AppTypography.bodyMedium),
+                      Text(isAr ? 'مجاني' : 'Free', style: AppTypography.titleSmall.copyWith(color: AppColors.primaryGold)),
                     ],
                   ),
                   const Divider(color: AppColors.border, height: 20),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('الإجمالي النهائي', style: AppTypography.titleLarge),
-                      Text('${cartState.total.toStringAsFixed(0)} ر.س', style: AppTypography.price),
+                      Text(isAr ? 'الإجمالي النهائي' : 'Total Amount', style: AppTypography.titleLarge),
+                      Text('${cartState.total.toStringAsFixed(0)} ${isAr ? "ر.س" : "SAR"}', style: AppTypography.price),
                     ],
                   ),
                   const SizedBox(height: 18),
 
                   CustomButton(
-                    text: 'متابعة الدفع (${cartState.total.toStringAsFixed(0)} ر.س)',
+                    text: '${isAr ? "متابعة الدفع" : "Proceed to Checkout"} (${cartState.total.toStringAsFixed(0)} ${isAr ? "ر.س" : "SAR"})',
                     onPressed: () {
                       showDialog(
                         context: context,
@@ -186,14 +194,16 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                           backgroundColor: AppColors.surface,
                           title: const Icon(Icons.check_circle, color: AppColors.success, size: 60),
                           content: Text(
-                            'تم استلام طلبك بنجاح من بازار مُضيف!\nرقم الطلب: #ORD-98431',
+                            isAr
+                                ? 'تم استلام طلبك بنجاح من بازار مُضيف!\nرقم الطلب: #ORD-98431'
+                                : 'Order placed successfully from Modeefe Bazaar!\nOrder Ref: #ORD-98431',
                             style: AppTypography.bodyLarge,
                             textAlign: TextAlign.center,
                           ),
                           actions: [
                             Center(
                               child: CustomButton(
-                                text: 'العودة للرئيسية',
+                                text: isAr ? 'العودة للرئيسية' : 'Back to Home',
                                 width: 180,
                                 onPressed: () {
                                   Navigator.pop(ctx);

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_typography.dart';
+import '../../core/localization/locale_provider.dart';
 import '../../core/widgets/experience_card.dart';
 import '../wishlist/data/wishlist_repository.dart';
 
@@ -11,11 +12,13 @@ class FavoritesScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final currentLocale = ref.watch(localeProvider);
+    final isAr = currentLocale.languageCode == 'ar';
     final wishlistAsync = ref.watch(wishlistItemsProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('المفضلات', style: AppTypography.headingSmall),
+        title: Text(isAr ? 'المفضلات' : 'Wishlist', style: AppTypography.headingSmall),
       ),
       body: wishlistAsync.when(
         data: (items) {
@@ -28,13 +31,22 @@ class FavoritesScreen extends ConsumerWidget {
                   children: [
                     const Icon(Icons.favorite_border, size: 54, color: AppColors.textMuted),
                     const SizedBox(height: 16),
-                    Text('قائمة المفضلات فارغة', style: AppTypography.titleLarge),
+                    Text(
+                      isAr ? 'قائمة المفضلات فارغة' : 'Your Wishlist is Empty',
+                      style: AppTypography.titleLarge,
+                    ),
                     const SizedBox(height: 6),
-                    Text('استكشف التجارب والوجهات واضغط على علامة القلب لحفظها هنا', style: AppTypography.bodySmall, textAlign: TextAlign.center),
+                    Text(
+                      isAr
+                          ? 'استكشف التجارب والوجهات واضغط على علامة القلب لحفظها هنا'
+                          : 'Explore tours and destinations and tap the heart icon to save them here.',
+                      style: AppTypography.bodySmall,
+                      textAlign: TextAlign.center,
+                    ),
                     const SizedBox(height: 24),
                     ElevatedButton(
                       onPressed: () => context.go('/discover'),
-                      child: const Text('استكشف التجارب الآن'),
+                      child: Text(isAr ? 'استكشف التجارب الآن' : 'Explore Tours Now'),
                     ),
                   ],
                 ),
@@ -51,10 +63,10 @@ class FavoritesScreen extends ConsumerWidget {
                 width: double.infinity,
                 child: ExperienceCard(
                   title: item.title,
-                  category: item.objectModel == 'tour' ? 'جولة سياحية' : 'معلم سياحي',
-                  location: item.location ?? 'المملكة العربية السعودية',
-                  price: '${item.price.toStringAsFixed(0)} ر.س',
-                  duration: 'ساعتان',
+                  category: item.objectModel == 'tour' ? (isAr ? 'مسار سياحي' : 'Tourist Trail') : (isAr ? 'معلم سياحي' : 'Landmark'),
+                  location: item.location ?? (isAr ? 'المملكة العربية السعودية' : 'Saudi Arabia'),
+                  price: '${item.price.toStringAsFixed(0)} ${isAr ? "ر.س" : "SAR"}',
+                  duration: isAr ? 'ساعتان' : '2 hours',
                   rating: 4.9,
                   imageUrl: item.imageUrl ?? 'https://images.unsplash.com/photo-1590073844006-33379778ae09?w=800&q=80',
                   isFavorite: true,
@@ -75,11 +87,11 @@ class FavoritesScreen extends ConsumerWidget {
             children: [
               const Icon(Icons.error_outline, size: 48, color: AppColors.error),
               const SizedBox(height: 12),
-              Text('تعذر تحميل قائمة المفضلات', style: AppTypography.titleMedium),
+              Text(isAr ? 'تعذر تحميل قائمة المفضلات' : 'Failed to load wishlist', style: AppTypography.titleMedium),
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: () => ref.refresh(wishlistItemsProvider),
-                child: const Text('إعادة المحاولة'),
+                child: Text(isAr ? 'إعادة المحاولة' : 'Retry'),
               ),
             ],
           ),

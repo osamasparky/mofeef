@@ -24,6 +24,7 @@ import '../../features/cars/presentation/car_detail_screen.dart';
 import '../../features/events/presentation/event_list_screen.dart';
 import '../../features/events/presentation/event_detail_screen.dart';
 import '../constants/app_colors.dart';
+import '../localization/locale_provider.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final _shellNavigatorKey = GlobalKey<NavigatorState>();
@@ -168,7 +169,7 @@ final routerProvider = Provider<GoRouter>((ref) {
 });
 
 
-class ScaffoldWithNavBar extends StatelessWidget {
+class ScaffoldWithNavBar extends ConsumerWidget {
   final Widget child;
 
   const ScaffoldWithNavBar({super.key, required this.child});
@@ -204,8 +205,10 @@ class ScaffoldWithNavBar extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final currentIndex = _calculateSelectedIndex(context);
+    final currentLocale = ref.watch(localeProvider);
+    final isAr = currentLocale.languageCode == 'ar';
 
     return Scaffold(
       body: child,
@@ -218,31 +221,31 @@ class ScaffoldWithNavBar extends StatelessWidget {
           onDestinationSelected: (index) => _onItemTapped(index, context),
           backgroundColor: AppColors.surface,
           indicatorColor: AppColors.goldGlow,
-          destinations: const [
+          destinations: [
             NavigationDestination(
-              icon: Icon(Icons.home_outlined),
-              selectedIcon: Icon(Icons.home, color: AppColors.primaryGold),
-              label: 'الرئيسية',
+              icon: const Icon(Icons.home_outlined),
+              selectedIcon: const Icon(Icons.home, color: AppColors.primaryGold),
+              label: isAr ? 'الرئيسية' : 'Home',
             ),
             NavigationDestination(
-              icon: Icon(Icons.explore_outlined),
-              selectedIcon: Icon(Icons.explore, color: AppColors.primaryGold),
-              label: 'اكتشف',
+              icon: const Icon(Icons.explore_outlined),
+              selectedIcon: const Icon(Icons.explore, color: AppColors.primaryGold),
+              label: isAr ? 'اكتشف' : 'Discover',
             ),
             NavigationDestination(
-              icon: Icon(Icons.confirmation_number_outlined),
-              selectedIcon: Icon(Icons.confirmation_number, color: AppColors.primaryGold),
-              label: 'حجوزاتي',
+              icon: const Icon(Icons.confirmation_number_outlined),
+              selectedIcon: const Icon(Icons.confirmation_number, color: AppColors.primaryGold),
+              label: isAr ? 'حجوزاتي' : 'Bookings',
             ),
             NavigationDestination(
-              icon: Icon(Icons.favorite_border),
-              selectedIcon: Icon(Icons.favorite, color: AppColors.primaryGold),
-              label: 'المفضلة',
+              icon: const Icon(Icons.favorite_border),
+              selectedIcon: const Icon(Icons.favorite, color: AppColors.primaryGold),
+              label: isAr ? 'المفضلة' : 'Wishlist',
             ),
             NavigationDestination(
-              icon: Icon(Icons.person_outline),
-              selectedIcon: Icon(Icons.person, color: AppColors.primaryGold),
-              label: 'حسابي',
+              icon: const Icon(Icons.person_outline),
+              selectedIcon: const Icon(Icons.person, color: AppColors.primaryGold),
+              label: isAr ? 'حسابي' : 'Profile',
             ),
           ],
         ),
