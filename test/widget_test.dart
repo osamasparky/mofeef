@@ -9,5 +9,7 @@ void main() {
         child: ModeefApp(),
       ),
     );
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(find.byType(ModeefApp), findsOneWidget);
   });
 }

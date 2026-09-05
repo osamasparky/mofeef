@@ -1,22 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_typography.dart';
 import '../../core/widgets/custom_button.dart';
 import '../../core/widgets/empty_state_view.dart';
-import 'models/product_model.dart';
+import '../cart/data/cart_repository.dart';
 
-class CartScreen extends StatefulWidget {
+class CartScreen extends ConsumerStatefulWidget {
   const CartScreen({super.key});
 
   @override
-  State<CartScreen> createState() => _CartScreenState();
+  ConsumerState<CartScreen> createState() => _CartScreenState();
 }
 
-class _CartScreenState extends State<CartScreen> {
-  final List<ProductModel> _cartItems = [mockProducts[0], mockProducts[1]];
+class _CartScreenState extends ConsumerState<CartScreen> {
   final TextEditingController _couponController = TextEditingController();
-  bool _couponApplied = false;
 
   @override
   void dispose() {
@@ -26,7 +25,9 @@ class _CartScreenState extends State<CartScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_cartItems.isEmpty) {
+    final cartState = ref.watch(cartNotifierProvider);
+
+    if (cartState.items.isEmpty) {
       return Scaffold(
         appBar: AppBar(title: Text('السلة', style: AppTypography.headingSmall)),
         body: EmptyStateView(
@@ -39,17 +40,13 @@ class _CartScreenState extends State<CartScreen> {
       );
     }
 
-    final subtotal = _cartItems.fold<double>(0, (sum, item) => sum + item.priceNumeric);
-    final discount = _couponApplied ? subtotal * 0.1 : 0.0;
-    final total = subtotal - discount;
-
     return Scaffold(
       appBar: AppBar(
-        title: Text('السلة (${_cartItems.length} منتجات)', style: AppTypography.headingSmall),
+        title: Text('السلة (${cartState.items.length} منتجات)', style: AppTypography.headingSmall),
         actions: [
           IconButton(
             icon: const Icon(Icons.delete_outline, color: AppColors.error),
-            onPressed: () => setState(() => _cartItems.clear()),
+            onPressed: () => ref.read(cartNotifierProvider.notifier).clearCart(),
           ),
         ],
       ),
@@ -58,10 +55,10 @@ class _CartScreenState extends State<CartScreen> {
           Expanded(
             child: ListView.separated(
               padding: const EdgeInsets.all(16),
-              itemCount: _cartItems.length,
+              itemCount: cartState.items.length,
               separatorBuilder: (context, index) => const SizedBox(height: 12),
               itemBuilder: (context, index) {
-                final item = _cartItems[index];
+                final item = cartState.items[index];
                 return Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
@@ -73,7 +70,12 @@ class _CartScreenState extends State<CartScreen> {
                     children: [
                       ClipRRect(
                         borderRadius: BorderRadius.circular(12),
-                        child: Image.network(item.imageUrl, width: 70, height: 70, fit: BoxFit.cover),
+                        child: Image.network(
+                          item.imageUrl.isNotEmpty ? item.imageUrl : 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=800&q=80',
+                          width: 70,
+                          height: 70,
+                          fit: BoxFit.cover,
+                        ),
                       ),
                       const SizedBox(width: 14),
                       Expanded(
@@ -90,7 +92,7 @@ class _CartScreenState extends State<CartScreen> {
                       ),
                       IconButton(
                         icon: const Icon(Icons.close, size: 18, color: AppColors.textMuted),
-                        onPressed: () => setState(() => _cartItems.removeAt(index)),
+                        onPressed: () => ref.read(cartNotifierProvider.notifier).removeItem(index),
                       ),
                     ],
                   ),
@@ -109,7 +111,6 @@ class _CartScreenState extends State<CartScreen> {
             child: SafeArea(
               child: Column(
                 children: [
-                  // Coupon Code Row
                   Row(
                     children: [
                       Expanded(
@@ -126,12 +127,14 @@ class _CartScreenState extends State<CartScreen> {
                         text: 'تطبيق',
                         width: 90,
                         height: 48,
-                        onPressed: () {
+                        onPressed: () async {
                           if (_couponController.text.isNotEmpty) {
-                            setState(() => _couponApplied = true);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('تم تطبيق كود الخصم بنجاح!'), backgroundColor: AppColors.success),
-                            );
+                            final success = await ref.read(cartNotifierProvider.notifier).applyCoupon(_couponController.text.trim());
+                            if (success && context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('تم تطبيق كود الخصم بنجاح!'), backgroundColor: AppColors.success),
+                              );
+                            }
                           }
                         },
                       ),
@@ -139,21 +142,20 @@ class _CartScreenState extends State<CartScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Pricing rows
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text('المجموع الفرعي', style: AppTypography.bodyMedium),
-                      Text('${subtotal.toStringAsFixed(0)} ر.س', style: AppTypography.titleSmall),
+                      Text('${cartState.subtotal.toStringAsFixed(0)} ر.س', style: AppTypography.titleSmall),
                     ],
                   ),
-                  if (_couponApplied) ...[
+                  if (cartState.discount > 0) ...[
                     const SizedBox(height: 6),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('خصم الكوبون (١٠٪)', style: AppTypography.bodyMedium.copyWith(color: AppColors.success)),
-                        Text('-${discount.toStringAsFixed(0)} ر.س', style: AppTypography.titleSmall.copyWith(color: AppColors.success)),
+                        Text('خصم الكوبون', style: AppTypography.bodyMedium.copyWith(color: AppColors.success)),
+                        Text('-${cartState.discount.toStringAsFixed(0)} ر.س', style: AppTypography.titleSmall.copyWith(color: AppColors.success)),
                       ],
                     ),
                   ],
@@ -170,13 +172,13 @@ class _CartScreenState extends State<CartScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text('الإجمالي النهائي', style: AppTypography.titleLarge),
-                      Text('${total.toStringAsFixed(0)} ر.س', style: AppTypography.price),
+                      Text('${cartState.total.toStringAsFixed(0)} ر.س', style: AppTypography.price),
                     ],
                   ),
                   const SizedBox(height: 18),
 
                   CustomButton(
-                    text: 'متابعة الدفع (${total.toStringAsFixed(0)} ر.س)',
+                    text: 'متابعة الدفع (${cartState.total.toStringAsFixed(0)} ر.س)',
                     onPressed: () {
                       showDialog(
                         context: context,
@@ -195,7 +197,7 @@ class _CartScreenState extends State<CartScreen> {
                                 width: 180,
                                 onPressed: () {
                                   Navigator.pop(ctx);
-                                  setState(() => _cartItems.clear());
+                                  ref.read(cartNotifierProvider.notifier).clearCart();
                                   context.go('/home');
                                 },
                               ),

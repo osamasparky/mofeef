@@ -1,13 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_typography.dart';
 import '../../core/widgets/custom_button.dart';
+import 'data/booking_repository.dart';
 
-class MyReservationsScreen extends StatelessWidget {
+class MyReservationsScreen extends ConsumerWidget {
   const MyReservationsScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final upcomingBookingsAsync = ref.watch(bookingHistoryProvider(''));
+    final ticketsAsync = ref.watch(myTicketsProvider);
+
     return DefaultTabController(
       length: 3,
       child: Scaffold(
@@ -28,55 +33,96 @@ class MyReservationsScreen extends StatelessWidget {
         ),
         body: TabBarView(
           children: [
-            // Upcoming Tab
-            ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                _buildTicketCard(
-                  context,
-                  title: 'مناطيد فوق سماء العُلا',
-                  category: 'مغامرة',
-                  bookingCode: 'MDF-89931',
-                  date: 'السبت، ١٢ أكتوبر ٢٠٢٦',
-                  time: '٠٥:٣٠ صباحاً',
-                  ticketsCount: 2,
-                  price: '١,٢٠٠ ر.س',
-                  status: 'مؤكد',
-                  statusColor: AppColors.success,
+            // Upcoming Tab with Real API
+            upcomingBookingsAsync.when(
+              data: (bookings) {
+                if (bookings.isEmpty) {
+                  return Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(32.0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.confirmation_number_outlined, size: 54, color: AppColors.textMuted),
+                          const SizedBox(height: 16),
+                          Text('لا توجد حجوزات قادمة', style: AppTypography.titleLarge),
+                          const SizedBox(height: 6),
+                          Text('استكشف التجارب والمتاحف واحجز رحلتك القادمة بكل سهولة', style: AppTypography.bodySmall, textAlign: TextAlign.center),
+                        ],
+                      ),
+                    ),
+                  );
+                }
+                return ListView.separated(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: bookings.length,
+                  separatorBuilder: (context, index) => const SizedBox(height: 16),
+                  itemBuilder: (context, index) {
+                    final b = bookings[index];
+                    return _buildTicketCard(
+                      context,
+                      title: b.serviceTitle,
+                      category: b.serviceType == 'tour' ? 'جولة سياحية' : 'تذكرة معلم',
+                      bookingCode: b.code,
+                      date: b.startDate.isNotEmpty ? b.startDate : 'موعد الزيارة',
+                      time: '٠٩:٠٠ صباحاً',
+                      ticketsCount: b.totalGuests,
+                      price: '${b.total.toStringAsFixed(0)} ر.س',
+                      status: b.status == 'confirmed' ? 'مؤكد' : b.status,
+                      statusColor: AppColors.success,
+                    );
+                  },
+                );
+              },
+              loading: () => const Center(child: CircularProgressIndicator(color: AppColors.primaryGold)),
+              error: (_, __) => Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.error_outline, size: 48, color: AppColors.error),
+                    const SizedBox(height: 12),
+                    Text('تعذر تحميل سجل الحجوزات', style: AppTypography.titleMedium),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: () => ref.refresh(bookingHistoryProvider('')),
+                      child: const Text('إعادة المحاولة'),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 16),
-                _buildTicketCard(
-                  context,
-                  title: 'المتحف الوطني السعودي',
-                  category: 'متحف',
-                  bookingCode: 'MDF-77210',
-                  date: 'الجمعة، ٢٥ أكتوبر ٢٠٢٦',
-                  time: '٠٤:٠٠ مساءً',
-                  ticketsCount: 3,
-                  price: '١٥٠ ر.س',
-                  status: 'مؤكد',
-                  statusColor: AppColors.success,
-                ),
-              ],
+              ),
             ),
 
             // Completed Tab
-            ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                _buildTicketCard(
-                  context,
-                  title: 'ليالي السوق التراثي بالدرعية',
-                  category: 'ثقافة',
-                  bookingCode: 'MDF-55109',
-                  date: '١٥ سبتمبر ٢٠٢٦',
-                  time: '٠٨:٠٠ مساءً',
-                  ticketsCount: 2,
-                  price: '٢٥٠ ر.س',
-                  status: 'مكتملة',
-                  statusColor: AppColors.textSecondary,
-                ),
-              ],
+            ticketsAsync.when(
+              data: (tickets) {
+                if (tickets.isEmpty) {
+                  return Center(
+                    child: Text('لا توجد حجوزات سابقة مكتملة', style: AppTypography.bodyMedium),
+                  );
+                }
+                return ListView.separated(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: tickets.length,
+                  separatorBuilder: (context, index) => const SizedBox(height: 16),
+                  itemBuilder: (context, index) {
+                    final t = tickets[index];
+                    return _buildTicketCard(
+                      context,
+                      title: t.title,
+                      category: 'رحلة مكتملة',
+                      bookingCode: t.bookingCode,
+                      date: t.date,
+                      time: 'مساءً',
+                      ticketsCount: 1,
+                      price: 'مكتملة',
+                      status: 'مكتملة',
+                      statusColor: AppColors.textSecondary,
+                    );
+                  },
+                );
+              },
+              loading: () => const Center(child: CircularProgressIndicator(color: AppColors.primaryGold)),
+              error: (_, __) => Center(child: Text('لا توجد حجوزات مكتملة', style: AppTypography.bodyMedium)),
             ),
 
             // Cancelled Tab
@@ -109,7 +155,6 @@ class MyReservationsScreen extends StatelessWidget {
       ),
       child: Column(
         children: [
-          // Ticket Header
           Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -153,7 +198,6 @@ class MyReservationsScreen extends StatelessWidget {
             ),
           ),
 
-          // Dashed Divider & Cutouts
           Row(
             children: [
               Container(
@@ -199,7 +243,6 @@ class MyReservationsScreen extends StatelessWidget {
             ],
           ),
 
-          // Ticket Bottom with QR & Details
           Padding(
             padding: const EdgeInsets.all(16),
             child: Row(

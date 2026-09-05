@@ -5,7 +5,8 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_typography.dart';
 import '../../core/widgets/experience_card.dart';
 import '../../core/widgets/section_header.dart';
-import '../experiences/models/experience_model.dart';
+import '../tours/data/repositories/tour_repository.dart';
+import '../discovery/data/repositories/discovery_repository.dart';
 import '../auth/auth_provider.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -14,6 +15,8 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authProvider);
+    final toursAsync = ref.watch(toursListProvider(null));
+    final servicesAsync = ref.watch(servicesProvider);
 
     return Scaffold(
       body: CustomScrollView(
@@ -112,7 +115,7 @@ class HomeScreen extends ConsumerWidget {
 
                 const SizedBox(height: 12),
 
-                // Hero Banner (تجارب مختارة بعناية)
+                // Hero Banner
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Container(
@@ -179,17 +182,39 @@ class HomeScreen extends ConsumerWidget {
 
                 const SizedBox(height: 20),
 
-                // Quick Category Icons
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      _buildCategoryIcon(context, 'المتاحف', Icons.museum_outlined, () => context.go('/discover')),
-                      _buildCategoryIcon(context, 'الفعاليات', Icons.festival_outlined, () => context.go('/discover')),
-                      _buildCategoryIcon(context, 'الجولات', Icons.explore_outlined, () => context.go('/discover')),
-                      _buildCategoryIcon(context, 'المتجر', Icons.storefront_outlined, () => context.push('/store')),
-                    ],
+                // Quick Service Icons
+                servicesAsync.when(
+                  data: (services) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          _buildCategoryIcon(context, 'المتاحف', Icons.museum_outlined, () => context.push('/discover')),
+                          _buildCategoryIcon(context, 'الفعاليات', Icons.festival_outlined, () => context.push('/events')),
+                          _buildCategoryIcon(context, 'الأدلاء', Icons.person_pin_outlined, () => context.push('/guides')),
+                          _buildCategoryIcon(context, 'السيارات', Icons.directions_car_outlined, () => context.push('/cars')),
+                          _buildCategoryIcon(context, 'المتجر', Icons.storefront_outlined, () => context.push('/store')),
+                        ],
+                      ),
+                    );
+                  },
+                  loading: () => const Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Center(child: CircularProgressIndicator(color: AppColors.primaryGold)),
+                  ),
+                  error: (_, __) => Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        _buildCategoryIcon(context, 'المتاحف', Icons.museum_outlined, () => context.push('/discover')),
+                        _buildCategoryIcon(context, 'الفعاليات', Icons.festival_outlined, () => context.push('/events')),
+                        _buildCategoryIcon(context, 'الأدلاء', Icons.person_pin_outlined, () => context.push('/guides')),
+                        _buildCategoryIcon(context, 'السيارات', Icons.directions_car_outlined, () => context.push('/cars')),
+                        _buildCategoryIcon(context, 'المتجر', Icons.storefront_outlined, () => context.push('/store')),
+                      ],
+                    ),
                   ),
                 ),
 
@@ -202,26 +227,56 @@ class HomeScreen extends ConsumerWidget {
                   onActionTap: () => context.go('/discover'),
                 ),
 
-                SizedBox(
-                  height: 280,
-                  child: ListView.separated(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    scrollDirection: Axis.horizontal,
-                    itemCount: mockExperiences.length,
-                    separatorBuilder: (context, index) => const SizedBox(width: 14),
-                    itemBuilder: (context, index) {
-                      final exp = mockExperiences[index];
-                      return ExperienceCard(
-                        title: exp.title,
-                        category: exp.category,
-                        location: exp.location,
-                        price: exp.price,
-                        duration: exp.duration,
-                        rating: exp.rating,
-                        imageUrl: exp.imageUrl,
-                        onTap: () => context.push('/experience/${exp.id}'),
+                toursAsync.when(
+                  data: (tours) {
+                    if (tours.isEmpty) {
+                      return Padding(
+                        padding: const EdgeInsets.all(24.0),
+                        child: Center(
+                          child: Text('لا توجد تجارب متاحة حالياً', style: AppTypography.bodyMedium),
+                        ),
                       );
-                    },
+                    }
+                    return SizedBox(
+                      height: 280,
+                      child: ListView.separated(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        scrollDirection: Axis.horizontal,
+                        itemCount: tours.length,
+                        separatorBuilder: (context, index) => const SizedBox(width: 14),
+                        itemBuilder: (context, index) {
+                          final tour = tours[index];
+                          return ExperienceCard(
+                            title: tour.title,
+                            category: tour.categoryName ?? 'تجربة سياحية',
+                            location: tour.locationName ?? 'المملكة',
+                            price: tour.formattedPrice,
+                            duration: tour.duration ?? 'ساعتان',
+                            rating: tour.rating,
+                            imageUrl: tour.imageUrl ?? 'https://images.unsplash.com/photo-1590073844006-33379778ae09?w=800&q=80',
+                            onTap: () => context.push('/experience/${tour.id}'),
+                          );
+                        },
+                      ),
+                    );
+                  },
+                  loading: () => const SizedBox(
+                    height: 200,
+                    child: Center(child: CircularProgressIndicator(color: AppColors.primaryGold)),
+                  ),
+                  error: (err, _) => Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Center(
+                      child: Column(
+                        children: [
+                          Text('تعذر تحميل التجارب', style: AppTypography.bodyMedium),
+                          TextButton(
+                            onPressed: () => ref.refresh(toursListProvider(null)),
+                            child: const Text('إعادة المحاولة', style: TextStyle(color: AppColors.primaryGold)),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
 
@@ -282,17 +337,17 @@ class HomeScreen extends ConsumerWidget {
       child: Column(
         children: [
           Container(
-            width: 64,
-            height: 64,
+            width: 58,
+            height: 58,
             decoration: BoxDecoration(
               color: AppColors.surface,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: AppColors.border),
             ),
-            child: Icon(icon, color: AppColors.primaryGold, size: 28),
+            child: Icon(icon, color: AppColors.primaryGold, size: 26),
           ),
-          const SizedBox(height: 8),
-          Text(label, style: AppTypography.titleSmall),
+          const SizedBox(height: 6),
+          Text(label, style: AppTypography.titleSmall.copyWith(fontSize: 12)),
         ],
       ),
     );
