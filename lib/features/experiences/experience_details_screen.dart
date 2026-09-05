@@ -8,6 +8,8 @@ import '../../core/constants/app_typography.dart';
 import '../../core/localization/locale_provider.dart';
 import '../../core/utils/html_utils.dart';
 import '../../core/widgets/custom_button.dart';
+import '../../core/widgets/image_viewer_dialog.dart';
+import '../booking/data/booking_draft.dart';
 import '../tours/data/models/tour_model.dart';
 import '../tours/data/repositories/tour_repository.dart';
 
@@ -105,12 +107,15 @@ class _ExperienceDetailsScreenState extends ConsumerState<ExperienceDetailsScree
                             itemCount: images.length,
                             onPageChanged: (idx) => setState(() => _currentGalleryIndex = idx),
                             itemBuilder: (context, index) {
-                              return CachedNetworkImage(
-                                imageUrl: images[index],
-                                fit: BoxFit.cover,
-                                errorWidget: (_, __, ___) => Container(
-                                  color: AppColors.surface,
-                                  child: const Icon(Icons.image_not_supported, color: AppColors.textMuted),
+                              return GestureDetector(
+                                onTap: () => ImageViewerDialog.show(context, images: images, initialIndex: index),
+                                child: CachedNetworkImage(
+                                  imageUrl: images[index],
+                                  fit: BoxFit.cover,
+                                  errorWidget: (_, __, ___) => Container(
+                                    color: AppColors.surface,
+                                    child: const Icon(Icons.image_not_supported, color: AppColors.textMuted),
+                                  ),
                                 ),
                               );
                             },
@@ -300,6 +305,8 @@ class _ExperienceDetailsScreenState extends ConsumerState<ExperienceDetailsScree
                               separatorBuilder: (_, __) => const SizedBox(height: 12),
                               itemBuilder: (context, index) {
                                 final stage = tour.itinerary[index];
+                                final stageTitle = _formatStageTitle(index, stage.title, isAr);
+                                final stageDesc = _formatStageDesc(stage.desc, isAr);
                                 return Container(
                                   padding: const EdgeInsets.all(16),
                                   decoration: BoxDecoration(
@@ -326,10 +333,10 @@ class _ExperienceDetailsScreenState extends ConsumerState<ExperienceDetailsScree
                                         child: Column(
                                           crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
-                                            Text(stage.title, style: AppTypography.titleSmall),
-                                            if (stage.desc != null && stage.desc!.isNotEmpty) ...[
-                                              const SizedBox(height: 2),
-                                              Text(stage.desc!, style: AppTypography.bodySmall.copyWith(color: AppColors.primaryGold)),
+                                            Text(stageTitle, style: AppTypography.titleSmall),
+                                            if (stageDesc != null && stageDesc.isNotEmpty) ...[
+                                              const SizedBox(height: 4),
+                                              Text(stageDesc, style: AppTypography.bodySmall.copyWith(color: AppColors.primaryGold)),
                                             ],
                                             if (stage.content != null && stage.content!.isNotEmpty) ...[
                                               const SizedBox(height: 6),
@@ -339,13 +346,16 @@ class _ExperienceDetailsScreenState extends ConsumerState<ExperienceDetailsScree
                                         ),
                                       ),
                                       if (stage.image != null && stage.image!.isNotEmpty)
-                                        ClipRRect(
-                                          borderRadius: BorderRadius.circular(10),
-                                          child: CachedNetworkImage(
-                                            imageUrl: stage.image!,
-                                            width: 64,
-                                            height: 64,
-                                            fit: BoxFit.cover,
+                                        GestureDetector(
+                                          onTap: () => ImageViewerDialog.show(context, images: [stage.image!]),
+                                          child: ClipRRect(
+                                            borderRadius: BorderRadius.circular(10),
+                                            child: CachedNetworkImage(
+                                              imageUrl: stage.image!,
+                                              width: 64,
+                                              height: 64,
+                                              fit: BoxFit.cover,
+                                            ),
                                           ),
                                         ),
                                     ],
@@ -578,6 +588,45 @@ class _ExperienceDetailsScreenState extends ConsumerState<ExperienceDetailsScree
       ),
       builder: (ctx) => _BookingBottomSheet(tour: tour, isAr: isAr),
     );
+  }
+
+  String _formatStageTitle(int index, String? title, bool isAr) {
+    if (!isAr) return title ?? 'Stage ${index + 1}';
+    if (title == null || title.isEmpty) return 'المحطة ${index + 1}';
+    final lower = title.toLowerCase().trim();
+    if (lower.contains('mornning') || lower.contains('morning')) {
+      return 'المحطة الأولى: انطلاق الجولة الصباحية';
+    }
+    if (lower.contains('hour 1') || lower.contains('1 hour') || lower.contains('stage 1') || lower.contains('day 1')) {
+      return 'المحطة الأولى: استكشاف الموقع التاريخي';
+    }
+    if (lower.contains('hour 2') || lower.contains('2 hour') || lower.contains('stage 2') || lower.contains('day 2')) {
+      return 'المحطة الثانية: الجولة الإرشادية والمعالم';
+    }
+    if (lower.contains('hour 3') || lower.contains('3 hour') || lower.contains('stage 3') || lower.contains('day 3')) {
+      return 'المحطة الثالثة: الاستراحة وتجربة الضيافة';
+    }
+    if (lower.contains('hour 4') || lower.contains('4 hour') || lower.contains('stage 4') || lower.contains('day 4')) {
+      return 'المحطة الرابعة: ختام الجولة والتصوير';
+    }
+    final ordinalsAr = ['الأولى', 'الثانية', 'الثالثة', 'الرابعة', 'الخامسة', 'السادسة', 'السابعة', 'الثامنة'];
+    final ord = index < ordinalsAr.length ? ordinalsAr[index] : '${index + 1}';
+    return 'المحطة $ord: ${HtmlUtils.stripHtml(title)}';
+  }
+
+  String? _formatStageDesc(String? desc, bool isAr) {
+    if (desc == null || desc.isEmpty) return null;
+    final clean = HtmlUtils.stripHtml(desc);
+    if (isAr) {
+      if (clean.toLowerCase().contains('hour')) {
+        final numMatch = RegExp(r'\d+').firstMatch(clean);
+        if (numMatch != null) {
+          return 'المدة المتوقعة: ${numMatch.group(0)} ساعات';
+        }
+        return 'مدة المحطة: ساعة واحدة';
+      }
+    }
+    return clean;
   }
 
   Widget _buildInfoItem(IconData icon, String title, String value) {
@@ -877,8 +926,45 @@ class _BookingBottomSheetState extends State<_BookingBottomSheet> {
                   text: isAr ? 'متابعة للدفع والتأكيد' : 'Proceed to Checkout',
                   width: 190,
                   onPressed: () {
+                    final personItems = <BookingPersonItem>[];
+                    if (widget.tour.personTypes.isNotEmpty) {
+                      for (var p in widget.tour.personTypes) {
+                        final q = _personQuantities[p.name] ?? 0;
+                        if (q > 0) {
+                          personItems.add(BookingPersonItem(
+                            name: p.getDisplayName(isAr),
+                            price: p.price,
+                            quantity: q,
+                          ));
+                        }
+                      }
+                    } else {
+                      personItems.add(BookingPersonItem(
+                        name: isAr ? 'تذكرة دخول عامة' : 'General Ticket',
+                        price: widget.tour.salePrice ?? widget.tour.price,
+                        quantity: _personQuantities['default'] ?? 1,
+                      ));
+                    }
+
+                    final extraItems = widget.tour.extraPrices
+                        .where((e) => _selectedExtras.contains(e.name))
+                        .map((e) => BookingExtraItem(name: e.getDisplayName(isAr), price: e.price))
+                        .toList();
+
+                    final draft = BookingDraft(
+                      title: widget.tour.title,
+                      imageUrl: widget.tour.imageUrl,
+                      location: widget.tour.locationName,
+                      date: _selectedDate,
+                      serviceType: 'tour',
+                      serviceId: widget.tour.id,
+                      personItems: personItems,
+                      extraItems: extraItems,
+                      totalAmount: total,
+                    );
+
                     Navigator.pop(context);
-                    context.push('/checkout/${widget.tour.id}');
+                    context.push('/checkout/${widget.tour.id}', extra: draft);
                   },
                 ),
               ],

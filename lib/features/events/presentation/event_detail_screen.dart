@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_typography.dart';
 import '../../../core/localization/locale_provider.dart';
 import '../../../core/widgets/custom_button.dart';
+import '../../../core/widgets/image_viewer_dialog.dart';
+import '../../booking/data/booking_draft.dart';
 import '../data/event_repository.dart';
 
 class EventDetailScreen extends ConsumerStatefulWidget {
@@ -19,6 +22,17 @@ class EventDetailScreen extends ConsumerStatefulWidget {
 
 class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
   int _currentGalleryIndex = 0;
+
+  Future<void> _openMap(EventItemModel event) async {
+    final lat = event.mapLat ?? 24.7136;
+    final lng = event.mapLng ?? 46.6753;
+    final url = Uri.parse('https://www.google.com/maps/search/?api=1&query=$lat,$lng');
+    try {
+      if (await canLaunchUrl(url)) {
+        await launchUrl(url, mode: LaunchMode.externalApplication);
+      }
+    } catch (_) {}
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -57,12 +71,15 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
                             itemCount: images.length,
                             onPageChanged: (idx) => setState(() => _currentGalleryIndex = idx),
                             itemBuilder: (context, index) {
-                              return CachedNetworkImage(
-                                imageUrl: images[index],
-                                fit: BoxFit.cover,
-                                errorWidget: (_, __, ___) => Container(
-                                  color: AppColors.surface,
-                                  child: const Icon(Icons.festival_outlined, color: AppColors.primaryGold, size: 80),
+                              return GestureDetector(
+                                onTap: () => ImageViewerDialog.show(context, images: images, initialIndex: index),
+                                child: CachedNetworkImage(
+                                  imageUrl: images[index],
+                                  fit: BoxFit.cover,
+                                  errorWidget: (_, __, ___) => Container(
+                                    color: AppColors.surface,
+                                    child: const Icon(Icons.festival_outlined, color: AppColors.primaryGold, size: 80),
+                                  ),
                                 ),
                               );
                             },
@@ -114,7 +131,7 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                                 decoration: BoxDecoration(
                                   color: AppColors.goldGlow,
                                   borderRadius: BorderRadius.circular(20),
@@ -130,7 +147,7 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
                                   const Icon(Icons.star, color: AppColors.primaryGold, size: 18),
                                   const SizedBox(width: 4),
                                   Text(
-                                    '4.9 (مميز)',
+                                    isAr ? '4.9 (مميز)' : '4.9 (Featured)',
                                     style: AppTypography.titleSmall,
                                   ),
                                 ],
@@ -164,7 +181,7 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
                                 Container(width: 1, height: 30, color: AppColors.border),
                                 _buildInfo(Icons.schedule, isAr ? 'المدة' : 'Duration', event.duration),
                                 Container(width: 1, height: 30, color: AppColors.border),
-                                _buildInfo(Icons.access_time, isAr ? 'وقت البدء' : 'Start Time', event.startTime ?? '٥:٠٠ م'),
+                                _buildInfo(Icons.access_time, isAr ? 'وقت البدء' : 'Start Time', event.startTime ?? (isAr ? '٥:٠٠ م' : '5:00 PM')),
                               ],
                             ),
                           ),
@@ -205,6 +222,60 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
                                 )),
                             const SizedBox(height: 20),
                           ],
+
+                          // Interactive Google Map Section
+                          Text(isAr ? 'الموقع الجغرافي والوصول' : 'Location & Directions', style: AppTypography.titleLarge),
+                          const SizedBox(height: 10),
+                          GestureDetector(
+                            onTap: () => _openMap(event),
+                            child: Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: AppColors.card,
+                                borderRadius: BorderRadius.circular(18),
+                                border: Border.all(color: AppColors.primaryGold.withOpacity(0.5)),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.3),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(14),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.goldGlow,
+                                      borderRadius: BorderRadius.circular(14),
+                                    ),
+                                    child: const Icon(Icons.directions_outlined, color: AppColors.primaryGold, size: 28),
+                                  ),
+                                  const SizedBox(width: 14),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          event.location,
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 14),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          isAr ? 'انقر لفتح الاتجاهات المباشرة عبر خرائط Google' : 'Tap to open directions in Google Maps',
+                                          style: const TextStyle(color: AppColors.primaryGold, fontSize: 11),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const Icon(Icons.open_in_new, color: AppColors.primaryGold, size: 20),
+                                ],
+                              ),
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -319,9 +390,11 @@ class _EventBookingBottomSheetState extends State<_EventBookingBottomSheet> {
   void initState() {
     super.initState();
     if (widget.event.ticketTypes.isNotEmpty) {
-      for (int i = 0; i < widget.event.ticketTypes.length; i++) {
-        final t = widget.event.ticketTypes[i];
-        _ticketQuantities[t.code] = i == 0 ? 1 : 0;
+      for (var t in widget.event.ticketTypes) {
+        _ticketQuantities[t.name] = (t.name.toLowerCase().contains('standard') || t.name.toLowerCase().contains('regular') || t.nameAr?.contains('عادية') == true) ? 1 : 0;
+      }
+      if (_ticketQuantities.values.every((v) => v == 0)) {
+        _ticketQuantities[widget.event.ticketTypes.first.name] = 1;
       }
     } else {
       _ticketQuantities['default'] = 1;
@@ -332,11 +405,12 @@ class _EventBookingBottomSheetState extends State<_EventBookingBottomSheet> {
     double total = 0;
     if (widget.event.ticketTypes.isNotEmpty) {
       for (var t in widget.event.ticketTypes) {
-        final q = _ticketQuantities[t.code] ?? 0;
+        final q = _ticketQuantities[t.name] ?? 0;
         total += (q * t.price);
       }
     } else {
-      total += (widget.event.priceNumeric * (_ticketQuantities['default'] ?? 1));
+      final unit = widget.event.priceNum;
+      total += (unit * (_ticketQuantities['default'] ?? 1));
     }
 
     for (var extra in widget.event.extraPrices) {
@@ -390,7 +464,7 @@ class _EventBookingBottomSheetState extends State<_EventBookingBottomSheet> {
                     children: [
                       Text(widget.event.title, style: AppTypography.titleMedium, maxLines: 1, overflow: TextOverflow.ellipsis),
                       const SizedBox(height: 4),
-                      Text(widget.event.price, style: AppTypography.price.copyWith(fontSize: 14)),
+                      Text(widget.event.location, style: AppTypography.bodySmall),
                     ],
                   ),
                 ),
@@ -399,7 +473,7 @@ class _EventBookingBottomSheetState extends State<_EventBookingBottomSheet> {
             const Divider(color: AppColors.border, height: 28),
 
             // Date Selector
-            Text(isAr ? 'تاريخ الحضور' : 'Attendance Date', style: AppTypography.titleSmall),
+            Text(isAr ? 'تاريخ الحضور' : 'Event Date', style: AppTypography.titleSmall),
             const SizedBox(height: 10),
             GestureDetector(
               onTap: () async {
@@ -452,13 +526,16 @@ class _EventBookingBottomSheetState extends State<_EventBookingBottomSheet> {
             ),
             const SizedBox(height: 20),
 
-            // Ticket Types Selection
-            Text(isAr ? 'تحديد فئات وعدد التذاكر' : 'Select Ticket Categories & Quantities', style: AppTypography.titleSmall),
+            // Ticket Options
+            Text(isAr ? 'خيارات وفئات التذاكر' : 'Ticket Categories', style: AppTypography.titleSmall),
             const SizedBox(height: 10),
 
             if (widget.event.ticketTypes.isNotEmpty)
               ...widget.event.ticketTypes.map((t) {
-                final q = _ticketQuantities[t.code] ?? 0;
+                final q = _ticketQuantities[t.name] ?? 0;
+                final name = t.getDisplayName(isAr);
+                final desc = t.getDisplayDesc(isAr);
+
                 return Container(
                   margin: const EdgeInsets.only(bottom: 8),
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -470,23 +547,27 @@ class _EventBookingBottomSheetState extends State<_EventBookingBottomSheet> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(t.getDisplayName(isAr), style: AppTypography.titleSmall.copyWith(fontSize: 14)),
-                          Text('${t.price.toStringAsFixed(0)} ${isAr ? 'ر.س' : 'SAR'}', style: AppTypography.price.copyWith(fontSize: 13)),
-                        ],
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(name, style: AppTypography.titleSmall.copyWith(fontSize: 14)),
+                            if (desc != null && desc.isNotEmpty)
+                              Text(desc, style: AppTypography.bodySmall.copyWith(fontSize: 11, color: AppColors.textMuted)),
+                            Text('${t.price.toStringAsFixed(0)} ${isAr ? 'ر.س' : 'SAR'}', style: AppTypography.price.copyWith(fontSize: 13)),
+                          ],
+                        ),
                       ),
                       Row(
                         children: [
                           IconButton(
                             icon: const Icon(Icons.remove_circle_outline, color: AppColors.primaryGold, size: 22),
-                            onPressed: q > 0 ? () => setState(() => _ticketQuantities[t.code] = q - 1) : null,
+                            onPressed: q > 0 ? () => setState(() => _ticketQuantities[t.name] = q - 1) : null,
                           ),
                           Text('$q', style: AppTypography.titleMedium),
                           IconButton(
                             icon: const Icon(Icons.add_circle_outline, color: AppColors.primaryGold, size: 22),
-                            onPressed: q < t.maxNumber ? () => setState(() => _ticketQuantities[t.code] = q + 1) : null,
+                            onPressed: q < t.max ? () => setState(() => _ticketQuantities[t.name] = q + 1) : null,
                           ),
                         ],
                       ),
@@ -505,7 +586,7 @@ class _EventBookingBottomSheetState extends State<_EventBookingBottomSheet> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(isAr ? 'عدد التذاكر' : 'Number of Tickets', style: AppTypography.titleSmall),
+                    Text(isAr ? 'عدد التذاكر' : 'Tickets', style: AppTypography.titleSmall),
                     Row(
                       children: [
                         IconButton(
@@ -576,8 +657,45 @@ class _EventBookingBottomSheetState extends State<_EventBookingBottomSheet> {
                   text: isAr ? 'متابعة للدفع والتأكيد' : 'Proceed to Checkout',
                   width: 190,
                   onPressed: () {
+                    final personItems = <BookingPersonItem>[];
+                    if (widget.event.ticketTypes.isNotEmpty) {
+                      for (var t in widget.event.ticketTypes) {
+                        final q = _ticketQuantities[t.name] ?? 0;
+                        if (q > 0) {
+                          personItems.add(BookingPersonItem(
+                            name: t.getDisplayName(isAr),
+                            price: t.price,
+                            quantity: q,
+                          ));
+                        }
+                      }
+                    } else {
+                      personItems.add(BookingPersonItem(
+                        name: isAr ? 'تذكرة فعالية' : 'Event Ticket',
+                        price: widget.event.priceNum,
+                        quantity: _ticketQuantities['default'] ?? 1,
+                      ));
+                    }
+
+                    final extraItems = widget.event.extraPrices
+                        .where((e) => _selectedExtras.contains(e.name))
+                        .map((e) => BookingExtraItem(name: e.getDisplayName(isAr), price: e.price))
+                        .toList();
+
+                    final draft = BookingDraft(
+                      title: widget.event.title,
+                      imageUrl: widget.event.imageUrl,
+                      location: widget.event.location,
+                      date: _selectedDate,
+                      serviceType: 'event',
+                      serviceId: int.tryParse(widget.event.id.toString()) ?? 1,
+                      personItems: personItems,
+                      extraItems: extraItems,
+                      totalAmount: total,
+                    );
+
                     Navigator.pop(context);
-                    context.push('/checkout/${widget.event.id}');
+                    context.push('/checkout/${widget.event.id}', extra: draft);
                   },
                 ),
               ],

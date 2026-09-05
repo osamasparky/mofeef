@@ -1,25 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_typography.dart';
+import '../../core/localization/locale_provider.dart';
 import '../../core/widgets/custom_button.dart';
 import '../auth/auth_provider.dart';
 import '../experiences/experience_details_screen.dart';
+import 'data/booking_draft.dart';
 import 'data/booking_repository.dart';
 
 class CheckoutScreen extends ConsumerStatefulWidget {
   final String experienceId;
+  final BookingDraft? draft;
 
-  const CheckoutScreen({super.key, required this.experienceId});
+  const CheckoutScreen({
+    super.key,
+    required this.experienceId,
+    this.draft,
+  });
 
   @override
   ConsumerState<CheckoutScreen> createState() => _CheckoutScreenState();
 }
 
 class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
-  int _ticketCount = 2;
-  DateTime _selectedDate = DateTime.now().add(const Duration(days: 1));
+  late int _ticketCount;
+  late DateTime _selectedDate;
   String _selectedPaymentMethod = 'apple_pay';
   bool _isSubmitting = false;
 
@@ -34,6 +42,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   @override
   void initState() {
     super.initState();
+    _selectedDate = widget.draft?.date ?? DateTime.now().add(const Duration(days: 1));
+    _ticketCount = widget.draft?.totalGuests ?? 2;
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final auth = ref.read(authProvider);
       if (auth.userName != null) _nameController.text = auth.userName!;
@@ -51,7 +62,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     super.dispose();
   }
 
-  void _applyCoupon() {
+  void _applyCoupon(bool isAr) {
     final code = _couponController.text.trim().toUpperCase();
     if (code == 'MODEEFE' || code == 'KSA2030' || code == 'GOLD') {
       setState(() {
@@ -59,28 +70,39 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         _appliedCoupon = code;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('تم تطبيق خصم بقيمة ٥٠ ر.س بنجاح! 🎉'), backgroundColor: AppColors.success),
+        SnackBar(
+          content: Text(isAr ? 'تم تطبيق خصم بقيمة ٥٠ ر.س بنجاح! 🎉' : 'Coupon applied successfully (-50 SAR)! 🎉'),
+          backgroundColor: AppColors.success,
+        ),
       );
     } else if (code.isNotEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('رمز الكوبون غير صالح'), backgroundColor: AppColors.error),
+        SnackBar(
+          content: Text(isAr ? 'رمز الكوبون غير صالح' : 'Invalid coupon code'),
+          backgroundColor: AppColors.error,
+        ),
       );
     }
   }
 
-  void _handleConfirmBooking(double unitPrice, String title) async {
+  void _handleConfirmBooking({
+    required int serviceId,
+    required String serviceType,
+    required String title,
+    required int guests,
+    required double finalTotal,
+    required bool isAr,
+  }) async {
     setState(() => _isSubmitting = true);
     try {
-      final serviceId = int.tryParse(widget.experienceId) ?? 1;
       final dateStr = '${_selectedDate.year}-${_selectedDate.month.toString().padLeft(2, '0')}-${_selectedDate.day.toString().padLeft(2, '0')}';
-
       final bookingCode = 'MDF-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}';
 
       await ref.read(bookingRepositoryProvider).addToCart(
         serviceId: serviceId,
-        serviceType: 'tour',
+        serviceType: serviceType,
         startDate: dateStr,
-        guests: _ticketCount,
+        guests: guests,
       );
 
       // Invalidate booking history so the new booking immediately appears
@@ -94,11 +116,14 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           builder: (ctx) => AlertDialog(
             backgroundColor: AppColors.surface,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-            title: const Column(
+            title: Column(
               children: [
-                Icon(Icons.check_circle, color: AppColors.success, size: 64),
-                SizedBox(height: 12),
-                Text('تم تأكيد الحجز بنجاح!', style: TextStyle(fontWeight: FontWeight.bold)),
+                const Icon(Icons.check_circle, color: AppColors.success, size: 64),
+                const SizedBox(height: 12),
+                Text(
+                  isAr ? 'تم تأكيد الحجز بنجاح!' : 'Booking Confirmed!',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
               ],
             ),
             content: Column(
@@ -118,7 +143,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text('رقم الحجز:', style: AppTypography.bodySmall),
+                          Text(isAr ? 'رقم الحجز:' : 'Booking #:', style: AppTypography.bodySmall),
                           Text(bookingCode, style: AppTypography.titleSmall.copyWith(color: AppColors.primaryGold)),
                         ],
                       ),
@@ -126,7 +151,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text('الموعد:', style: AppTypography.bodySmall),
+                          Text(isAr ? 'الموعد:' : 'Date:', style: AppTypography.bodySmall),
                           Text(dateStr, style: AppTypography.bodySmall),
                         ],
                       ),
@@ -134,8 +159,16 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text('التذاكر:', style: AppTypography.bodySmall),
-                          Text('$_ticketCount تذاكر', style: AppTypography.bodySmall),
+                          Text(isAr ? 'التذاكر / الضيوف:' : 'Guests:', style: AppTypography.bodySmall),
+                          Text('$guests ${isAr ? 'تذاكر' : 'tickets'}', style: AppTypography.bodySmall),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(isAr ? 'المبلغ المدفوع:' : 'Paid Amount:', style: AppTypography.bodySmall),
+                          Text('${finalTotal.toStringAsFixed(0)} ${isAr ? 'ر.س' : 'SAR'}', style: AppTypography.titleSmall.copyWith(color: AppColors.primaryGold)),
                         ],
                       ),
                     ],
@@ -152,7 +185,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             actions: [
               Center(
                 child: CustomButton(
-                  text: 'عرض التذكرة في حجوزاتي',
+                  text: isAr ? 'عرض التذكرة في حجوزاتي' : 'View in My Bookings',
                   width: 220,
                   onPressed: () {
                     Navigator.pop(ctx);
@@ -167,7 +200,10 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('حدث خطأ أثناء الحجز: $e'), backgroundColor: AppColors.error),
+          SnackBar(
+            content: Text(isAr ? 'حدث خطأ أثناء الحجز: $e' : 'Booking error: $e'),
+            backgroundColor: AppColors.error,
+          ),
         );
       }
     } finally {
@@ -177,11 +213,260 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final currentLocale = ref.watch(localeProvider);
+    final isAr = currentLocale.languageCode == 'ar';
+
+    // If draft is passed from booking sheet, render with 100% exact parameters!
+    if (widget.draft != null) {
+      final draft = widget.draft!;
+      final subtotal = draft.subtotal;
+      final total = (subtotal - _discountAmount).clamp(0.0, double.infinity);
+
+      return Scaffold(
+        appBar: AppBar(
+          title: Text(isAr ? 'إتمام الحجز والدفع' : 'Checkout & Payment', style: AppTypography.headingSmall),
+        ),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 1. Item Summary Card
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppColors.card,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: Row(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: CachedNetworkImage(
+                        imageUrl: draft.imageUrl ?? 'https://images.unsplash.com/photo-1590073844006-33379778ae09?w=800&q=80',
+                        width: 70,
+                        height: 70,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(draft.title, style: AppTypography.titleMedium),
+                          const SizedBox(height: 4),
+                          Text(draft.location ?? (isAr ? 'المملكة العربية السعودية' : 'Saudi Arabia'), style: AppTypography.bodySmall),
+                          const SizedBox(height: 4),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: AppColors.goldGlow,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              draft.serviceType == 'tour'
+                                  ? (isAr ? 'مسار سياحي' : 'Tourist Trail')
+                                  : draft.serviceType == 'event'
+                                      ? (isAr ? 'فعالية' : 'Event')
+                                      : (isAr ? 'معلم ومتحف' : 'Museum'),
+                              style: const TextStyle(color: AppColors.primaryGold, fontSize: 11, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // 2. Booking Date
+              Text(isAr ? 'موعد الزيارة المحدد' : 'Selected Visit Date', style: AppTypography.titleLarge),
+              const SizedBox(height: 10),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.calendar_month, color: AppColors.primaryGold, size: 22),
+                    const SizedBox(width: 12),
+                    Text(
+                      '${_selectedDate.year}-${_selectedDate.month.toString().padLeft(2, '0')}-${_selectedDate.day.toString().padLeft(2, '0')}',
+                      style: AppTypography.titleSmall,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // 3. Exact Ticket Breakdown
+              Text(isAr ? 'تفاصيل التذاكر والخدمات' : 'Tickets & Services Breakdown', style: AppTypography.titleLarge),
+              const SizedBox(height: 10),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: Column(
+                  children: [
+                    if (draft.personItems.isNotEmpty)
+                      ...draft.personItems.where((p) => p.quantity > 0).map(
+                            (p) => _buildPriceRow(
+                              '${p.quantity} × ${p.name}',
+                              '${p.total.toStringAsFixed(0)} ${isAr ? 'ر.س' : 'SAR'}',
+                            ),
+                          )
+                    else
+                      _buildPriceRow(
+                        '${draft.totalGuests} × ${isAr ? 'تذكرة دخول' : 'General Ticket'}',
+                        '${draft.subtotal.toStringAsFixed(0)} ${isAr ? 'ر.س' : 'SAR'}',
+                      ),
+                    if (draft.extraItems.isNotEmpty) ...[
+                      const Divider(color: AppColors.border, height: 16),
+                      ...draft.extraItems.map(
+                        (e) => _buildPriceRow(
+                          '+ ${e.name}',
+                          '${e.price.toStringAsFixed(0)} ${isAr ? 'ر.س' : 'SAR'}',
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // 4. Guest Details
+              Text(isAr ? 'بيانات المسافر الرئيسي' : 'Lead Traveler Information', style: AppTypography.titleLarge),
+              const SizedBox(height: 10),
+              TextField(
+                controller: _nameController,
+                decoration: InputDecoration(
+                  labelText: isAr ? 'الاسم الكامل' : 'Full Name',
+                  prefixIcon: const Icon(Icons.person_outline, color: AppColors.primaryGold),
+                  filled: true,
+                  fillColor: AppColors.surface,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                ),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: _emailController,
+                keyboardType: TextInputType.emailAddress,
+                decoration: InputDecoration(
+                  labelText: isAr ? 'البريد الإلكتروني لتأكيد الحجز' : 'Email Address',
+                  prefixIcon: const Icon(Icons.email_outlined, color: AppColors.primaryGold),
+                  filled: true,
+                  fillColor: AppColors.surface,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // 5. Coupon Code
+              Text(isAr ? 'كوبون الخصم' : 'Promo / Discount Code', style: AppTypography.titleLarge),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _couponController,
+                      decoration: InputDecoration(
+                        hintText: isAr ? 'أدخل الرمز (مثال: MODEEFE)' : 'Enter promo code (e.g. MODEEFE)',
+                        filled: true,
+                        fillColor: AppColors.surface,
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primaryGold,
+                      foregroundColor: AppColors.textDark,
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    ),
+                    onPressed: () => _applyCoupon(isAr),
+                    child: Text(isAr ? 'تطبيق' : 'Apply', style: const TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+
+              // 6. Payment Methods
+              Text(isAr ? 'طريقة الدفع' : 'Payment Method', style: AppTypography.titleLarge),
+              const SizedBox(height: 10),
+              _buildPaymentOption('apple_pay', 'Apple Pay / Mada (مدى)', Icons.payment),
+              _buildPaymentOption('wallet', isAr ? 'محفظة مُضيف (رصيد: ١,٢٥٠ ر.س)' : 'Modeefe Wallet (1,250 SAR)', Icons.account_balance_wallet_outlined),
+              _buildPaymentOption('card', 'بطاقة فيزا / ماستركارد (Visa / MasterCard)', Icons.credit_card),
+              _buildPaymentOption('stc_pay', 'STC Pay', Icons.phone_android),
+
+              const SizedBox(height: 20),
+
+              // 7. Total Calculation Card
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: Column(
+                  children: [
+                    _buildPriceRow(isAr ? 'المجموع الفرعي' : 'Subtotal', '${subtotal.toStringAsFixed(0)} ${isAr ? 'ر.س' : 'SAR'}'),
+                    if (_discountAmount > 0)
+                      _buildPriceRow(
+                        '${isAr ? 'خصم الكوبون' : 'Discount'} ($_appliedCoupon)',
+                        '-${_discountAmount.toStringAsFixed(0)} ${isAr ? 'ر.س' : 'SAR'}',
+                      ),
+                    _buildPriceRow(isAr ? 'ضريبة القيمة المضافة (١٥٪)' : 'VAT (15%)', isAr ? 'مشمولة' : 'Included'),
+                    const Divider(color: AppColors.border, height: 20),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(isAr ? 'المجموع النهائي' : 'Total Amount', style: AppTypography.titleMedium),
+                        Text('${total.toStringAsFixed(0)} ${isAr ? 'ر.س' : 'SAR'}', style: AppTypography.price),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // 8. Confirm Button
+              CustomButton(
+                text: '${isAr ? 'تأكيد ودفع' : 'Confirm & Pay'} ${total.toStringAsFixed(0)} ${isAr ? 'ر.س' : 'SAR'}',
+                isLoading: _isSubmitting,
+                onPressed: () => _handleConfirmBooking(
+                  serviceId: draft.serviceId,
+                  serviceType: draft.serviceType,
+                  title: draft.title,
+                  guests: draft.totalGuests,
+                  finalTotal: total,
+                  isAr: isAr,
+                ),
+              ),
+              const SizedBox(height: 24),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // Fallback: Fetch from tourDetailProvider if no draft was passed
     final tourAsync = ref.watch(tourDetailProvider(widget.experienceId));
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('إتمام الحجز والدفع', style: AppTypography.headingSmall),
+        title: Text(isAr ? 'إتمام الحجز والدفع' : 'Checkout & Payment', style: AppTypography.headingSmall),
       ),
       body: tourAsync.when(
         data: (tour) {
@@ -206,8 +491,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                     children: [
                       ClipRRect(
                         borderRadius: BorderRadius.circular(12),
-                        child: Image.network(
-                          tour.imageUrl ?? 'https://images.unsplash.com/photo-1590073844006-33379778ae09?w=800&q=80',
+                        child: CachedNetworkImage(
+                          imageUrl: tour.imageUrl ?? 'https://images.unsplash.com/photo-1590073844006-33379778ae09?w=800&q=80',
                           width: 70,
                           height: 70,
                           fit: BoxFit.cover,
@@ -220,9 +505,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                           children: [
                             Text(tour.title, style: AppTypography.titleMedium),
                             const SizedBox(height: 4),
-                            Text(tour.locationName ?? 'المملكة', style: AppTypography.bodySmall),
+                            Text(tour.locationName ?? (isAr ? 'المملكة' : 'KSA'), style: AppTypography.bodySmall),
                             const SizedBox(height: 4),
-                            Text('${tour.formattedPrice} / للتذكرة', style: AppTypography.price.copyWith(fontSize: 14)),
+                            Text('${tour.formattedPrice} / ${isAr ? 'للتذكرة' : 'per ticket'}', style: AppTypography.price.copyWith(fontSize: 14)),
                           ],
                         ),
                       ),
@@ -232,7 +517,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                 const SizedBox(height: 24),
 
                 // Date Picker Section
-                Text('موعد الزيارة', style: AppTypography.titleLarge),
+                Text(isAr ? 'موعد الزيارة' : 'Visit Date', style: AppTypography.titleLarge),
                 const SizedBox(height: 12),
                 GestureDetector(
                   onTap: () async {
@@ -278,7 +563,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                             ),
                           ],
                         ),
-                        const Text('تغيير الموعد', style: TextStyle(color: AppColors.primaryGold, fontSize: 13, fontWeight: FontWeight.bold)),
+                        Text(isAr ? 'تغيير الموعد' : 'Change Date', style: const TextStyle(color: AppColors.primaryGold, fontSize: 13, fontWeight: FontWeight.bold)),
                       ],
                     ),
                   ),
@@ -286,7 +571,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                 const SizedBox(height: 24),
 
                 // Tickets Counter
-                Text('عدد التذاكر', style: AppTypography.titleLarge),
+                Text(isAr ? 'عدد التذاكر' : 'Number of Tickets', style: AppTypography.titleLarge),
                 const SizedBox(height: 12),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -298,7 +583,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('التذاكر (بالغين)', style: AppTypography.titleSmall),
+                      Text(isAr ? 'التذاكر (بالغين)' : 'Tickets (Adults)', style: AppTypography.titleSmall),
                       Row(
                         children: [
                           IconButton(
@@ -318,12 +603,12 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                 const SizedBox(height: 24),
 
                 // Guest Details
-                Text('بيانات المسافر الرئيسي', style: AppTypography.titleLarge),
+                Text(isAr ? 'بيانات المسافر الرئيسي' : 'Lead Traveler Information', style: AppTypography.titleLarge),
                 const SizedBox(height: 12),
                 TextField(
                   controller: _nameController,
                   decoration: InputDecoration(
-                    labelText: 'الاسم الكامل',
+                    labelText: isAr ? 'الاسم الكامل' : 'Full Name',
                     prefixIcon: const Icon(Icons.person_outline, color: AppColors.primaryGold),
                     filled: true,
                     fillColor: AppColors.surface,
@@ -335,7 +620,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
                   decoration: InputDecoration(
-                    labelText: 'البريد الإلكتروني لتأكيد الحجز',
+                    labelText: isAr ? 'البريد الإلكتروني لتأكيد الحجز' : 'Email Address',
                     prefixIcon: const Icon(Icons.email_outlined, color: AppColors.primaryGold),
                     filled: true,
                     fillColor: AppColors.surface,
@@ -345,7 +630,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                 const SizedBox(height: 24),
 
                 // Coupon Section
-                Text('كوبون الخصم', style: AppTypography.titleLarge),
+                Text(isAr ? 'كوبون الخصم' : 'Discount Coupon', style: AppTypography.titleLarge),
                 const SizedBox(height: 12),
                 Row(
                   children: [
@@ -353,7 +638,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                       child: TextField(
                         controller: _couponController,
                         decoration: InputDecoration(
-                          hintText: 'أدخل الرمز (مثال: MODEEFE)',
+                          hintText: isAr ? 'أدخل الرمز (مثال: MODEEFE)' : 'Enter promo code (e.g. MODEEFE)',
                           filled: true,
                           fillColor: AppColors.surface,
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
@@ -368,18 +653,18 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                       ),
-                      onPressed: _applyCoupon,
-                      child: const Text('تطبيق', style: TextStyle(fontWeight: FontWeight.bold)),
+                      onPressed: () => _applyCoupon(isAr),
+                      child: Text(isAr ? 'تطبيق' : 'Apply', style: const TextStyle(fontWeight: FontWeight.bold)),
                     ),
                   ],
                 ),
                 const SizedBox(height: 24),
 
                 // Payment Methods
-                Text('طريقة الدفع', style: AppTypography.titleLarge),
+                Text(isAr ? 'طريقة الدفع' : 'Payment Method', style: AppTypography.titleLarge),
                 const SizedBox(height: 12),
-                _buildPaymentOption('apple_pay', 'Apple Pay / Mada', Icons.payment),
-                _buildPaymentOption('wallet', 'رصيد المحفظة (١,٢٤٠ ر.س)', Icons.account_balance_wallet_outlined),
+                _buildPaymentOption('apple_pay', 'Apple Pay / Mada (مدى)', Icons.payment),
+                _buildPaymentOption('wallet', isAr ? 'رصيد المحفظة (١,٢٥٠ ر.س)' : 'Wallet Balance (1,250 SAR)', Icons.account_balance_wallet_outlined),
                 _buildPaymentOption('card', 'بطاقة ائتمانية (Visa / MasterCard)', Icons.credit_card),
 
                 const SizedBox(height: 24),
@@ -394,16 +679,16 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                   ),
                   child: Column(
                     children: [
-                      _buildPriceRow('التذاكر ($_ticketCount)', '${subtotal.toStringAsFixed(0)} ر.س'),
+                      _buildPriceRow('${isAr ? 'التذاكر' : 'Tickets'} ($_ticketCount)', '${subtotal.toStringAsFixed(0)} ${isAr ? 'ر.س' : 'SAR'}'),
                       if (_discountAmount > 0)
-                        _buildPriceRow('خصم الكوبون ($_appliedCoupon)', '-${_discountAmount.toStringAsFixed(0)} ر.س'),
-                      _buildPriceRow('ضريبة القيمة المضافة (١٥٪)', 'مشمولة'),
+                        _buildPriceRow('${isAr ? 'خصم الكوبون' : 'Discount'} ($_appliedCoupon)', '-${_discountAmount.toStringAsFixed(0)} ${isAr ? 'ر.س' : 'SAR'}'),
+                      _buildPriceRow(isAr ? 'ضريبة القيمة المضافة (١٥٪)' : 'VAT (15%)', isAr ? 'مشمولة' : 'Included'),
                       const Divider(color: AppColors.border, height: 24),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text('المجموع الكلي', style: AppTypography.titleMedium),
-                          Text('${total.toStringAsFixed(0)} ر.س', style: AppTypography.price),
+                          Text(isAr ? 'المجموع الكلي' : 'Total Amount', style: AppTypography.titleMedium),
+                          Text('${total.toStringAsFixed(0)} ${isAr ? 'ر.س' : 'SAR'}', style: AppTypography.price),
                         ],
                       ),
                     ],
@@ -413,17 +698,25 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
 
                 // Confirm Button
                 CustomButton(
-                  text: 'تأكيد ودفع ${total.toStringAsFixed(0)} ر.س',
+                  text: '${isAr ? 'تأكيد ودفع' : 'Confirm & Pay'} ${total.toStringAsFixed(0)} ${isAr ? 'ر.س' : 'SAR'}',
                   isLoading: _isSubmitting,
-                  onPressed: () => _handleConfirmBooking(unitPrice, tour.title),
+                  onPressed: () => _handleConfirmBooking(
+                    serviceId: int.tryParse(widget.experienceId) ?? 1,
+                    serviceType: 'tour',
+                    title: tour.title,
+                    guests: _ticketCount,
+                    finalTotal: total,
+                    isAr: isAr,
+                  ),
                 ),
+                const SizedBox(height: 24),
               ],
             ),
           );
         },
         loading: () => const Center(child: CircularProgressIndicator(color: AppColors.primaryGold)),
         error: (_, __) => Center(
-          child: Text('تعذر تحميل بيانات التجربة للحجز', style: AppTypography.titleMedium),
+          child: Text(isAr ? 'تعذر تحميل بيانات التجربة للحجز' : 'Failed to load booking details', style: AppTypography.titleMedium),
         ),
       ),
     );

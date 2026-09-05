@@ -241,12 +241,6 @@ class _TouristTrailsScreenState extends ConsumerState<TouristTrailsScreen> {
       appBar: AppBar(
         title: Text(isAr ? 'المسارات السياحية' : 'Tourist Trails & Routes'),
         centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.tune, color: AppColors.primaryGold),
-            onPressed: () => _openFilterModal(context, isAr),
-          ),
-        ],
       ),
       body: Column(
         children: [

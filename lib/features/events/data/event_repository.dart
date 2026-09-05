@@ -21,9 +21,17 @@ class EventTicketType {
     this.maxNumber = 10,
   });
 
+  int get max => maxNumber;
+
   String getDisplayName(bool isAr) {
     if (isAr && nameAr != null && nameAr!.isNotEmpty) return nameAr!;
     return name;
+  }
+
+  String? getDisplayDesc(bool isAr) {
+    if (code.contains('vip')) return isAr ? 'دخول مميز مع خدمات خاصة ومقاعد كبار الشخصيات' : 'VIP entry with premium seats & hospitality';
+    if (code.contains('group')) return isAr ? 'باقة مخصصة للعائلات والمجموعات' : 'Special package for families and groups';
+    return null;
   }
 
   factory EventTicketType.fromJson(Map<String, dynamic> json) {
@@ -41,6 +49,9 @@ class EventItemModel {
   final String id;
   final String title;
   final String location;
+  final String? address;
+  final double? mapLat;
+  final double? mapLng;
   final String date;
   final String price;
   final double priceNumeric;
@@ -58,6 +69,9 @@ class EventItemModel {
     required this.id,
     required this.title,
     required this.location,
+    this.address,
+    this.mapLat,
+    this.mapLng,
     required this.date,
     required this.price,
     required this.priceNumeric,
@@ -71,6 +85,8 @@ class EventItemModel {
     this.ticketTypes = const [],
     this.extraPrices = const [],
   });
+
+  double get priceNum => salePrice ?? priceNumeric;
 
   factory EventItemModel.fromJson(Map<String, dynamic> map) {
     final rawPrice = double.tryParse(map['price']?.toString() ?? '150') ?? 150.0;
@@ -108,22 +124,22 @@ class EventItemModel {
           .toList();
     }
 
-    final rawContent = map['content']?.toString() ?? map['desc']?.toString() ?? '';
-    final cleanDesc = HtmlUtils.stripHtml(rawContent);
-
     return EventItemModel(
       id: map['id']?.toString() ?? '0',
-      title: map['title']?.toString() ?? map['name']?.toString() ?? 'فعالية سعودية',
-      location: map['location'] is Map ? map['location']['name']?.toString() ?? map['location']['title']?.toString() ?? 'المملكة' : (map['location']?.toString() ?? 'المملكة'),
-      date: map['start_date']?.toString() ?? map['date']?.toString() ?? 'موسم الفعاليات',
+      title: map['title']?.toString() ?? 'فعالية مميزة',
+      location: map['location'] is Map ? map['location']['name']?.toString() ?? 'الرياض' : (map['location']?.toString() ?? 'الرياض'),
+      address: map['address']?.toString(),
+      mapLat: double.tryParse(map['map_lat']?.toString() ?? map['map_latitude']?.toString() ?? '24.7136'),
+      mapLng: double.tryParse(map['map_lng']?.toString() ?? map['map_longitude']?.toString() ?? '46.6753'),
+      date: map['start_date']?.toString() ?? 'اليوم — طوال الأسبوع',
       price: '${(sale ?? rawPrice).toStringAsFixed(0)} ر.س',
-      priceNumeric: sale ?? rawPrice,
+      priceNumeric: rawPrice,
       salePrice: sale,
       imageUrl: img,
-      description: cleanDesc.isNotEmpty ? cleanDesc : 'فعالية سياحية وثقافية غنية بالعروض الحية والأنشطة الترفيهية.',
+      description: HtmlUtils.stripHtml(map['content']?.toString() ?? map['description']?.toString() ?? 'فعالية وموسم ثقافي رائع.'),
       duration: map['duration']?.toString() ?? '٤ ساعات',
-      startTime: map['start_time']?.toString(),
-      endTime: map['end_time']?.toString(),
+      startTime: map['start_time']?.toString() ?? '٥:٠٠ م',
+      endTime: map['end_time']?.toString() ?? '١١:٠٠ م',
       gallery: gal,
       ticketTypes: tickets,
       extraPrices: extras,

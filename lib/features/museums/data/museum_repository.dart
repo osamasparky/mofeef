@@ -15,6 +15,9 @@ class MuseumModel {
   final double rating;
   final int reviewsCount;
   final String? locationName;
+  final String? address;
+  final double? mapLat;
+  final double? mapLng;
 
   const MuseumModel({
     required this.id,
@@ -27,6 +30,9 @@ class MuseumModel {
     required this.rating,
     required this.reviewsCount,
     this.locationName,
+    this.address,
+    this.mapLat,
+    this.mapLng,
   });
 
   String get formattedPrice => price > 0 ? '${price.toStringAsFixed(0)} ر.س' : 'دخول مجاني';
@@ -58,6 +64,9 @@ class MuseumModel {
       rating: parsedRating,
       reviewsCount: parsedReviews,
       locationName: json['location'] is Map ? json['location']['name']?.toString() : (json['location']?.toString() ?? 'الرياض'),
+      address: json['address']?.toString(),
+      mapLat: double.tryParse(json['map_lat']?.toString() ?? json['map_latitude']?.toString() ?? '24.7136'),
+      mapLng: double.tryParse(json['map_lng']?.toString() ?? json['map_longitude']?.toString() ?? '46.6753'),
     );
   }
 }

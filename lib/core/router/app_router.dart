@@ -7,6 +7,7 @@ import '../../features/home/home_screen.dart';
 import '../../features/discovery/discovery_screen.dart';
 import '../../features/booking/my_reservations_screen.dart';
 import '../../features/booking/checkout_screen.dart';
+import '../../features/booking/data/booking_draft.dart';
 import '../../features/profile/favorites_screen.dart';
 import '../../features/profile/profile_screen.dart';
 import '../../features/profile/notifications_screen.dart';
@@ -84,7 +85,8 @@ final routerProvider = Provider<GoRouter>((ref) {
         parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) {
           final id = state.pathParameters['id'] ?? '17';
-          return CheckoutScreen(experienceId: id);
+          final draft = state.extra is BookingDraft ? state.extra as BookingDraft : null;
+          return CheckoutScreen(experienceId: id, draft: draft);
         },
       ),
       GoRoute(

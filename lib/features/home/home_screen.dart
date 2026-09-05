@@ -12,6 +12,7 @@ import '../discovery/data/repositories/discovery_repository.dart';
 import '../discovery/data/models/discovery_models.dart';
 import '../events/data/event_repository.dart';
 import '../museums/data/museum_repository.dart';
+import '../cars/data/car_repository.dart';
 import '../cart/data/cart_repository.dart';
 import '../auth/auth_provider.dart';
 
@@ -25,6 +26,7 @@ class HomeScreen extends ConsumerWidget {
     final locationsAsync = ref.watch(locationsProvider);
     final eventsAsync = ref.watch(eventsListProvider);
     final museumsAsync = ref.watch(museumsListProvider);
+    final carsAsync = ref.watch(carsListProvider);
     final cartState = ref.watch(cartNotifierProvider);
     final currentLocale = ref.watch(localeProvider);
     final isAr = currentLocale.languageCode == 'ar';
@@ -242,7 +244,7 @@ class HomeScreen extends ConsumerWidget {
                   ),
                 ),
 
-                // 3. Complete Categories Grid/Row matching Figma (Includes "المسارات السياحية")
+                // 3. Complete Categories Grid/Row (7 Core Services from API)
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Column(
@@ -252,15 +254,14 @@ class HomeScreen extends ConsumerWidget {
                         children: [
                           _buildCategoryCard(context, isAr ? 'الوجهات' : 'Destinations', Icons.map_outlined, () => context.push('/locations')),
                           _buildCategoryCard(context, isAr ? 'المسارات' : 'Trails', Icons.alt_route, () => context.push('/trails')),
-                          _buildCategoryCard(context, isAr ? 'التجارب' : 'Experiences', Icons.explore_outlined, () => context.go('/discover')),
                           _buildCategoryCard(context, isAr ? 'المتاحف' : 'Museums', Icons.account_balance_outlined, () => context.push('/museums')),
+                          _buildCategoryCard(context, isAr ? 'الفعاليات' : 'Events', Icons.festival_outlined, () => context.push('/events')),
                         ],
                       ),
                       const SizedBox(height: 12),
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
-                          _buildCategoryCard(context, isAr ? 'الفعاليات' : 'Events', Icons.festival_outlined, () => context.push('/events')),
                           _buildCategoryCard(context, isAr ? 'المرشدون' : 'Guides', Icons.person_pin_outlined, () => context.push('/guides')),
                           _buildCategoryCard(context, isAr ? 'السيارات' : 'Cars', Icons.directions_car_outlined, () => context.push('/cars')),
                           _buildCategoryCard(context, isAr ? 'المتجر' : 'Shop', Icons.storefront_outlined, () => context.push('/store')),
@@ -377,12 +378,12 @@ class HomeScreen extends ConsumerWidget {
 
                 const SizedBox(height: 24),
 
-                // 5. Featured Tourist Trails & Experiences ("المسارات والتجارب السياحية")
+                // 5. Featured Tourist Trails & Experiences ("المسارات السياحية")
                 SectionHeader(
-                  title: isAr ? 'المسارات والتجارب السياحية' : 'Tourist Trails & Experiences',
+                  title: isAr ? 'المسارات السياحية والتاريخية' : 'Tourist & Heritage Trails',
                   subtitle: isAr ? 'مسارات حية ومغامرات استكشافية متكاملة' : 'Curated itineraries and adventures',
                   actionText: isAr ? 'عرض الكل' : 'View all',
-                  onActionTap: () => context.go('/discover'),
+                  onActionTap: () => context.push('/trails'),
                 ),
 
                 toursAsync.when(
@@ -543,6 +544,84 @@ class HomeScreen extends ConsumerWidget {
                                         Text(museum.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppTypography.titleSmall),
                                         const SizedBox(height: 4),
                                         Text(museum.formattedPrice, style: AppTypography.price.copyWith(fontSize: 13)),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    );
+                  },
+                  loading: () => const SizedBox.shrink(),
+                  error: (_, __) => const SizedBox.shrink(),
+                ),
+
+                const SizedBox(height: 24),
+
+                // 8. Cars & Transport Section ("السيارات والتنقل السياحي")
+                SectionHeader(
+                  title: isAr ? 'السيارات والتنقل السياحي' : 'Car Rentals & Transport',
+                  subtitle: isAr ? 'أسطول فاخر وخدمات نقل سياحية مريحة' : 'Luxury fleet and tourist transport',
+                  actionText: isAr ? 'المزيد' : 'More',
+                  onActionTap: () => context.push('/cars'),
+                ),
+
+                carsAsync.when(
+                  data: (cars) {
+                    if (cars.isEmpty) return const SizedBox.shrink();
+                    return SizedBox(
+                      height: 200,
+                      child: ListView.separated(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        scrollDirection: Axis.horizontal,
+                        itemCount: cars.length,
+                        separatorBuilder: (_, __) => const SizedBox(width: 14),
+                        itemBuilder: (context, index) {
+                          final car = cars[index];
+                          return GestureDetector(
+                            onTap: () => context.push('/car/${car.id}'),
+                            child: Container(
+                              width: 220,
+                              decoration: BoxDecoration(
+                                color: AppColors.card,
+                                borderRadius: BorderRadius.circular(18),
+                                border: Border.all(color: AppColors.border),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  ClipRRect(
+                                    borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
+                                    child: CachedNetworkImage(
+                                      imageUrl: car.imageUrl,
+                                      height: 105,
+                                      width: double.infinity,
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.all(10),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(car.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppTypography.titleSmall),
+                                        const SizedBox(height: 4),
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Row(
+                                              children: [
+                                                const Icon(Icons.people_alt_outlined, size: 14, color: AppColors.textSecondary),
+                                                const SizedBox(width: 4),
+                                                Text('${car.passengerCount}', style: AppTypography.bodySmall),
+                                              ],
+                                            ),
+                                            Text(car.pricePerDay, style: AppTypography.price.copyWith(fontSize: 13)),
+                                          ],
+                                        ),
                                       ],
                                     ),
                                   ),
