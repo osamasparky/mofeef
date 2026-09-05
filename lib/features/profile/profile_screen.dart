@@ -24,90 +24,119 @@ class ProfileScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isAr ? 'الملف الشخصي' : 'Profile', style: AppTypography.headingSmall),
+        title: Text(isAr ? 'الملف الشخصي والإعدادات' : 'Profile & Settings', style: AppTypography.headingSmall),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.edit_outlined, color: AppColors.primaryGold),
+            tooltip: isAr ? 'تعديل الملف الشخصي' : 'Edit Profile',
+            onPressed: () => context.push('/edit-profile'),
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
             // User Profile Card matching Figma
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: AppColors.card,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: AppColors.border),
-              ),
-              child: Column(
-                children: [
-                  Stack(
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(16),
-                        child: Image.asset(
-                          'assets/images/logo.png',
+            GestureDetector(
+              onTap: () => context.push('/edit-profile'),
+              child: Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: AppColors.card,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: Column(
+                  children: [
+                    Stack(
+                      children: [
+                        Container(
                           width: 80,
                           height: 80,
-                          fit: BoxFit.contain,
-                        ),
-                      ),
-                      Positioned(
-                        bottom: 0,
-                        right: 0,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                           decoration: BoxDecoration(
-                            color: AppColors.primaryGold,
-                            borderRadius: BorderRadius.circular(10),
+                            shape: BoxShape.circle,
+                            color: AppColors.goldGlow,
+                            border: Border.all(color: AppColors.primaryGold, width: 2),
                           ),
-                          child: Text(
-                            isAr ? 'ذهبـي' : 'VIP Gold',
-                            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.textDark),
+                          child: Center(
+                            child: Text(
+                              authState.userName != null && authState.userName!.isNotEmpty
+                                  ? authState.userName!.characters.first.toUpperCase()
+                                  : 'م',
+                              style: const TextStyle(
+                                color: AppColors.primaryGold,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 32,
+                              ),
+                            ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 14),
-                  Text(
-                    authState.userName ?? (isAr ? 'مسافر مُضيف' : 'Modeefe Traveler'),
-                    style: AppTypography.titleLarge,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    authState.userEmail ?? 'traveler@modeefe.sa',
-                    style: AppTypography.bodySmall,
-                  ),
-                  const SizedBox(height: 18),
+                        Positioned(
+                          bottom: 0,
+                          right: 0,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: AppColors.primaryGold,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Text(
+                              isAr ? 'ذهبـي' : 'VIP Gold',
+                              style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.textDark),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          authState.userName ?? (isAr ? 'مسافر مُضيف' : 'Modeefe Traveler'),
+                          style: AppTypography.titleLarge,
+                        ),
+                        const SizedBox(width: 6),
+                        const Icon(Icons.edit_outlined, size: 16, color: AppColors.primaryGold),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      authState.userEmail ?? 'traveler@modeefe.sa',
+                      style: AppTypography.bodySmall,
+                    ),
+                    const SizedBox(height: 18),
 
-                  // Real Dynamic Stats Row
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      _buildStatItem('١', isAr ? 'وجهات زرتها' : 'Visited'),
-                      Container(width: 1, height: 35, color: AppColors.border),
-                      _buildStatItem(favCount, isAr ? 'تجارب مفضلة' : 'Wishlist'),
-                      Container(width: 1, height: 35, color: AppColors.border),
-                      _buildStatItem(bookCount, isAr ? 'حجوزات نشطة' : 'Bookings'),
-                    ],
-                  ),
-                ],
+                    // Real Dynamic Stats Row
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        _buildStatItem('١', isAr ? 'وجهات زرتها' : 'Visited'),
+                        Container(width: 1, height: 35, color: AppColors.border),
+                        _buildStatItem(favCount, isAr ? 'تجارب مفضلة' : 'Wishlist'),
+                        Container(width: 1, height: 35, color: AppColors.border),
+                        _buildStatItem(bookCount, isAr ? 'حجوزات نشطة' : 'Bookings'),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: 20),
 
             // Settings & Quick Links
             _buildSettingsTile(
-              icon: Icons.account_balance_wallet_outlined,
-              title: isAr ? 'المحفظة والرصيد' : 'Wallet & Balance',
-              subtitle: isAr ? '١,٢٤٠ ر.س متاح' : '1,240 SAR Available',
-              onTap: () => context.push('/wallet'),
+              icon: Icons.person_outline,
+              title: isAr ? 'تعديل الملف الشخصي' : 'Edit Profile Information',
+              subtitle: isAr ? 'الاسم، البريد، رقم الجوال' : 'Name, Email, Phone',
+              onTap: () => context.push('/edit-profile'),
             ),
             _buildSettingsTile(
-              icon: Icons.storefront_outlined,
-              title: isAr ? 'بازار مُضيف للمقتنيات' : 'Modeefe Heritage Bazaar',
-              subtitle: isAr ? 'تحف ومنتجات تراثية' : 'Handicrafts & Gifts',
-              onTap: () => context.push('/store'),
+              icon: Icons.account_balance_wallet_outlined,
+              title: isAr ? 'المحفظة والرصيد' : 'Wallet & Balance',
+              subtitle: isAr ? '١,٢٥٠ ر.س متاح' : '1,250 SAR Available',
+              onTap: () => context.push('/wallet'),
             ),
             _buildSettingsTile(
               icon: Icons.notifications_outlined,
@@ -121,12 +150,25 @@ class ProfileScreen extends ConsumerWidget {
               onTap: () => _showLanguageDialog(context, ref, isAr),
             ),
             _buildSettingsTile(
+              icon: Icons.gavel_outlined,
+              title: isAr ? 'الشروط والأحكام' : 'Terms & Conditions',
+              subtitle: isAr ? 'سياسات الحجز، الإلغاء، واستخدام المنصة' : 'Booking, cancellation, and usage terms',
+              onTap: () => context.push('/terms-conditions'),
+            ),
+            _buildSettingsTile(
+              icon: Icons.privacy_tip_outlined,
+              title: isAr ? 'سياسة الخصوصية' : 'Privacy Policy',
+              subtitle: isAr ? 'حماية البيانات وأمان المعاملات وفق الأنظمة' : 'Data protection and PDPL compliance',
+              onTap: () => context.push('/privacy-policy'),
+            ),
+            _buildSettingsTile(
               icon: Icons.help_outline,
               title: isAr ? 'مركز المساعدة والدعم' : 'Help & Support Center',
+              subtitle: isAr ? 'خدمة العملاء ٢٤/٧' : '24/7 Customer Support',
               onTap: () {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text(isAr ? 'خدمة العملاء متاحة على مدار الساعة: support@modeefe.com' : 'Support available 24/7: support@modeefe.com'),
+                    content: Text(isAr ? 'خدمة العملاء متاحة على مدار الساعة: support@modeefe.sa' : 'Support available 24/7: support@modeefe.sa'),
                     backgroundColor: AppColors.primaryGold,
                   ),
                 );

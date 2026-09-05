@@ -10,6 +10,9 @@ import '../../features/booking/checkout_screen.dart';
 import '../../features/booking/data/booking_draft.dart';
 import '../../features/profile/favorites_screen.dart';
 import '../../features/profile/profile_screen.dart';
+import '../../features/profile/edit_profile_screen.dart';
+import '../../features/profile/privacy_policy_screen.dart';
+import '../../features/profile/terms_conditions_screen.dart';
 import '../../features/profile/notifications_screen.dart';
 import '../../features/wallet/wallet_screen.dart';
 import '../../features/shop/store_screen.dart';
@@ -116,6 +119,21 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/notifications',
         parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) => const NotificationsScreen(),
+      ),
+      GoRoute(
+        path: '/edit-profile',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const EditProfileScreen(),
+      ),
+      GoRoute(
+        path: '/privacy-policy',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const PrivacyPolicyScreen(),
+      ),
+      GoRoute(
+        path: '/terms-conditions',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const TermsConditionsScreen(),
       ),
       GoRoute(
         path: '/trails',

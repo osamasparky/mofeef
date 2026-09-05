@@ -98,6 +98,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
+  void updateUserState(UserModel user) {
+    state = state.copyWith(user: user);
+  }
+
   Future<void> logout() async {
     await _repository.logout();
     state = const AuthState();
