@@ -53,32 +53,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Logo / Heritage Emblem
+                  // Logo
                   Center(
-                    child: Container(
-                      width: 90,
-                      height: 90,
-                      decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: AppColors.goldGradient,
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.goldGlow,
-                            blurRadius: 20,
-                            offset: Offset(0, 6),
-                          ),
-                        ],
-                      ),
-                      child: const Center(
-                        child: Text(
-                          'مُ',
-                          style: TextStyle(
-                            fontSize: 44,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.textDark,
-                          ),
-                        ),
-                      ),
+                    child: Image.asset(
+                      'assets/images/logo.png',
+                      height: 110,
+                      fit: BoxFit.contain,
                     ),
                   ),
                   const SizedBox(height: 24),
