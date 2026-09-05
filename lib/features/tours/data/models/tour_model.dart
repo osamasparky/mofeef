@@ -85,6 +85,8 @@ class TourModel {
   });
 
   String get formattedPrice => '${(salePrice ?? price).toStringAsFixed(0)} ر.س';
+  double get priceNumeric => salePrice ?? price;
+  String get description => content ?? '';
 
   factory TourModel.fromJson(Map<String, dynamic> json) {
     double parsedRating = 4.8;

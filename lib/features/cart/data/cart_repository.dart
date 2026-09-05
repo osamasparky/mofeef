@@ -11,6 +11,8 @@ class CartStateModel {
   final double total;
   final String? couponCode;
 
+  int get itemCount => items.length;
+
   const CartStateModel({
     this.items = const [],
     this.subtotal = 0.0,
