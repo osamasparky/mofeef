@@ -95,7 +95,7 @@ class MockApiInterceptor extends Interceptor {
         'data': [
           {'id': 1, 'name': 'العُلا - عروس الجبال', 'slug': 'alula', 'image_url': 'https://images.unsplash.com/photo-1590073844006-33379778ae09?w=800&q=80', 'banner_image': 'https://images.unsplash.com/photo-1590073844006-33379778ae09?w=1200&q=80'},
           {'id': 2, 'name': 'الدرعية التاريخية', 'slug': 'diriyah', 'image_url': 'https://images.unsplash.com/photo-1586724237569-f3d0c1dee8c6?w=800&q=80', 'banner_image': 'https://images.unsplash.com/photo-1586724237569-f3d0c1dee8c6?w=1200&q=80'},
-          {'id': 3, 'name': 'البلد التاريخية - جدة', 'slug': 'al-balad', 'image_url': 'https://images.unsplash.com/photo-1578895101407-28d8442e61df?w=800&q=80', 'banner_image': 'https://images.unsplash.com/photo-1578895101407-28d8442e61df?w=1200&q=80'},
+          {'id': 3, 'name': 'البلد التاريخية - جدة', 'slug': 'al-balad', 'image_url': 'https://images.unsplash.com/photo-1586724237569-f3d0c1dee8c6?w=800&q=80', 'banner_image': 'https://images.unsplash.com/photo-1578895101407-28d8442e61df?w=1200&q=80'},
           {'id': 4, 'name': 'رجال ألمع - عسير', 'slug': 'rijal-almaa', 'image_url': 'https://images.unsplash.com/photo-1548013146-72479768bada?w=800&q=80', 'banner_image': 'https://images.unsplash.com/photo-1548013146-72479768bada?w=1200&q=80'}
         ]
       };
@@ -194,7 +194,7 @@ class MockApiInterceptor extends Interceptor {
             'title': 'مسار البلد التاريخية ورواشين جدة القديمة',
             'price': 200,
             'sale_price': null,
-            'image_url': 'https://images.unsplash.com/photo-1578895101407-28d8442e61df?w=800&q=80',
+            'image_url': 'https://images.unsplash.com/photo-1586724237569-f3d0c1dee8c6?w=800&q=80',
             'content': 'جولة مشي شيقة بين الأزقة العتيقة وبيت نصيف وسوق الندى وتذوق أشهر المأكولات الحجازية الشعبية.',
             'location': {'id': 3, 'name': 'جدة'},
             'category': {'id': 1, 'name': 'ثقافة وتراث'},
