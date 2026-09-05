@@ -123,7 +123,7 @@ class CarModel {
       category: json['category'] is Map ? json['category']['name']?.toString() ?? 'فاخرة' : (json['category']?.toString() ?? 'فاخرة'),
       price: rawPrice,
       salePrice: rawSalePrice,
-      pricePerDay: '${effectivePrice.toStringAsFixed(0)} ر.س / يوم',
+      pricePerDay: '${effectivePrice.toStringAsFixed(0)} ﷼ / يوم',
       passengerCount: int.tryParse(json['passenger']?.toString() ?? '5') ?? 5,
       doors: int.tryParse(json['door']?.toString() ?? '4') ?? 4,
       baggage: int.tryParse(json['baggage']?.toString() ?? '3') ?? 3,

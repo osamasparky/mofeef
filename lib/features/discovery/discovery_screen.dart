@@ -172,7 +172,7 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
                     children: [
                       Text(isAr ? 'نطاق السعر' : 'Price Range', style: AppTypography.titleSmall),
                       Text(
-                        '${_priceRange.start.round()} — ${_priceRange.end.round()} ${isAr ? 'ر.س' : 'SAR'}',
+                        '${_priceRange.start.round()} — ${_priceRange.end.round()} ﷼',
                         style: AppTypography.price.copyWith(fontSize: 14),
                       ),
                     ],
@@ -1141,7 +1141,7 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
                         children: [
                           Text(product.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppTypography.titleSmall),
                           const SizedBox(height: 4),
-                          Text('${product.price} ${isAr ? 'ر.س' : 'SAR'}', style: AppTypography.price.copyWith(fontSize: 13)),
+                          Text(product.price, style: AppTypography.price.copyWith(fontSize: 13)),
                         ],
                       ),
                     ),

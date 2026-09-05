@@ -109,7 +109,7 @@ class _MuseumListScreenState extends ConsumerState<MuseumListScreen> {
                     children: [
                       Text('نطاق السعر', style: AppTypography.titleSmall),
                       Text(
-                        '${_priceRange.start.round()} — ${_priceRange.end.round()} ر.س',
+                        '${_priceRange.start.round()} — ${_priceRange.end.round()} ﷼',
                         style: AppTypography.price.copyWith(fontSize: 14),
                       ),
                     ],

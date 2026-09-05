@@ -7,6 +7,7 @@ import '../../core/localization/locale_provider.dart';
 import '../auth/auth_provider.dart';
 import '../booking/data/booking_repository.dart';
 import '../wishlist/data/wishlist_repository.dart';
+import '../wallet/wallet_screen.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -18,6 +19,7 @@ class ProfileScreen extends ConsumerWidget {
     final isAr = currentLocale.languageCode == 'ar';
     final wishlistAsync = ref.watch(wishlistItemsProvider);
     final bookingsAsync = ref.watch(bookingHistoryProvider(''));
+    final walletState = ref.watch(walletProvider);
 
     final favCount = wishlistAsync.asData?.value.length.toString() ?? '0';
     final bookCount = bookingsAsync.asData?.value.length.toString() ?? '0';
@@ -135,7 +137,7 @@ class ProfileScreen extends ConsumerWidget {
             _buildSettingsTile(
               icon: Icons.account_balance_wallet_outlined,
               title: isAr ? 'المحفظة والرصيد' : 'Wallet & Balance',
-              subtitle: isAr ? '١,٢٥٠ ر.س متاح' : '1,250 SAR Available',
+              subtitle: isAr ? '${walletState.balance.toStringAsFixed(0)} ﷼ متاح' : '${walletState.balance.toStringAsFixed(0)} ﷼ Available',
               onTap: () => context.push('/wallet'),
             ),
             _buildSettingsTile(

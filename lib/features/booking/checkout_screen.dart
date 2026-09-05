@@ -76,7 +76,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(isAr ? 'تم تطبيق خصم بقيمة ٥٠ ر.س بنجاح! 🎉' : 'Coupon applied successfully (-50 SAR)! 🎉'),
+          content: Text(isAr ? 'تم تطبيق خصم بقيمة ٥٠ ﷼ بنجاح! 🎉' : 'Coupon applied successfully (-50 ﷼)! 🎉'),
           backgroundColor: AppColors.success,
         ),
       );
@@ -173,7 +173,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(isAr ? 'المبلغ المدفوع:' : 'Paid Amount:', style: AppTypography.bodySmall),
-                          Text('${finalTotal.toStringAsFixed(0)} ${isAr ? 'ر.س' : 'SAR'}', style: AppTypography.titleSmall.copyWith(color: AppColors.primaryGold)),
+                          Text('${finalTotal.toStringAsFixed(0)} ﷼', style: AppTypography.titleSmall.copyWith(color: AppColors.primaryGold)),
                         ],
                       ),
                     ],
@@ -332,20 +332,20 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                       ...draft.personItems.where((p) => p.quantity > 0).map(
                             (p) => _buildPriceRow(
                               '${p.quantity} × ${p.name}',
-                              '${p.total.toStringAsFixed(0)} ${isAr ? 'ر.س' : 'SAR'}',
+                              '${p.total.toStringAsFixed(0)} ${isAr ? '﷼' : 'SAR'}',
                             ),
                           )
                     else
                       _buildPriceRow(
                         '${draft.totalGuests} × ${isAr ? 'تذكرة دخول' : 'General Ticket'}',
-                        '${draft.subtotal.toStringAsFixed(0)} ${isAr ? 'ر.س' : 'SAR'}',
+                        '${draft.subtotal.toStringAsFixed(0)} ${isAr ? '﷼' : 'SAR'}',
                       ),
                     if (draft.extraItems.isNotEmpty) ...[
                       const Divider(color: AppColors.border, height: 16),
                       ...draft.extraItems.map(
                         (e) => _buildPriceRow(
                           '+ ${e.name}',
-                          '${e.price.toStringAsFixed(0)} ${isAr ? 'ر.س' : 'SAR'}',
+                          '${e.price.toStringAsFixed(0)} ${isAr ? '﷼' : 'SAR'}',
                         ),
                       ),
                     ],
@@ -384,7 +384,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                 controller: _phoneController,
                 keyboardType: TextInputType.phone,
                 decoration: InputDecoration(
-                  labelText: isAr ? 'رقم الجوال' : 'Phone Number',
+                  labelText: isAr ? 'رقم الجوال للتواصل' : 'Phone Number',
                   prefixIcon: const Icon(Icons.phone_outlined, color: AppColors.primaryGold),
                   filled: true,
                   fillColor: AppColors.surface,
@@ -394,7 +394,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               const SizedBox(height: 20),
 
               // 5. Coupon Code
-              Text(isAr ? 'كوبون الخصم' : 'Promo / Discount Code', style: AppTypography.titleLarge),
+              Text(isAr ? 'كوبون الخصم' : 'Discount Coupon', style: AppTypography.titleLarge),
               const SizedBox(height: 10),
               Row(
                 children: [
@@ -402,7 +402,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                     child: TextField(
                       controller: _couponController,
                       decoration: InputDecoration(
-                        hintText: isAr ? 'أدخل الرمز (مثال: MODEEFE)' : 'Enter promo code (e.g. MODEEFE)',
+                        hintText: isAr ? 'أدخل رمز القسيمة (مثال: MODEEFE10)' : 'Enter coupon code',
+                        prefixIcon: const Icon(Icons.discount_outlined, color: AppColors.primaryGold),
                         filled: true,
                         fillColor: AppColors.surface,
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
@@ -424,41 +425,22 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               ),
               const SizedBox(height: 20),
 
-              // 6. Payment Gateways from API (Moyasar Gateway & Options)
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(isAr ? 'طريقة وبوابة الدفع' : 'Payment Method & Gateway', style: AppTypography.titleLarge),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: AppColors.goldGlow,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: AppColors.primaryGold.withOpacity(0.3)),
-                    ),
-                    child: Text(
-                      isAr ? 'بوابة ميسر Moyasar معتمدة' : 'Moyasar Verified',
-                      style: const TextStyle(color: AppColors.primaryGold, fontSize: 10, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ],
-              ),
+              // 6. Payment Gateways
+              Text(isAr ? 'طريقة وبوابة الدفع' : 'Payment Method', style: AppTypography.titleLarge),
               const SizedBox(height: 10),
 
               gatewaysAsync.when(
                 data: (gateways) {
                   return Column(
-                    children: gateways.map((g) {
-                      return _buildGatewayTile(g, isAr);
-                    }).toList(),
+                    children: gateways.map((gw) => _buildGatewayTile(gw, isAr)).toList(),
                   );
                 },
                 loading: () => const Center(child: Padding(padding: EdgeInsets.all(16), child: CircularProgressIndicator(color: AppColors.primaryGold))),
                 error: (_, __) => Column(
                   children: [
-                    _buildPaymentOption('moyasar_apple_pay', 'Apple Pay (عبر بوابة ميسر)', Icons.payment),
+                    _buildPaymentOption('moyasar_apple_pay', 'Apple Pay (بوابة ميسر)', Icons.payment),
                     _buildPaymentOption('moyasar_mada', 'بطاقة مدى Mada (بوابة ميسر)', Icons.credit_card),
-                    _buildPaymentOption('wallet', isAr ? 'محفظة مُضيف (١,٢٥٠ ر.س)' : 'Modeefe Wallet', Icons.account_balance_wallet_outlined),
+                    _buildPaymentOption('wallet', isAr ? 'محفظة مُضيف' : 'Modeefe Wallet', Icons.account_balance_wallet_outlined),
                   ],
                 ),
               ),
@@ -475,11 +457,11 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                 ),
                 child: Column(
                   children: [
-                    _buildPriceRow(isAr ? 'المجموع الفرعي' : 'Subtotal', '${subtotal.toStringAsFixed(0)} ${isAr ? 'ر.س' : 'SAR'}'),
+                    _buildPriceRow(isAr ? 'المجموع الفرعي' : 'Subtotal', '${subtotal.toStringAsFixed(0)} ${isAr ? '﷼' : 'SAR'}'),
                     if (_discountAmount > 0)
                       _buildPriceRow(
                         '${isAr ? 'خصم الكوبون' : 'Discount'} ($_appliedCoupon)',
-                        '-${_discountAmount.toStringAsFixed(0)} ${isAr ? 'ر.س' : 'SAR'}',
+                        '-${_discountAmount.toStringAsFixed(0)} ${isAr ? '﷼' : 'SAR'}',
                       ),
                     _buildPriceRow(isAr ? 'ضريبة القيمة المضافة (١٥٪)' : 'VAT (15%)', isAr ? 'مشمولة' : 'Included'),
                     const Divider(color: AppColors.border, height: 20),
@@ -487,7 +469,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(isAr ? 'المجموع النهائي' : 'Total Amount', style: AppTypography.titleMedium),
-                        Text('${total.toStringAsFixed(0)} ${isAr ? 'ر.س' : 'SAR'}', style: AppTypography.price),
+                        Text('${total.toStringAsFixed(0)} ${isAr ? '﷼' : 'SAR'}', style: AppTypography.price),
                       ],
                     ),
                   ],
@@ -497,7 +479,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
 
               // 8. Confirm Button
               CustomButton(
-                text: '${isAr ? 'تأكيد ودفع' : 'Confirm & Pay'} ${total.toStringAsFixed(0)} ${isAr ? 'ر.س' : 'SAR'}',
+                text: '${isAr ? 'تأكيد ودفع' : 'Confirm & Pay'} ${total.toStringAsFixed(0)} ﷼',
                 isLoading: _isSubmitting,
                 onPressed: () => _handleConfirmBooking(
                   serviceId: draft.serviceId,
@@ -749,7 +731,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                 const SizedBox(height: 12),
                 _buildPaymentOption('moyasar_apple_pay', 'Apple Pay (عبر بوابة ميسر)', Icons.payment),
                 _buildPaymentOption('moyasar_mada', 'بطاقة مدى Mada (بوابة ميسر)', Icons.credit_card),
-                _buildPaymentOption('wallet', isAr ? 'رصيد المحفظة (١,٢٥٠ ر.س)' : 'Wallet Balance (1,250 SAR)', Icons.account_balance_wallet_outlined),
+                _buildPaymentOption('wallet', isAr ? 'رصيد المحفظة الرقمية' : 'Digital Wallet Balance', Icons.account_balance_wallet_outlined),
 
                 const SizedBox(height: 24),
 
@@ -763,16 +745,16 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                   ),
                   child: Column(
                     children: [
-                      _buildPriceRow('${isAr ? 'التذاكر' : 'Tickets'} ($_ticketCount)', '${subtotal.toStringAsFixed(0)} ${isAr ? 'ر.س' : 'SAR'}'),
+                      _buildPriceRow('${isAr ? 'التذاكر' : 'Tickets'} ($_ticketCount)', '${subtotal.toStringAsFixed(0)} ${isAr ? '﷼' : 'SAR'}'),
                       if (_discountAmount > 0)
-                        _buildPriceRow('${isAr ? 'خصم الكوبون' : 'Discount'} ($_appliedCoupon)', '-${_discountAmount.toStringAsFixed(0)} ${isAr ? 'ر.س' : 'SAR'}'),
+                        _buildPriceRow('${isAr ? 'خصم الكوبون' : 'Discount'} ($_appliedCoupon)', '-${_discountAmount.toStringAsFixed(0)} ${isAr ? '﷼' : 'SAR'}'),
                       _buildPriceRow(isAr ? 'ضريبة القيمة المضافة (١٥٪)' : 'VAT (15%)', isAr ? 'مشمولة' : 'Included'),
                       const Divider(color: AppColors.border, height: 24),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(isAr ? 'المجموع الكلي' : 'Total Amount', style: AppTypography.titleMedium),
-                          Text('${total.toStringAsFixed(0)} ${isAr ? 'ر.س' : 'SAR'}', style: AppTypography.price),
+                          Text('${total.toStringAsFixed(0)} ${isAr ? '﷼' : 'SAR'}', style: AppTypography.price),
                         ],
                       ),
                     ],
@@ -782,7 +764,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
 
                 // Confirm Button
                 CustomButton(
-                  text: '${isAr ? 'تأكيد ودفع' : 'Confirm & Pay'} ${total.toStringAsFixed(0)} ${isAr ? 'ر.س' : 'SAR'}',
+                  text: '${isAr ? 'تأكيد ودفع' : 'Confirm & Pay'} ${total.toStringAsFixed(0)} ${isAr ? '﷼' : 'SAR'}',
                   isLoading: _isSubmitting,
                   onPressed: () => _handleConfirmBooking(
                     serviceId: int.tryParse(widget.experienceId) ?? 1,

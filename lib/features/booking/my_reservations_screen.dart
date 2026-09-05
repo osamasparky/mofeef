@@ -86,7 +86,7 @@ class MyReservationsScreen extends ConsumerWidget {
                       date: b.startDate.isNotEmpty ? b.startDate : (isAr ? 'موعد الزيارة' : 'Visit Date'),
                       time: isAr ? 'تاريخ الحجز' : 'Booking Date',
                       ticketsCount: b.totalGuests,
-                      price: '${b.total.toStringAsFixed(0)} ${isAr ? "ر.س" : "SAR"}',
+                      price: '${b.total.toStringAsFixed(0)} ﷼',
                       status: b.status == 'confirmed' ? (isAr ? 'مؤكد' : 'Confirmed') : b.status,
                       statusColor: AppColors.success,
                     );

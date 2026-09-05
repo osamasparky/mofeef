@@ -35,7 +35,7 @@ class MuseumModel {
     this.mapLng,
   });
 
-  String get formattedPrice => price > 0 ? '${price.toStringAsFixed(0)} ر.س' : 'دخول مجاني';
+  String get formattedPrice => price > 0 ? '${price.toStringAsFixed(0)} ﷼' : 'دخول مجاني';
 
   factory MuseumModel.fromJson(Map<String, dynamic> json) {
     double parsedRating = 4.9;

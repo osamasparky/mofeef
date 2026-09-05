@@ -216,7 +216,7 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
                                           Text(t.getDisplayName(isAr), style: AppTypography.titleSmall),
                                         ],
                                       ),
-                                      Text('${t.price.toStringAsFixed(0)} ${isAr ? 'ر.س' : 'SAR'}', style: AppTypography.price.copyWith(fontSize: 15)),
+                                      Text('${t.price.toStringAsFixed(0)} ﷼', style: AppTypography.price.copyWith(fontSize: 15)),
                                     ],
                                   ),
                                 )),
@@ -564,7 +564,7 @@ class _EventBookingBottomSheetState extends State<_EventBookingBottomSheet> {
                             Text(name, style: AppTypography.titleSmall.copyWith(fontSize: 14)),
                             if (desc != null && desc.isNotEmpty)
                               Text(desc, style: AppTypography.bodySmall.copyWith(fontSize: 11, color: AppColors.textMuted)),
-                            Text('${t.price.toStringAsFixed(0)} ${isAr ? 'ر.س' : 'SAR'}', style: AppTypography.price.copyWith(fontSize: 13)),
+                            Text('${t.price.toStringAsFixed(0)} ﷼', style: AppTypography.price.copyWith(fontSize: 13)),
                           ],
                         ),
                       ),
@@ -634,7 +634,7 @@ class _EventBookingBottomSheetState extends State<_EventBookingBottomSheet> {
                     activeColor: AppColors.primaryGold,
                     checkColor: AppColors.textDark,
                     title: Text(extra.getDisplayName(isAr), style: AppTypography.titleSmall.copyWith(fontSize: 14)),
-                    subtitle: Text('+ ${extra.price.toStringAsFixed(0)} ${isAr ? 'ر.س' : 'SAR'}', style: AppTypography.price.copyWith(fontSize: 12)),
+                    subtitle: Text('+ ${extra.price.toStringAsFixed(0)} ﷼', style: AppTypography.price.copyWith(fontSize: 12)),
                     value: isSelected,
                     onChanged: (val) {
                       setState(() {
@@ -660,7 +660,7 @@ class _EventBookingBottomSheetState extends State<_EventBookingBottomSheet> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(isAr ? 'المجموع الإجمالي' : 'Total Amount', style: AppTypography.bodySmall),
-                    Text('${total.toStringAsFixed(0)} ${isAr ? 'ر.س' : 'SAR'}', style: AppTypography.price.copyWith(fontSize: 22)),
+                    Text('${total.toStringAsFixed(0)} ﷼', style: AppTypography.price.copyWith(fontSize: 22)),
                   ],
                 ),
                 CustomButton(

@@ -13,6 +13,7 @@ import '../discovery/data/models/discovery_models.dart';
 import '../events/data/event_repository.dart';
 import '../museums/data/museum_repository.dart';
 import '../cars/data/car_repository.dart';
+import '../shop/data/shop_repository.dart';
 import '../cart/data/cart_repository.dart';
 import '../auth/auth_provider.dart';
 
@@ -27,6 +28,7 @@ class HomeScreen extends ConsumerWidget {
     final eventsAsync = ref.watch(eventsListProvider);
     final museumsAsync = ref.watch(museumsListProvider);
     final carsAsync = ref.watch(carsListProvider);
+    final productsAsync = ref.watch(productsListProvider);
     final cartState = ref.watch(cartNotifierProvider);
     final currentLocale = ref.watch(localeProvider);
     final isAr = currentLocale.languageCode == 'ar';
@@ -639,7 +641,71 @@ class HomeScreen extends ConsumerWidget {
 
                 const SizedBox(height: 24),
 
-                // 8. Heritage Bazaar Promo Card
+                // 9. Gift Shop Section ("متجر الهدايا")
+                SectionHeader(
+                  title: isAr ? 'متجر الهدايا والتذكارات' : 'Gift Shop & Souvenirs',
+                  subtitle: isAr ? 'هدايا وتذكارات تراثية سعودية أصيلة' : 'Authentic Saudi gifts and souvenirs',
+                  actionText: isAr ? 'المزيد' : 'More',
+                  onActionTap: () => context.push('/store'),
+                ),
+
+                productsAsync.when(
+                  data: (products) {
+                    if (products.isEmpty) return const SizedBox.shrink();
+                    return SizedBox(
+                      height: 200,
+                      child: ListView.separated(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        scrollDirection: Axis.horizontal,
+                        itemCount: products.length,
+                        separatorBuilder: (_, __) => const SizedBox(width: 14),
+                        itemBuilder: (context, index) {
+                          final product = products[index];
+                          return GestureDetector(
+                            onTap: () => context.push('/product/${product.id}'),
+                            child: Container(
+                              width: 160,
+                              decoration: BoxDecoration(
+                                color: AppColors.card,
+                                borderRadius: BorderRadius.circular(18),
+                                border: Border.all(color: AppColors.border),
+                              ),
+                              clipBehavior: Clip.antiAlias,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  CachedNetworkImage(
+                                    imageUrl: product.imageUrl,
+                                    height: 110,
+                                    width: double.infinity,
+                                    fit: BoxFit.cover,
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.all(10),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(product.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppTypography.titleSmall),
+                                        const SizedBox(height: 4),
+                                        Text(product.price, style: AppTypography.price.copyWith(fontSize: 13)),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    );
+                  },
+                  loading: () => const SizedBox.shrink(),
+                  error: (_, __) => const SizedBox.shrink(),
+                ),
+
+                const SizedBox(height: 16),
+
+                // Gift Shop Promo Card
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: GestureDetector(
@@ -659,17 +725,17 @@ class HomeScreen extends ConsumerWidget {
                               color: AppColors.goldGlow,
                               borderRadius: BorderRadius.circular(16),
                             ),
-                            child: const Icon(Icons.storefront, color: AppColors.primaryGold, size: 30),
+                            child: const Icon(Icons.card_giftcard, color: AppColors.primaryGold, size: 30),
                           ),
                           const SizedBox(width: 16),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(isAr ? 'بازار مُضيف للمقتنيات التراثية' : 'Modeefe Heritage Bazaar', style: AppTypography.titleMedium),
+                                Text(isAr ? 'متجر الهدايا والتذكارات' : 'Modeefe Gift Shop', style: AppTypography.titleMedium),
                                 const SizedBox(height: 4),
                                 Text(
-                                  isAr ? 'تحف فاخرة، عطور وبخور، ومصنوعات يدوية' : 'Authentic gifts, oud, perfumes, and handicrafts',
+                                  isAr ? 'تصفح جميع الهدايا، التمور، العطور، والتحف التراثية' : 'Explore all souvenirs, dates, oud, and gifts',
                                   style: AppTypography.bodySmall,
                                 ),
                               ],

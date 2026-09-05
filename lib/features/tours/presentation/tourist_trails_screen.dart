@@ -159,7 +159,7 @@ class _TouristTrailsScreenState extends ConsumerState<TouristTrailsScreen> {
                   children: [
                     Text(isAr ? 'نطاق السعر' : 'Price Range', style: AppTypography.titleSmall),
                     Text(
-                      '${_priceRange.start.round()} — ${_priceRange.end.round()} ${isAr ? 'ر.س' : 'SAR'}',
+                      '${_priceRange.start.round()} — ${_priceRange.end.round()} ﷼',
                       style: AppTypography.price.copyWith(fontSize: 14),
                     ),
                   ],

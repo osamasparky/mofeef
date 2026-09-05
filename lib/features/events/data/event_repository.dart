@@ -132,7 +132,7 @@ class EventItemModel {
       mapLat: double.tryParse(map['map_lat']?.toString() ?? map['map_latitude']?.toString() ?? '24.7136'),
       mapLng: double.tryParse(map['map_lng']?.toString() ?? map['map_longitude']?.toString() ?? '46.6753'),
       date: map['start_date']?.toString() ?? 'اليوم — طوال الأسبوع',
-      price: '${(sale ?? rawPrice).toStringAsFixed(0)} ر.س',
+      price: '${(sale ?? rawPrice).toStringAsFixed(0)} ﷼',
       priceNumeric: rawPrice,
       salePrice: sale,
       imageUrl: img,

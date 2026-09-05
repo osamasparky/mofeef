@@ -66,8 +66,8 @@ class ProductModel {
     final numPrice = double.tryParse(rawPrice.toString()) ?? 0.0;
     final numOrigin = double.tryParse(rawOriginPrice.toString()) ?? numPrice;
 
-    final displayPrice = json['display_price']?.toString() ?? '${numPrice.toStringAsFixed(0)} ر.س';
-    final displayOrigin = json['display_regular_price']?.toString() ?? '${numOrigin.toStringAsFixed(0)} ر.س';
+    final displayPrice = json['display_price']?.toString() ?? '${numPrice.toStringAsFixed(0)} ﷼';
+    final displayOrigin = json['display_regular_price']?.toString() ?? '${numOrigin.toStringAsFixed(0)} ﷼';
 
     // Parse specifications
     List<ProductSpecification> specs = [];
@@ -147,9 +147,9 @@ class ProductModel {
       title: titleStr.isNotEmpty ? titleStr : 'منتج تراثي فاخر',
       category: json['category'] is Map ? json['category']['name']?.toString() ?? 'مقتنيات' : (json['category']?.toString() ?? 'مقتنيات'),
       storeName: json['store'] is Map ? json['store']['name']?.toString() ?? 'بازار مُضيف للمقتنيات' : 'بازار مُضيف للمقتنيات',
-      price: displayPrice.contains('ر.س') || displayPrice.contains('﷼') ? displayPrice : '$displayPrice ر.س',
+      price: displayPrice.contains('﷼') ? displayPrice : (displayPrice.contains('ر.س') ? displayPrice.replaceAll('ر.س', '﷼') : '$displayPrice ﷼'),
       priceNumeric: numPrice,
-      originalPrice: displayOrigin.contains('ر.س') || displayOrigin.contains('﷼') ? displayOrigin : '$displayOrigin ر.س',
+      originalPrice: displayOrigin.contains('﷼') ? displayOrigin : (displayOrigin.contains('ر.س') ? displayOrigin.replaceAll('ر.س', '﷼') : '$displayOrigin ﷼'),
       discountPercent: json['discount_percent']?.toString(),
       rating: parsedRating,
       reviewsCount: parsedReviews > 0 ? parsedReviews : 10,

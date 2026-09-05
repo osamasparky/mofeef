@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../config/app_config.dart';
 import '../localization/locale_provider.dart';
-import 'mock_api_interceptor.dart';
 
 final secureStorageProvider = Provider<FlutterSecureStorage>((ref) {
   return const FlutterSecureStorage();
@@ -49,8 +48,6 @@ final dioProvider = Provider<Dio>((ref) {
       },
     ),
   );
-
-  dio.interceptors.add(MockApiInterceptor());
 
   return dio;
 });

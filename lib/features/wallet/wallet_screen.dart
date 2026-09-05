@@ -112,7 +112,7 @@ class WalletScreen extends ConsumerWidget {
                 const SizedBox(height: 16),
 
                 // Amount Selection
-                Text(isAr ? 'اختر المبلغ (ر.س)' : 'Select Amount (SAR)', style: AppTypography.titleSmall),
+                Text(isAr ? 'اختر المبلغ (﷼)' : 'Select Amount (﷼)', style: AppTypography.titleSmall),
                 const SizedBox(height: 10),
                 Wrap(
                   spacing: 10,
@@ -120,7 +120,7 @@ class WalletScreen extends ConsumerWidget {
                   children: amounts.map((amt) {
                     final isSel = selectedAmount == amt;
                     return ChoiceChip(
-                      label: Text('${amt.toInt()} ${isAr ? 'ر.س' : 'SAR'}'),
+                      label: Text('${amt.toInt()} ﷼'),
                       selected: isSel,
                       onSelected: (val) => setModalState(() => selectedAmount = amt),
                       selectedColor: AppColors.primaryGold,
@@ -165,7 +165,7 @@ class WalletScreen extends ConsumerWidget {
                     Navigator.pop(context);
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text(isAr ? 'تم شحن المحفظة بنجاح بمبلغ ${selectedAmount.toInt()} ر.س' : 'Successfully added ${selectedAmount.toInt()} SAR to wallet'),
+                        content: Text(isAr ? 'تم شحن المحفظة بنجاح بمبلغ ${selectedAmount.toInt()} ﷼' : 'Successfully added ${selectedAmount.toInt()} ﷼ to wallet'),
                         backgroundColor: AppColors.success,
                       ),
                     );
@@ -228,7 +228,7 @@ class WalletScreen extends ConsumerWidget {
                   Text(isAr ? 'الرصيد المتاح' : 'Available Balance', style: AppTypography.bodySmall),
                   const SizedBox(height: 4),
                   Text(
-                    '${walletState.balance.toStringAsFixed(2)} ${isAr ? 'ر.س' : 'SAR'}',
+                    '${walletState.balance.toStringAsFixed(2)} ﷼',
                     style: AppTypography.headingLarge.copyWith(color: AppColors.primaryGold, fontSize: 32),
                   ),
                   const SizedBox(height: 24),
@@ -332,7 +332,7 @@ class WalletScreen extends ConsumerWidget {
                           ],
                         ),
                         Text(
-                          '${tx.isCredit ? '+' : '-'}${tx.amount.toStringAsFixed(0)} ${isAr ? 'ر.س' : 'SAR'}',
+                          '${tx.isCredit ? '+' : '-'}${tx.amount.toStringAsFixed(0)} ﷼',
                           style: TextStyle(
                             color: tx.isCredit ? AppColors.success : AppColors.error,
                             fontWeight: FontWeight.bold,

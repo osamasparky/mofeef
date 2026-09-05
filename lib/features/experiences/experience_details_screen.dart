@@ -856,7 +856,7 @@ class _BookingBottomSheetState extends State<_BookingBottomSheet> {
                             Text(name, style: AppTypography.titleSmall.copyWith(fontSize: 14)),
                             if (desc != null && desc.isNotEmpty)
                               Text(desc, style: AppTypography.bodySmall.copyWith(fontSize: 11, color: AppColors.textMuted)),
-                            Text('${p.price.toStringAsFixed(0)} ${isAr ? 'ر.س' : 'SAR'}', style: AppTypography.price.copyWith(fontSize: 13)),
+                            Text('${p.price.toStringAsFixed(0)} ${isAr ? '﷼' : 'SAR'}', style: AppTypography.price.copyWith(fontSize: 13)),
                           ],
                         ),
                       ),
@@ -926,7 +926,7 @@ class _BookingBottomSheetState extends State<_BookingBottomSheet> {
                     activeColor: AppColors.primaryGold,
                     checkColor: AppColors.textDark,
                     title: Text(extra.getDisplayName(isAr), style: AppTypography.titleSmall.copyWith(fontSize: 14)),
-                    subtitle: Text('+ ${extra.price.toStringAsFixed(0)} ${isAr ? 'ر.س' : 'SAR'}', style: AppTypography.price.copyWith(fontSize: 12)),
+                    subtitle: Text('+ ${extra.price.toStringAsFixed(0)} ${isAr ? '﷼' : 'SAR'}', style: AppTypography.price.copyWith(fontSize: 12)),
                     value: isSelected,
                     onChanged: (val) {
                       setState(() {
@@ -952,7 +952,7 @@ class _BookingBottomSheetState extends State<_BookingBottomSheet> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(isAr ? 'المجموع الإجمالي' : 'Total Amount', style: AppTypography.bodySmall),
-                    Text('${total.toStringAsFixed(0)} ${isAr ? 'ر.س' : 'SAR'}', style: AppTypography.price.copyWith(fontSize: 22)),
+                    Text('${total.toStringAsFixed(0)} ${isAr ? '﷼' : 'SAR'}', style: AppTypography.price.copyWith(fontSize: 22)),
                   ],
                 ),
                 CustomButton(

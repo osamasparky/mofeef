@@ -65,7 +65,7 @@ class FavoritesScreen extends ConsumerWidget {
                   title: item.title,
                   category: item.objectModel == 'tour' ? (isAr ? 'مسار سياحي' : 'Tourist Trail') : (isAr ? 'معلم سياحي' : 'Landmark'),
                   location: item.location ?? (isAr ? 'المملكة العربية السعودية' : 'Saudi Arabia'),
-                  price: '${item.price.toStringAsFixed(0)} ${isAr ? "ر.س" : "SAR"}',
+                  price: '${item.price.toStringAsFixed(0)} ﷼',
                   duration: isAr ? 'ساعتان' : '2 hours',
                   rating: 4.9,
                   imageUrl: item.imageUrl ?? 'https://images.unsplash.com/photo-1590073844006-33379778ae09?w=800&q=80',

@@ -154,7 +154,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(isAr ? 'المجموع الفرعي' : 'Subtotal', style: AppTypography.bodyMedium),
-                      Text('${cartState.subtotal.toStringAsFixed(0)} ${isAr ? "ر.س" : "SAR"}', style: AppTypography.titleSmall),
+                      Text('${cartState.subtotal.toStringAsFixed(0)} ﷼', style: AppTypography.titleSmall),
                     ],
                   ),
                   if (cartState.discount > 0) ...[
@@ -163,7 +163,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(isAr ? 'خصم الكوبون' : 'Coupon Discount', style: AppTypography.bodyMedium.copyWith(color: AppColors.success)),
-                        Text('-${cartState.discount.toStringAsFixed(0)} ${isAr ? "ر.س" : "SAR"}', style: AppTypography.titleSmall.copyWith(color: AppColors.success)),
+                        Text('-${cartState.discount.toStringAsFixed(0)} ﷼', style: AppTypography.titleSmall.copyWith(color: AppColors.success)),
                       ],
                     ),
                   ],
@@ -180,13 +180,13 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(isAr ? 'الإجمالي النهائي' : 'Total Amount', style: AppTypography.titleLarge),
-                      Text('${cartState.total.toStringAsFixed(0)} ${isAr ? "ر.س" : "SAR"}', style: AppTypography.price),
+                      Text('${cartState.total.toStringAsFixed(0)} ﷼', style: AppTypography.price),
                     ],
                   ),
                   const SizedBox(height: 18),
 
                   CustomButton(
-                    text: '${isAr ? "متابعة الدفع" : "Proceed to Checkout"} (${cartState.total.toStringAsFixed(0)} ${isAr ? "ر.س" : "SAR"})',
+                    text: '${isAr ? "متابعة الدفع" : "Proceed to Checkout"} (${cartState.total.toStringAsFixed(0)} ﷼)',
                     onPressed: () {
                       showDialog(
                         context: context,

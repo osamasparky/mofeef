@@ -20,6 +20,8 @@ class PaymentGatewayItem {
     this.isOffline = false,
     required this.iconType,
   });
+
+  bool get isMoyasar => id.startsWith('moyasar');
 }
 
 final paymentGatewaysProvider = FutureProvider<List<PaymentGatewayItem>>((ref) async {
@@ -125,7 +127,7 @@ const _defaultGateways = [
   PaymentGatewayItem(
     id: 'wallet',
     name: 'Modeefe Wallet Balance',
-    nameAr: 'رصيد محفظة مُضيف (١,٢٥٠ ر.س)',
+    nameAr: 'رصيد محفظة مُضيف الرقمية',
     desc: 'Pay directly from your in-app balance',
     descAr: 'خصم مباشر وفوري من رصيد محفظتك المتاح',
     iconType: 'wallet',

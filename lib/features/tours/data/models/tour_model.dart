@@ -160,7 +160,7 @@ class TourModel {
     this.openHours,
   });
 
-  String get formattedPrice => '${(salePrice ?? price).toStringAsFixed(0)} ر.س';
+  String get formattedPrice => '${(salePrice ?? price).toStringAsFixed(0)} ﷼';
   double get priceNumeric => salePrice ?? price;
   String get description => content ?? '';
 

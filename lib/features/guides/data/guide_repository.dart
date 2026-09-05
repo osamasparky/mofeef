@@ -38,7 +38,7 @@ class GuideRepositoryImpl implements GuideRepository {
           languages: map['languages'] is List ? (map['languages'] as List).map((l) => l.toString()).toList() : ['العربية'],
           rating: double.tryParse(map['review_score']?.toString() ?? '4.9') ?? 4.9,
           toursCount: int.tryParse(map['tours_count']?.toString() ?? '50') ?? 50,
-          hourlyRate: '${map['price'] ?? '150'} ر.س / ساعة',
+          hourlyRate: '${map['price'] ?? '150'} ﷼ / ساعة',
           imageUrl: map['avatar_url']?.toString() ?? map['image']?.toString() ?? 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&q=80',
         );
       }).toList();
@@ -59,7 +59,7 @@ class GuideRepositoryImpl implements GuideRepository {
         languages: map['languages'] is List ? (map['languages'] as List).map((l) => l.toString()).toList() : ['العربية'],
         rating: double.tryParse(map['review_score']?.toString() ?? '4.9') ?? 4.9,
         toursCount: int.tryParse(map['tours_count']?.toString() ?? '50') ?? 50,
-        hourlyRate: '${map['price'] ?? '150'} ر.س / ساعة',
+        hourlyRate: '${map['price'] ?? '150'} ﷼ / ساعة',
         imageUrl: map['avatar_url']?.toString() ?? map['image']?.toString() ?? 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&q=80',
       );
     } on DioException catch (e) {

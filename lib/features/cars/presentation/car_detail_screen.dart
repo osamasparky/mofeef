@@ -645,7 +645,7 @@ class _CarBookingBottomSheetState extends State<_CarBookingBottomSheet> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text('طلب سائق خاص محترف', style: AppTypography.titleSmall),
-                        Text('خدمة سائق مرافق مع السيارة (+200 ر.س/يوم)', style: AppTypography.bodySmall),
+                        Text('خدمة سائق مرافق مع السيارة (+200 ﷼/يوم)', style: AppTypography.bodySmall),
                       ],
                     ),
                   ),
@@ -673,7 +673,7 @@ class _CarBookingBottomSheetState extends State<_CarBookingBottomSheet> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text('سعر الإيجار الأساسي ($_daysCount أيام):', style: AppTypography.bodySmall),
-                      Text('${(_baseDailyRate * _daysCount).toStringAsFixed(0)} ر.س', style: AppTypography.titleSmall),
+                      Text('${(_baseDailyRate * _daysCount).toStringAsFixed(0)} ﷼', style: AppTypography.titleSmall),
                     ],
                   ),
                   if (_includeDriver) ...[
@@ -682,7 +682,7 @@ class _CarBookingBottomSheetState extends State<_CarBookingBottomSheet> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text('خدمة السائق الخاص ($_daysCount أيام):', style: AppTypography.bodySmall),
-                        Text('${(_driverDailyRate * _daysCount).toStringAsFixed(0)} ر.س', style: AppTypography.titleSmall),
+                        Text('${(_driverDailyRate * _daysCount).toStringAsFixed(0)} ﷼', style: AppTypography.titleSmall),
                       ],
                     ),
                   ],
@@ -691,7 +691,7 @@ class _CarBookingBottomSheetState extends State<_CarBookingBottomSheet> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text('الإجمالي المستحق:', style: AppTypography.titleMedium),
-                      Text('${_totalPrice.toStringAsFixed(0)} ر.س', style: AppTypography.price),
+                      Text('${_totalPrice.toStringAsFixed(0)} ﷼', style: AppTypography.price),
                     ],
                   ),
                 ],
