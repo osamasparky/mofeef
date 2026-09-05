@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_typography.dart';
+import '../../core/localization/locale_provider.dart';
 import '../../core/widgets/custom_button.dart';
 import '../../core/widgets/custom_text_field.dart';
 import 'auth_provider.dart';
@@ -15,8 +16,8 @@ class LoginScreen extends ConsumerStatefulWidget {
 }
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
-  final _emailController = TextEditingController(text: 'traveler@mudief.sa');
-  final _passwordController = TextEditingController(text: '••••••••');
+  final _emailController = TextEditingController(text: 'john.doe@example.com');
+  final _passwordController = TextEditingController(text: 'password123');
   bool _obscurePassword = true;
 
   @override
@@ -28,11 +29,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   void _handleLogin() async {
     final success = await ref.read(authProvider.notifier).login(
-          _emailController.text,
+          _emailController.text.trim(),
           _passwordController.text,
         );
     if (success && mounted) {
       context.go('/home');
+    } else if (mounted) {
+      final error = ref.read(authProvider).errorMessage;
+      if (error != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error), backgroundColor: AppColors.error),
+        );
+      }
     }
   }
 
@@ -61,20 +69,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       fit: BoxFit.contain,
                     ),
                   ),
-                  const SizedBox(height: 24),
-                  // Welcome Titles from Figma
+                  const SizedBox(height: 20),
                   Text(
-                    'أهلاً بك في مُضيف',
+                    ref.tr('welcome_back'),
                     style: AppTypography.headingLarge,
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
                   Text(
-                    'ابدأ رحلتك السعودية الفاخرة واستكشف الأصالة',
+                    ref.tr('hero_subtitle'),
                     style: AppTypography.bodyMedium,
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 36),
+                  const SizedBox(height: 32),
 
                   // Login Form Card
                   Container(
@@ -89,7 +96,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       children: [
                         CustomTextField(
                           controller: _emailController,
-                          label: 'البريد الإلكتروني',
+                          label: ref.tr('is_arabic') == 'ar' ? 'البريد الإلكتروني' : 'Email Address',
                           hintText: 'name@example.com',
                           keyboardType: TextInputType.emailAddress,
                           prefixIcon: const Icon(Icons.email_outlined, color: AppColors.textSecondary),
@@ -97,7 +104,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         const SizedBox(height: 18),
                         CustomTextField(
                           controller: _passwordController,
-                          label: 'كلمة المرور',
+                          label: ref.tr('is_arabic') == 'ar' ? 'كلمة المرور' : 'Password',
                           hintText: '••••••••',
                           obscureText: _obscurePassword,
                           prefixIcon: const Icon(Icons.lock_outline, color: AppColors.textSecondary),
@@ -122,7 +129,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ),
                         const SizedBox(height: 16),
                         CustomButton(
-                          text: 'تسجيل الدخول',
+                          text: ref.tr('login_title'),
                           isLoading: authState.isLoading,
                           onPressed: _handleLogin,
                         ),
@@ -131,19 +138,34 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                   const SizedBox(height: 24),
 
-                  // Quick Guest Action / Switch
+                  // Direct Register Action Button
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text('ليس لديك حساب بعد؟', style: AppTypography.bodyMedium),
+                      Text(ref.tr('no_account'), style: AppTypography.bodyMedium),
                       TextButton(
-                        onPressed: () => context.go('/home'),
+                        onPressed: () => context.push('/register'),
                         child: Text(
-                          'تصفح كزائر',
-                          style: AppTypography.titleSmall.copyWith(color: AppColors.primaryGold),
+                          ref.tr('create_account'),
+                          style: AppTypography.titleSmall.copyWith(
+                            color: AppColors.primaryGold,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ],
+                  ),
+
+                  // Guest Browsing Button
+                  Center(
+                    child: TextButton.icon(
+                      onPressed: () => context.go('/home'),
+                      icon: const Icon(Icons.arrow_forward, size: 16, color: AppColors.textSecondary),
+                      label: Text(
+                        ref.tr('browse_as_guest'),
+                        style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary),
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -154,3 +176,4 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     );
   }
 }
+

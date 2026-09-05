@@ -201,7 +201,7 @@ class ExperienceDetailsScreen extends ConsumerWidget {
                         Expanded(
                           child: CustomButton(
                             text: 'حجز التذكرة',
-                            onPressed: () => context.push('/checkout/${tour.id}'),
+                            onPressed: () => _showBookingModal(context, tour),
                           ),
                         ),
                       ],
@@ -237,6 +237,18 @@ class ExperienceDetailsScreen extends ConsumerWidget {
     );
   }
 
+  void _showBookingModal(BuildContext context, TourModel tour) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (ctx) => _BookingBottomSheet(tour: tour),
+    );
+  }
+
   Widget _buildInfoItem(IconData icon, String title, String value) {
     return Column(
       children: [
@@ -246,6 +258,182 @@ class ExperienceDetailsScreen extends ConsumerWidget {
         const SizedBox(height: 2),
         Text(value, style: AppTypography.titleSmall),
       ],
+    );
+  }
+}
+
+class _BookingBottomSheet extends StatefulWidget {
+  final TourModel tour;
+
+  const _BookingBottomSheet({required this.tour});
+
+  @override
+  State<_BookingBottomSheet> createState() => _BookingBottomSheetState();
+}
+
+class _BookingBottomSheetState extends State<_BookingBottomSheet> {
+  int _guests = 1;
+  DateTime _selectedDate = DateTime.now().add(const Duration(days: 1));
+
+  @override
+  Widget build(BuildContext context) {
+    final unitPrice = widget.tour.salePrice ?? widget.tour.price;
+    final total = unitPrice * _guests;
+
+    return Padding(
+      padding: EdgeInsets.only(
+        left: 20,
+        right: 20,
+        top: 20,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2)),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: CachedNetworkImage(
+                  imageUrl: widget.tour.imageUrl ?? 'https://images.unsplash.com/photo-1590073844006-33379778ae09?w=800&q=80',
+                  width: 56,
+                  height: 56,
+                  fit: BoxFit.cover,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(widget.tour.title, style: AppTypography.titleMedium, maxLines: 1, overflow: TextOverflow.ellipsis),
+                    const SizedBox(height: 4),
+                    Text('${widget.tour.formattedPrice} / للشخص', style: AppTypography.price.copyWith(fontSize: 14)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const Divider(color: AppColors.border, height: 28),
+
+          // Date Selector
+          Text('تاريخ الزيارة', style: AppTypography.titleSmall),
+          const SizedBox(height: 10),
+          GestureDetector(
+            onTap: () async {
+              final picked = await showDatePicker(
+                context: context,
+                initialDate: _selectedDate,
+                firstDate: DateTime.now(),
+                lastDate: DateTime.now().add(const Duration(days: 90)),
+                builder: (context, child) {
+                  return Theme(
+                    data: Theme.of(context).copyWith(
+                      colorScheme: const ColorScheme.dark(
+                        primary: AppColors.primaryGold,
+                        surface: AppColors.card,
+                        onSurface: AppColors.textPrimary,
+                      ),
+                    ),
+                    child: child!,
+                  );
+                },
+              );
+              if (picked != null) {
+                setState(() => _selectedDate = picked);
+              }
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              decoration: BoxDecoration(
+                color: AppColors.card,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: AppColors.border),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.calendar_month, color: AppColors.primaryGold, size: 20),
+                      const SizedBox(width: 10),
+                      Text(
+                        '${_selectedDate.year}-${_selectedDate.month.toString().padLeft(2, '0')}-${_selectedDate.day.toString().padLeft(2, '0')}',
+                        style: AppTypography.titleSmall,
+                      ),
+                    ],
+                  ),
+                  const Text('تغيير التاريخ', style: TextStyle(color: AppColors.primaryGold, fontSize: 13, fontWeight: FontWeight.bold)),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // Guest Counter
+          Text('عدد الزوار / التذاكر', style: AppTypography.titleSmall),
+          const SizedBox(height: 10),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: AppColors.card,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: AppColors.border),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('$_guests تذكرة', style: AppTypography.titleSmall),
+                Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.remove_circle_outline, color: AppColors.primaryGold),
+                      onPressed: _guests > 1 ? () => setState(() => _guests--) : null,
+                    ),
+                    Text('$_guests', style: AppTypography.titleMedium),
+                    IconButton(
+                      icon: const Icon(Icons.add_circle_outline, color: AppColors.primaryGold),
+                      onPressed: () => setState(() => _guests++),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          // Total & Checkout Action
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('المجموع الإجمالي', style: AppTypography.bodySmall),
+                  Text('${total.toStringAsFixed(0)} ر.س', style: AppTypography.price),
+                ],
+              ),
+              CustomButton(
+                text: 'متابعة للدفع والتأكيد',
+                width: 200,
+                onPressed: () {
+                  Navigator.pop(context);
+                  context.push('/checkout/${widget.tour.id}');
+                },
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

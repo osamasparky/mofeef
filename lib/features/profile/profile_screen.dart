@@ -3,7 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_typography.dart';
+import '../../core/localization/locale_provider.dart';
 import '../auth/auth_provider.dart';
+import '../booking/data/booking_repository.dart';
+import '../wishlist/data/wishlist_repository.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -11,10 +14,17 @@ class ProfileScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authProvider);
+    final currentLocale = ref.watch(localeProvider);
+    final isAr = currentLocale.languageCode == 'ar';
+    final wishlistAsync = ref.watch(wishlistItemsProvider);
+    final bookingsAsync = ref.watch(bookingHistoryProvider(''));
+
+    final favCount = wishlistAsync.asData?.value.length.toString() ?? '0';
+    final bookCount = bookingsAsync.asData?.value.length.toString() ?? '0';
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('الملف الشخصي', style: AppTypography.headingSmall),
+        title: Text(isAr ? 'الملف الشخصي' : 'Profile', style: AppTypography.headingSmall),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -50,26 +60,35 @@ class ProfileScreen extends ConsumerWidget {
                             color: AppColors.primaryGold,
                             borderRadius: BorderRadius.circular(10),
                           ),
-                          child: const Text('ذهبـي', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.textDark)),
+                          child: Text(
+                            isAr ? 'ذهبـي' : 'VIP Gold',
+                            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.textDark),
+                          ),
                         ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 14),
-                  Text(authState.userName ?? 'مسافر مُضيف', style: AppTypography.titleLarge),
+                  Text(
+                    authState.userName ?? (isAr ? 'مسافر مُضيف' : 'Modeefe Traveler'),
+                    style: AppTypography.titleLarge,
+                  ),
                   const SizedBox(height: 4),
-                  Text(authState.userEmail ?? 'traveler@mudief.sa', style: AppTypography.bodySmall),
+                  Text(
+                    authState.userEmail ?? 'traveler@modeefe.sa',
+                    style: AppTypography.bodySmall,
+                  ),
                   const SizedBox(height: 18),
 
-                  // Stats Row
+                  // Real Dynamic Stats Row
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      _buildStatItem('٣', 'وجهات زرتها'),
+                      _buildStatItem('١', isAr ? 'وجهات زرتها' : 'Visited'),
                       Container(width: 1, height: 35, color: AppColors.border),
-                      _buildStatItem('١٢', 'تجارب مفضلة'),
+                      _buildStatItem(favCount, isAr ? 'تجارب مفضلة' : 'Wishlist'),
                       Container(width: 1, height: 35, color: AppColors.border),
-                      _buildStatItem('٤', 'حجوزات نشطة'),
+                      _buildStatItem(bookCount, isAr ? 'حجوزات نشطة' : 'Bookings'),
                     ],
                   ),
                 ],
@@ -80,35 +99,42 @@ class ProfileScreen extends ConsumerWidget {
             // Settings & Quick Links
             _buildSettingsTile(
               icon: Icons.account_balance_wallet_outlined,
-              title: 'المحفظة والرصيد',
-              subtitle: '١,٢٤٠ ر.س متاح',
+              title: isAr ? 'المحفظة والرصيد' : 'Wallet & Balance',
+              subtitle: isAr ? '١,٢٤٠ ر.س متاح' : '1,240 SAR Available',
               onTap: () => context.push('/wallet'),
             ),
             _buildSettingsTile(
               icon: Icons.storefront_outlined,
-              title: 'بازار مُضيف للمقتنيات',
-              subtitle: 'تحف ومنتجات تراثية',
+              title: isAr ? 'بازار مُضيف للمقتنيات' : 'Modeefe Heritage Bazaar',
+              subtitle: isAr ? 'تحف ومنتجات تراثية' : 'Handicrafts & Gifts',
               onTap: () => context.push('/store'),
             ),
             _buildSettingsTile(
               icon: Icons.notifications_outlined,
-              title: 'الإشعارات والتحديثات',
+              title: isAr ? 'الإشعارات والتحديثات' : 'Notifications',
               onTap: () => context.push('/notifications'),
             ),
             _buildSettingsTile(
               icon: Icons.language,
-              title: 'اللغة',
-              subtitle: 'العربية (السعودية)',
-              onTap: () {},
+              title: isAr ? 'اللغة / Language' : 'Language / اللغة',
+              subtitle: isAr ? 'العربية (السعودية)' : 'English (US)',
+              onTap: () => _showLanguageDialog(context, ref, isAr),
             ),
             _buildSettingsTile(
               icon: Icons.help_outline,
-              title: 'مركز المساعدة والدعم',
-              onTap: () {},
+              title: isAr ? 'مركز المساعدة والدعم' : 'Help & Support Center',
+              onTap: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(isAr ? 'خدمة العملاء متاحة على مدار الساعة: support@modeefe.com' : 'Support available 24/7: support@modeefe.com'),
+                    backgroundColor: AppColors.primaryGold,
+                  ),
+                );
+              },
             ),
             _buildSettingsTile(
               icon: Icons.logout,
-              title: 'تسجيل الخروج',
+              title: isAr ? 'تسجيل الخروج' : 'Logout',
               iconColor: AppColors.error,
               textColor: AppColors.error,
               onTap: () async {
@@ -118,6 +144,58 @@ class ProfileScreen extends ConsumerWidget {
                 }
               },
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showLanguageDialog(BuildContext context, WidgetRef ref, bool isAr) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2)),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              isAr ? 'اختر لغة التطبيق' : 'Select App Language',
+              style: AppTypography.titleLarge,
+            ),
+            const SizedBox(height: 16),
+            ListTile(
+              leading: const Text('🇸🇦', style: TextStyle(fontSize: 24)),
+              title: const Text('العربية (Arabic)', style: TextStyle(fontWeight: FontWeight.bold)),
+              trailing: isAr ? const Icon(Icons.check_circle, color: AppColors.primaryGold) : null,
+              onTap: () {
+                ref.read(localeProvider.notifier).setLocale('ar');
+                Navigator.pop(ctx);
+              },
+            ),
+            const Divider(color: AppColors.border),
+            ListTile(
+              leading: const Text('🇬🇧', style: TextStyle(fontSize: 24)),
+              title: const Text('English (الإنجليزية)', style: TextStyle(fontWeight: FontWeight.bold)),
+              trailing: !isAr ? const Icon(Icons.check_circle, color: AppColors.primaryGold) : null,
+              onTap: () {
+                ref.read(localeProvider.notifier).setLocale('en');
+                Navigator.pop(ctx);
+              },
+            ),
+            const SizedBox(height: 12),
           ],
         ),
       ),
