@@ -6,7 +6,6 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_typography.dart';
 import '../../core/localization/locale_provider.dart';
 import '../../core/widgets/custom_button.dart';
-import '../../core/widgets/experience_card.dart';
 import '../tours/data/repositories/tour_repository.dart';
 import '../museums/data/museum_repository.dart';
 import '../events/data/event_repository.dart';
@@ -376,20 +375,70 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
         return ListView.separated(
           padding: const EdgeInsets.all(16),
           itemCount: filtered.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 16),
+          separatorBuilder: (_, __) => const SizedBox(height: 14),
           itemBuilder: (context, index) {
             final tour = filtered[index];
-            return SizedBox(
-              width: double.infinity,
-              child: ExperienceCard(
-                title: tour.title,
-                category: tour.categoryName ?? (isAr ? 'مسار سياحي' : 'Tourist Trail'),
-                location: tour.locationName ?? (isAr ? 'المملكة' : 'KSA'),
-                price: tour.formattedPrice,
-                duration: tour.duration ?? (isAr ? 'ساعتان' : '2 hours'),
-                rating: tour.rating,
-                imageUrl: tour.imageUrl ?? 'https://images.unsplash.com/photo-1590073844006-33379778ae09?w=800&q=80',
-                onTap: () => context.push('/experience/${tour.id}'),
+            return GestureDetector(
+              onTap: () => context.push('/experience/${tour.id}'),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: AppColors.card,
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: Row(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(18),
+                      child: CachedNetworkImage(
+                        imageUrl: tour.imageUrl ?? 'https://images.unsplash.com/photo-1590073844006-33379778ae09?w=800&q=80',
+                        width: 120,
+                        height: 110,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(tour.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppTypography.titleMedium),
+                            const SizedBox(height: 4),
+                            Row(
+                              children: [
+                                const Icon(Icons.location_on_outlined, size: 14, color: AppColors.primaryGold),
+                                const SizedBox(width: 4),
+                                Expanded(
+                                  child: Text(tour.locationName ?? (isAr ? 'المملكة' : 'KSA'), style: AppTypography.bodySmall, maxLines: 1, overflow: TextOverflow.ellipsis),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  children: [
+                                    const Icon(Icons.star, color: AppColors.primaryGold, size: 14),
+                                    const SizedBox(width: 4),
+                                    Text('${tour.rating}', style: AppTypography.titleSmall.copyWith(fontSize: 12)),
+                                    if (tour.duration != null) ...[
+                                      const SizedBox(width: 8),
+                                      Text('• ${tour.duration}', style: AppTypography.bodySmall.copyWith(fontSize: 11)),
+                                    ],
+                                  ],
+                                ),
+                                Text(tour.formattedPrice, style: AppTypography.price.copyWith(fontSize: 14)),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             );
           },

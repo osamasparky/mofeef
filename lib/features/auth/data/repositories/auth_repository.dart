@@ -13,6 +13,8 @@ abstract class AuthRepository {
   Future<void> changePassword(String currentPassword, String newPassword);
   Future<void> logout();
   Future<String?> getSavedToken();
+  Future<UserModel?> getSavedUser();
+  Future<void> saveUser(UserModel user);
 }
 
 class AuthRepositoryImpl implements AuthRepository {
@@ -25,10 +27,11 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<UserModel> login(String email, String password) async {
     try {
       final user = await _remoteDataSource.login(email, password);
-      if (user.token != null) {
-        final storage = _ref.read(secureStorageProvider);
+      final storage = _ref.read(secureStorageProvider);
+      if (user.token != null && user.token!.isNotEmpty) {
         await storage.write(key: 'auth_token', value: user.token!);
       }
+      await storage.write(key: 'user_profile', value: user.toJsonString());
       return user;
     } on DioException catch (e) {
       throw ServerFailure.fromDioException(e);
@@ -39,10 +42,11 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<UserModel> register(Map<String, dynamic> data) async {
     try {
       final user = await _remoteDataSource.register(data);
-      if (user.token != null) {
-        final storage = _ref.read(secureStorageProvider);
+      final storage = _ref.read(secureStorageProvider);
+      if (user.token != null && user.token!.isNotEmpty) {
         await storage.write(key: 'auth_token', value: user.token!);
       }
+      await storage.write(key: 'user_profile', value: user.toJsonString());
       return user;
     } on DioException catch (e) {
       throw ServerFailure.fromDioException(e);
@@ -52,7 +56,9 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<UserModel> getProfile() async {
     try {
-      return await _remoteDataSource.getProfile();
+      final user = await _remoteDataSource.getProfile();
+      await saveUser(user);
+      return user;
     } on DioException catch (e) {
       throw ServerFailure.fromDioException(e);
     }
@@ -62,6 +68,7 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<void> updateProfile(Map<String, dynamic> data) async {
     try {
       await _remoteDataSource.updateProfile(data);
+      await getProfile();
     } on DioException catch (e) {
       throw ServerFailure.fromDioException(e);
     }
@@ -83,6 +90,7 @@ class AuthRepositoryImpl implements AuthRepository {
     } finally {
       final storage = _ref.read(secureStorageProvider);
       await storage.delete(key: 'auth_token');
+      await storage.delete(key: 'user_profile');
     }
   }
 
@@ -90,6 +98,24 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<String?> getSavedToken() async {
     final storage = _ref.read(secureStorageProvider);
     return await storage.read(key: 'auth_token');
+  }
+
+  @override
+  Future<UserModel?> getSavedUser() async {
+    try {
+      final storage = _ref.read(secureStorageProvider);
+      final str = await storage.read(key: 'user_profile');
+      if (str != null && str.isNotEmpty) {
+        return UserModel.fromJsonString(str);
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  @override
+  Future<void> saveUser(UserModel user) async {
+    final storage = _ref.read(secureStorageProvider);
+    await storage.write(key: 'user_profile', value: user.toJsonString());
   }
 }
 

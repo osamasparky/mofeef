@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 class UserModel {
   final int id;
   final String? name;
@@ -22,28 +24,57 @@ class UserModel {
   });
 
   String get displayName {
-    if (name != null && name!.isNotEmpty) return name!;
+    if (name != null && name!.trim().isNotEmpty) return name!.trim();
     if (firstName != null || lastName != null) {
-      return '${firstName ?? ''} ${lastName ?? ''}'.trim();
+      final combined = '${firstName ?? ''} ${lastName ?? ''}'.trim();
+      if (combined.isNotEmpty) return combined;
     }
-    return email.split('@').first;
+    if (email.isNotEmpty && email.contains('@')) {
+      return email.split('@').first;
+    }
+    return 'مسافر مُضيف';
   }
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
-    // Handle nested user/data if present
+    // 1. Extract token (could be at root or in nested object)
+    final token = json['access_token']?.toString() ??
+        json['token']?.toString() ??
+        json['user']?['token']?.toString() ??
+        json['data']?['token']?.toString();
+
+    // 2. Extract user data map
     final dynamic nested = json['user'] ?? json['data'];
-    final data = nested is Map<String, dynamic> ? nested : json;
+    final Map<String, dynamic> data = nested is Map<String, dynamic> ? nested : json;
+
+    final idVal = data['id'] ?? json['id'];
+    final id = idVal is int ? idVal : (int.tryParse(idVal?.toString() ?? '0') ?? 0);
+
+    final fName = data['first_name']?.toString() ?? json['first_name']?.toString();
+    final lName = data['last_name']?.toString() ?? json['last_name']?.toString();
+    final rawName = data['name']?.toString() ??
+        data['display_name']?.toString() ??
+        data['user_name']?.toString() ??
+        json['name']?.toString() ??
+        json['display_name']?.toString();
+
+    final email = data['email']?.toString() ?? json['email']?.toString() ?? '';
+    final phone = data['phone']?.toString() ?? json['phone']?.toString();
+    final avatar = data['avatar_url']?.toString() ??
+        data['avatar']?.toString() ??
+        json['avatar_url']?.toString() ??
+        json['avatar']?.toString();
+    final role = data['role']?.toString() ?? data['role_id']?.toString() ?? json['role']?.toString();
 
     return UserModel(
-      id: data['id'] is int ? data['id'] : int.tryParse(data['id']?.toString() ?? '0') ?? 0,
-      name: data['name']?.toString() ?? data['display_name']?.toString(),
-      firstName: data['first_name']?.toString(),
-      lastName: data['last_name']?.toString(),
-      email: data['email']?.toString() ?? '',
-      phone: data['phone']?.toString(),
-      avatarUrl: data['avatar_url']?.toString() ?? data['avatar']?.toString(),
-      role: data['role']?.toString(),
-      token: json['access_token']?.toString() ?? json['token']?.toString(),
+      id: id,
+      name: rawName,
+      firstName: fName,
+      lastName: lName,
+      email: email,
+      phone: phone,
+      avatarUrl: avatar,
+      role: role,
+      token: token,
     );
   }
 
@@ -57,6 +88,11 @@ class UserModel {
       'phone': phone,
       'avatar_url': avatarUrl,
       'role': role,
+      'token': token,
     };
   }
+
+  String toJsonString() => jsonEncode(toJson());
+
+  factory UserModel.fromJsonString(String str) => UserModel.fromJson(jsonDecode(str) as Map<String, dynamic>);
 }

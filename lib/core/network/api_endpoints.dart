@@ -38,6 +38,7 @@ class ApiEndpoints {
   // ==================== 5. CONTENT & DISCOVERY ====================
   static const String homeLayout = '/home-page';
   static const String services = '/services';
+  static const String gateways = '/gateways';
   static const String locations = '/locations';
   static String locationDetail(dynamic id) => '/location/$id';
   static const String news = '/news';

@@ -10,6 +10,7 @@ import '../auth/auth_provider.dart';
 import '../experiences/experience_details_screen.dart';
 import 'data/booking_draft.dart';
 import 'data/booking_repository.dart';
+import 'data/payment_gateways_provider.dart';
 
 class CheckoutScreen extends ConsumerStatefulWidget {
   final String experienceId;
@@ -28,7 +29,7 @@ class CheckoutScreen extends ConsumerStatefulWidget {
 class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   late int _ticketCount;
   late DateTime _selectedDate;
-  String _selectedPaymentMethod = 'apple_pay';
+  String _selectedPaymentMethod = 'moyasar_apple_pay';
   bool _isSubmitting = false;
 
   final TextEditingController _nameController = TextEditingController();
@@ -49,7 +50,11 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       final auth = ref.read(authProvider);
       if (auth.userName != null) _nameController.text = auth.userName!;
       if (auth.userEmail != null) _emailController.text = auth.userEmail!;
-      _phoneController.text = '0555123456';
+      if (auth.user?.phone != null) {
+        _phoneController.text = auth.user!.phone!;
+      } else {
+        _phoneController.text = '0555123456';
+      }
     });
   }
 
@@ -215,8 +220,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   Widget build(BuildContext context) {
     final currentLocale = ref.watch(localeProvider);
     final isAr = currentLocale.languageCode == 'ar';
+    final gatewaysAsync = ref.watch(paymentGatewaysProvider);
 
-    // If draft is passed from booking sheet, render with 100% exact parameters!
+    // If draft is passed from booking sheet, render with exact parameters!
     if (widget.draft != null) {
       final draft = widget.draft!;
       final subtotal = draft.subtotal;
@@ -225,6 +231,11 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       return Scaffold(
         appBar: AppBar(
           title: Text(isAr ? 'إتمام الحجز والدفع' : 'Checkout & Payment', style: AppTypography.headingSmall),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            tooltip: isAr ? 'رجوع' : 'Back',
+            onPressed: () => context.pop(),
+          ),
         ),
         body: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
@@ -368,6 +379,18 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
                 ),
               ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: _phoneController,
+                keyboardType: TextInputType.phone,
+                decoration: InputDecoration(
+                  labelText: isAr ? 'رقم الجوال' : 'Phone Number',
+                  prefixIcon: const Icon(Icons.phone_outlined, color: AppColors.primaryGold),
+                  filled: true,
+                  fillColor: AppColors.surface,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                ),
+              ),
               const SizedBox(height: 20),
 
               // 5. Coupon Code
@@ -401,13 +424,44 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               ),
               const SizedBox(height: 20),
 
-              // 6. Payment Methods
-              Text(isAr ? 'طريقة الدفع' : 'Payment Method', style: AppTypography.titleLarge),
+              // 6. Payment Gateways from API (Moyasar Gateway & Options)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(isAr ? 'طريقة وبوابة الدفع' : 'Payment Method & Gateway', style: AppTypography.titleLarge),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: AppColors.goldGlow,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: AppColors.primaryGold.withOpacity(0.3)),
+                    ),
+                    child: Text(
+                      isAr ? 'بوابة ميسر Moyasar معتمدة' : 'Moyasar Verified',
+                      style: const TextStyle(color: AppColors.primaryGold, fontSize: 10, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
+              ),
               const SizedBox(height: 10),
-              _buildPaymentOption('apple_pay', 'Apple Pay / Mada (مدى)', Icons.payment),
-              _buildPaymentOption('wallet', isAr ? 'محفظة مُضيف (رصيد: ١,٢٥٠ ر.س)' : 'Modeefe Wallet (1,250 SAR)', Icons.account_balance_wallet_outlined),
-              _buildPaymentOption('card', 'بطاقة فيزا / ماستركارد (Visa / MasterCard)', Icons.credit_card),
-              _buildPaymentOption('stc_pay', 'STC Pay', Icons.phone_android),
+
+              gatewaysAsync.when(
+                data: (gateways) {
+                  return Column(
+                    children: gateways.map((g) {
+                      return _buildGatewayTile(g, isAr);
+                    }).toList(),
+                  );
+                },
+                loading: () => const Center(child: Padding(padding: EdgeInsets.all(16), child: CircularProgressIndicator(color: AppColors.primaryGold))),
+                error: (_, __) => Column(
+                  children: [
+                    _buildPaymentOption('moyasar_apple_pay', 'Apple Pay (عبر بوابة ميسر)', Icons.payment),
+                    _buildPaymentOption('moyasar_mada', 'بطاقة مدى Mada (بوابة ميسر)', Icons.credit_card),
+                    _buildPaymentOption('wallet', isAr ? 'محفظة مُضيف (١,٢٥٠ ر.س)' : 'Modeefe Wallet', Icons.account_balance_wallet_outlined),
+                  ],
+                ),
+              ),
 
               const SizedBox(height: 20),
 
@@ -454,6 +508,19 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                   isAr: isAr,
                 ),
               ),
+              const SizedBox(height: 12),
+
+              // Cancel and Return Button
+              Center(
+                child: TextButton.icon(
+                  icon: const Icon(Icons.arrow_back, size: 16, color: AppColors.textSecondary),
+                  label: Text(
+                    isAr ? 'إلغاء والرجوع للتفاصيل' : 'Cancel and Return to Details',
+                    style: const TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.bold),
+                  ),
+                  onPressed: () => context.pop(),
+                ),
+              ),
               const SizedBox(height: 24),
             ],
           ),
@@ -467,6 +534,11 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(isAr ? 'إتمام الحجز والدفع' : 'Checkout & Payment', style: AppTypography.headingSmall),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          tooltip: isAr ? 'رجوع' : 'Back',
+          onPressed: () => context.pop(),
+        ),
       ),
       body: tourAsync.when(
         data: (tour) {
@@ -627,6 +699,18 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
                   ),
                 ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _phoneController,
+                  keyboardType: TextInputType.phone,
+                  decoration: InputDecoration(
+                    labelText: isAr ? 'رقم الجوال' : 'Phone Number',
+                    prefixIcon: const Icon(Icons.phone_outlined, color: AppColors.primaryGold),
+                    filled: true,
+                    fillColor: AppColors.surface,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                  ),
+                ),
                 const SizedBox(height: 24),
 
                 // Coupon Section
@@ -661,11 +745,11 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                 const SizedBox(height: 24),
 
                 // Payment Methods
-                Text(isAr ? 'طريقة الدفع' : 'Payment Method', style: AppTypography.titleLarge),
+                Text(isAr ? 'طريقة وبوابة الدفع' : 'Payment Method', style: AppTypography.titleLarge),
                 const SizedBox(height: 12),
-                _buildPaymentOption('apple_pay', 'Apple Pay / Mada (مدى)', Icons.payment),
+                _buildPaymentOption('moyasar_apple_pay', 'Apple Pay (عبر بوابة ميسر)', Icons.payment),
+                _buildPaymentOption('moyasar_mada', 'بطاقة مدى Mada (بوابة ميسر)', Icons.credit_card),
                 _buildPaymentOption('wallet', isAr ? 'رصيد المحفظة (١,٢٥٠ ر.س)' : 'Wallet Balance (1,250 SAR)', Icons.account_balance_wallet_outlined),
-                _buildPaymentOption('card', 'بطاقة ائتمانية (Visa / MasterCard)', Icons.credit_card),
 
                 const SizedBox(height: 24),
 
@@ -709,6 +793,17 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                     isAr: isAr,
                   ),
                 ),
+                const SizedBox(height: 12),
+                Center(
+                  child: TextButton.icon(
+                    icon: const Icon(Icons.arrow_back, size: 16, color: AppColors.textSecondary),
+                    label: Text(
+                      isAr ? 'إلغاء والرجوع للتفاصيل' : 'Cancel and Return to Details',
+                      style: const TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.bold),
+                    ),
+                    onPressed: () => context.pop(),
+                  ),
+                ),
                 const SizedBox(height: 24),
               ],
             ),
@@ -717,6 +812,56 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         loading: () => const Center(child: CircularProgressIndicator(color: AppColors.primaryGold)),
         error: (_, __) => Center(
           child: Text(isAr ? 'تعذر تحميل بيانات التجربة للحجز' : 'Failed to load booking details', style: AppTypography.titleMedium),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGatewayTile(PaymentGatewayItem gateway, bool isAr) {
+    final isSelected = _selectedPaymentMethod == gateway.id;
+    IconData iconData = Icons.payment;
+    if (gateway.iconType == 'apple_pay') iconData = Icons.phone_iphone;
+    if (gateway.iconType == 'mada' || gateway.iconType == 'card') iconData = Icons.credit_card;
+    if (gateway.iconType == 'wallet') iconData = Icons.account_balance_wallet_outlined;
+    if (gateway.iconType == 'stc_pay') iconData = Icons.phone_android;
+    if (gateway.iconType == 'offline') iconData = Icons.handshake_outlined;
+
+    return GestureDetector(
+      onTap: () => setState(() => _selectedPaymentMethod = gateway.id),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.goldGlow : AppColors.surface,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: isSelected ? AppColors.primaryGold : AppColors.border,
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(iconData, color: isSelected ? AppColors.primaryGold : AppColors.textSecondary),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    isAr ? gateway.nameAr : gateway.name,
+                    style: AppTypography.bodyLarge.copyWith(
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    isAr ? gateway.descAr : gateway.desc,
+                    style: AppTypography.bodySmall.copyWith(color: AppColors.textMuted, fontSize: 11),
+                  ),
+                ],
+              ),
+            ),
+            if (isSelected) const Icon(Icons.check_circle, color: AppColors.primaryGold, size: 20),
+          ],
         ),
       ),
     );

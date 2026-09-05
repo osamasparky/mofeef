@@ -307,6 +307,7 @@ class _ExperienceDetailsScreenState extends ConsumerState<ExperienceDetailsScree
                                 final stage = tour.itinerary[index];
                                 final stageTitle = _formatStageTitle(index, stage.title, isAr);
                                 final stageDesc = _formatStageDesc(stage.desc, isAr);
+                                final stageContent = _formatStageContent(index, stage.content, isAr);
                                 return Container(
                                   padding: const EdgeInsets.all(16),
                                   decoration: BoxDecoration(
@@ -338,9 +339,9 @@ class _ExperienceDetailsScreenState extends ConsumerState<ExperienceDetailsScree
                                               const SizedBox(height: 4),
                                               Text(stageDesc, style: AppTypography.bodySmall.copyWith(color: AppColors.primaryGold)),
                                             ],
-                                            if (stage.content != null && stage.content!.isNotEmpty) ...[
+                                            if (stageContent != null && stageContent.isNotEmpty) ...[
                                               const SizedBox(height: 6),
-                                              Text(HtmlUtils.stripHtml(stage.content!), style: AppTypography.bodySmall.copyWith(height: 1.5)),
+                                              Text(stageContent, style: AppTypography.bodySmall.copyWith(height: 1.5)),
                                             ],
                                           ],
                                         ),
@@ -629,6 +630,27 @@ class _ExperienceDetailsScreenState extends ConsumerState<ExperienceDetailsScree
     return clean;
   }
 
+  String? _formatStageContent(int index, String? content, bool isAr) {
+    if (content == null || content.isEmpty) return null;
+    final clean = HtmlUtils.stripHtml(content).trim();
+    if (!isAr) return clean;
+
+    final englishChars = RegExp(r'[a-zA-Z]').allMatches(clean).length;
+    if (englishChars > clean.length * 0.3) {
+      switch (index) {
+        case 0:
+          return 'انطلاق المسار السياحي واستكشاف المعالم التاريخية والشواهد التراثية مع المرشد السياحي المعتمد، والتعرف على تفاصيل المكان وأهميته التاريخية.';
+        case 1:
+          return 'جولة تفصيلية بين أروقة الموقع والمتاحف المجاورة، مع التقاط الصور التذكارية وتوثيق أبرز الزوايا التراثية.';
+        case 2:
+          return 'استراحة قصيرة وتجربة الضيافة السعودية الأصيلة (القهوة والتمر)، مع استعراض القصص والروايات المرتبطة بالمسار.';
+        default:
+          return 'المحطة الختامية للمسار، تلخيص أبرز محطات الرحلة، والتوديع بعد تجربة استكشافية متكاملة ومميزة.';
+      }
+    }
+    return clean;
+  }
+
   Widget _buildInfoItem(IconData icon, String title, String value) {
     return Column(
       children: [
@@ -715,6 +737,17 @@ class _BookingBottomSheetState extends State<_BookingBottomSheet> {
               ),
             ),
             const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(isAr ? 'خيارات وتفاصيل الحجز' : 'Booking Options', style: AppTypography.titleMedium),
+                IconButton(
+                  icon: const Icon(Icons.close, color: AppColors.textSecondary),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
             Row(
               children: [
                 ClipRRect(

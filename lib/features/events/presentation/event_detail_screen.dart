@@ -445,7 +445,17 @@ class _EventBookingBottomSheetState extends State<_EventBookingBottomSheet> {
                 decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2)),
               ),
             ),
-            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(isAr ? 'خيارات وتذاكر الفعالية' : 'Event Booking Options', style: AppTypography.titleMedium),
+                IconButton(
+                  icon: const Icon(Icons.close, color: AppColors.textSecondary),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
             Row(
               children: [
                 ClipRRect(

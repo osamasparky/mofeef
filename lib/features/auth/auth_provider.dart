@@ -43,13 +43,22 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   Future<void> checkAuthStatus() async {
     final token = await _repository.getSavedToken();
+    final savedUser = await _repository.getSavedUser();
+
+    if (savedUser != null) {
+      state = state.copyWith(isAuthenticated: true, user: savedUser);
+    }
+
     if (token != null && token.isNotEmpty) {
       try {
         final profile = await _repository.getProfile();
         state = state.copyWith(isAuthenticated: true, user: profile);
       } catch (_) {
-        // Token might still be valid or offline
-        state = state.copyWith(isAuthenticated: true);
+        if (savedUser != null) {
+          state = state.copyWith(isAuthenticated: true, user: savedUser);
+        } else {
+          state = state.copyWith(isAuthenticated: true);
+        }
       }
     }
   }
@@ -58,10 +67,16 @@ class AuthNotifier extends StateNotifier<AuthState> {
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
       final user = await _repository.login(email, password);
+      UserModel finalUser = user;
+      try {
+        final profile = await _repository.getProfile();
+        finalUser = profile;
+      } catch (_) {}
+
       state = state.copyWith(
         isAuthenticated: true,
         isLoading: false,
-        user: user,
+        user: finalUser,
       );
       return true;
     } on Failure catch (e) {
@@ -83,10 +98,16 @@ class AuthNotifier extends StateNotifier<AuthState> {
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
       final user = await _repository.register(data);
+      UserModel finalUser = user;
+      try {
+        final profile = await _repository.getProfile();
+        finalUser = profile;
+      } catch (_) {}
+
       state = state.copyWith(
         isAuthenticated: true,
         isLoading: false,
-        user: user,
+        user: finalUser,
       );
       return true;
     } on Failure catch (e) {
@@ -100,6 +121,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   void updateUserState(UserModel user) {
     state = state.copyWith(user: user);
+    _repository.saveUser(user);
   }
 
   Future<void> logout() async {
