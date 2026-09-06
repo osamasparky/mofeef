@@ -333,59 +333,68 @@ class HomeScreen extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 18),
-              // 3. Complete Categories Grid (5 in a row + richer deeper colors)
+              // 3. Complete Categories Grid (5 in a row + centered)
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 14),
+                padding: const EdgeInsets.symmetric(horizontal: 10),
                 child: Column(
                   children: [
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        _buildCategoryCard(
-                          context,
-                          label: isAr ? 'الوجهات' : 'Destinations',
-                          icon: Icons.map_outlined,
-                          accentColor: const Color(0xFF38BDF8),
-                          gradientColors: const [Color(0xFF0C3854), Color(0xFF051D2E)],
-                          onTap: () => context.push('/locations'),
+                        Expanded(
+                          child: _buildCategoryCard(
+                            context,
+                            label: isAr ? 'الوجهات' : 'Destinations',
+                            icon: Icons.map_outlined,
+                            accentColor: const Color(0xFF38BDF8),
+                            gradientColors: const [Color(0xFF0C3854), Color(0xFF051D2E)],
+                            onTap: () => context.push('/locations'),
+                          ),
                         ),
-                        _buildCategoryCard(
-                          context,
-                          label: isAr ? 'المسارات' : 'Trails',
-                          icon: Icons.alt_route,
-                          accentColor: const Color(0xFFFBBF24),
-                          gradientColors: const [Color(0xFF422F09), Color(0xFF221703)],
-                          onTap: () => context.push('/trails'),
+                        Expanded(
+                          child: _buildCategoryCard(
+                            context,
+                            label: isAr ? 'المسارات' : 'Trails',
+                            icon: Icons.alt_route,
+                            accentColor: const Color(0xFFFBBF24),
+                            gradientColors: const [Color(0xFF422F09), Color(0xFF221703)],
+                            onTap: () => context.push('/trails'),
+                          ),
                         ),
-                        _buildCategoryCard(
-                          context,
-                          label: isAr ? 'المتاحف' : 'Museums',
-                          icon: Icons.account_balance_outlined,
-                          accentColor: const Color(0xFFC084FC),
-                          gradientColors: const [Color(0xFF3B1552), Color(0xFF1F082C)],
-                          onTap: () => context.push('/museums'),
+                        Expanded(
+                          child: _buildCategoryCard(
+                            context,
+                            label: isAr ? 'المتاحف' : 'Museums',
+                            icon: Icons.account_balance_outlined,
+                            accentColor: const Color(0xFFC084FC),
+                            gradientColors: const [Color(0xFF3B1552), Color(0xFF1F082C)],
+                            onTap: () => context.push('/museums'),
+                          ),
                         ),
-                        _buildCategoryCard(
-                          context,
-                          label: isAr ? 'الفعاليات' : 'Events',
-                          icon: Icons.festival_outlined,
-                          accentColor: const Color(0xFFF43F5E),
-                          gradientColors: const [Color(0xFF4A0D1E), Color(0xFF25040D)],
-                          onTap: () => context.push('/events'),
+                        Expanded(
+                          child: _buildCategoryCard(
+                            context,
+                            label: isAr ? 'الفعاليات' : 'Events',
+                            icon: Icons.festival_outlined,
+                            accentColor: const Color(0xFFF43F5E),
+                            gradientColors: const [Color(0xFF4A0D1E), Color(0xFF25040D)],
+                            onTap: () => context.push('/events'),
+                          ),
                         ),
-                        _buildCategoryCard(
-                          context,
-                          label: isAr ? 'المرشدون' : 'Guides',
-                          icon: Icons.person_pin_outlined,
-                          accentColor: const Color(0xFF34D399),
-                          gradientColors: const [Color(0xFF0D3D2A), Color(0xFF052015)],
-                          onTap: () => context.push('/guides'),
+                        Expanded(
+                          child: _buildCategoryCard(
+                            context,
+                            label: isAr ? 'المرشدون' : 'Guides',
+                            icon: Icons.person_pin_outlined,
+                            accentColor: const Color(0xFF34D399),
+                            gradientColors: const [Color(0xFF0D3D2A), Color(0xFF052015)],
+                            onTap: () => context.push('/guides'),
+                          ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 12),
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         _buildCategoryCard(
                           context,
@@ -395,7 +404,7 @@ class HomeScreen extends ConsumerWidget {
                           gradientColors: const [Color(0xFF183354), Color(0xFF0C1D32)],
                           onTap: () => context.push('/cars'),
                         ),
-                        const SizedBox(width: 14),
+                        const SizedBox(width: 24),
                         _buildCategoryCard(
                           context,
                           label: isAr ? 'المتجر' : 'Shop',
@@ -991,14 +1000,15 @@ class HomeScreen extends ConsumerWidget {
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
-      child: SizedBox(
-        width: 62,
+      child: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Container(
               width: 58,
               height: 52,
+              alignment: Alignment.center,
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
@@ -1020,7 +1030,9 @@ class HomeScreen extends ConsumerWidget {
                   ),
                 ],
               ),
-              child: Icon(icon, color: accentColor, size: 24),
+              child: Center(
+                child: Icon(icon, color: accentColor, size: 24),
+              ),
             ),
             const SizedBox(height: 5),
             Text(
