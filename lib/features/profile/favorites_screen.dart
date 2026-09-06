@@ -32,22 +32,49 @@ class FavoritesScreen extends ConsumerWidget {
                     const Icon(Icons.favorite_border, size: 54, color: AppColors.textMuted),
                     const SizedBox(height: 16),
                     Text(
-                      isAr ? 'لا يوجد مفضلة' : 'No Favorites',
+                      isAr ? 'لا توجد عناصر في المفضلة حتى الآن' : 'No favorites yet',
                       style: AppTypography.titleLarge,
+                      textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 6),
                     Text(
                       isAr
-                          ? 'استكشف التجارب والوجهات واضغط على علامة القلب لحفظها هنا'
-                          : 'Explore tours and destinations and tap the heart icon to save them here.',
+                          ? 'قم بإضافة كل ما تفضله لتجده بسهولة في أي وقت.'
+                          : 'Add your favorite experiences and places to easily find them anytime.',
                       style: AppTypography.bodySmall,
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 24),
-                    ElevatedButton.icon(
-                      onPressed: () => context.go('/home'),
-                      icon: const Icon(Icons.home_outlined),
-                      label: Text(isAr ? 'العودة إلى الرئيسية' : 'Back to Home'),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 48,
+                      child: ElevatedButton.icon(
+                        onPressed: () => context.go('/discover'),
+                        icon: const Icon(Icons.explore_outlined),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primaryGold,
+                          foregroundColor: AppColors.textDark,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          textStyle: AppTypography.titleSmall.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                        label: Text(isAr ? 'تصفح الآن' : 'Browse Now'),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 48,
+                      child: OutlinedButton.icon(
+                        onPressed: () => context.go('/home'),
+                        icon: const Icon(Icons.home_outlined),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          side: const BorderSide(color: AppColors.border),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          textStyle: AppTypography.titleSmall,
+                        ),
+                        label: Text(isAr ? 'العودة إلى الرئيسية' : 'Back to Home'),
+                      ),
                     ),
                   ],
                 ),

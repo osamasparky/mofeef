@@ -41,35 +41,13 @@ class MyReservationsScreen extends ConsumerWidget {
             upcomingBookingsAsync.when(
               data: (bookings) {
                 if (bookings.isEmpty) {
-                  return Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(32.0),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.confirmation_number_outlined, size: 54, color: AppColors.textMuted),
-                          const SizedBox(height: 16),
-                          Text(
-                            isAr ? 'لا يوجد حجوزات' : 'No Bookings',
-                            style: AppTypography.titleLarge,
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            isAr
-                                ? 'استكشف التجارب والمتاحف واحجز رحلتك القادمة بكل سهولة.'
-                                : 'Explore tours and museums and book your next trip easily.',
-                            style: AppTypography.bodySmall,
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 24),
-                          ElevatedButton.icon(
-                            onPressed: () => context.go('/home'),
-                            icon: const Icon(Icons.home_outlined),
-                            label: Text(isAr ? 'العودة إلى الرئيسية' : 'Back to Home'),
-                          ),
-                        ],
-                      ),
-                    ),
+                  return _buildEmptyState(
+                    context,
+                    isAr: isAr,
+                    title: isAr ? 'لا توجد حجوزات حتى الآن' : 'No bookings yet',
+                    subtitle: isAr
+                        ? 'ابدأ بأول حجز لك واستمتع بتجربة مميزة.'
+                        : 'Start your first booking and enjoy an unforgettable experience.',
                   );
                 }
                 return ListView.separated(
@@ -116,30 +94,13 @@ class MyReservationsScreen extends ConsumerWidget {
             ticketsAsync.when(
               data: (tickets) {
                 if (tickets.isEmpty) {
-                  return Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(32.0),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.history_outlined, size: 48, color: AppColors.textMuted),
-                          const SizedBox(height: 12),
-                          Text(isAr ? 'لا يوجد حجوزات' : 'No Bookings', style: AppTypography.titleLarge),
-                          const SizedBox(height: 6),
-                          Text(
-                            isAr ? 'لا توجد حجوزات سابقة مكتملة حتى الآن' : 'No completed bookings yet.',
-                            style: AppTypography.bodySmall,
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 24),
-                          ElevatedButton.icon(
-                            onPressed: () => context.go('/home'),
-                            icon: const Icon(Icons.home_outlined),
-                            label: Text(isAr ? 'العودة إلى الرئيسية' : 'Back to Home'),
-                          ),
-                        ],
-                      ),
-                    ),
+                  return _buildEmptyState(
+                    context,
+                    isAr: isAr,
+                    title: isAr ? 'لا توجد حجوزات حتى الآن' : 'No bookings yet',
+                    subtitle: isAr
+                        ? 'ابدأ بأول حجز لك واستمتع بتجربة مميزة.'
+                        : 'Start your first booking and enjoy an unforgettable experience.',
                   );
                 }
                 return ListView.separated(
@@ -152,34 +113,93 @@ class MyReservationsScreen extends ConsumerWidget {
                       context,
                       isAr: isAr,
                       title: t.title,
-                      category: isAr ? 'رحلة مكتملة' : 'Completed Trip',
+                      category: isAr ? 'تذكرة مؤكدة' : 'Confirmed Ticket',
                       bookingCode: t.bookingCode,
                       date: t.date,
-                      time: '',
+                      time: isAr ? 'تذكرة إلكترونية' : 'E-Ticket',
                       ticketsCount: 1,
                       price: isAr ? 'مكتملة' : 'Completed',
-                      status: isAr ? 'مكتملة' : 'Completed',
-                      statusColor: AppColors.textSecondary,
+                      status: isAr ? 'مكتمل' : 'Completed',
+                      statusColor: AppColors.primaryGold,
                     );
                   },
                 );
               },
               loading: () => const Center(child: CircularProgressIndicator(color: AppColors.primaryGold)),
-              error: (_, __) => Center(child: Text(isAr ? 'لا توجد حجوزات مكتملة' : 'No completed bookings', style: AppTypography.bodyMedium)),
-            ),
-
-            // Cancelled Tab
-            Center(
-              child: Padding(
-                padding: const EdgeInsets.all(32.0),
+              error: (_, __) => Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.cancel_outlined, size: 48, color: AppColors.textMuted),
+                    const Icon(Icons.error_outline, size: 48, color: AppColors.error),
                     const SizedBox(height: 12),
-                    Text(isAr ? 'لا توجد حجوزات ملغاة' : 'No cancelled bookings', style: AppTypography.bodyMedium),
+                    Text(isAr ? 'تعذر تحميل التذاكر' : 'Failed to load tickets', style: AppTypography.titleMedium),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: () => ref.refresh(myTicketsProvider),
+                      child: Text(isAr ? 'إعادة المحاولة' : 'Retry'),
+                    ),
                   ],
                 ),
+              ),
+            ),
+
+            // Cancelled Tab
+            _buildEmptyState(
+              context,
+              isAr: isAr,
+              title: isAr ? 'لا توجد حجوزات حتى الآن' : 'No bookings yet',
+              subtitle: isAr
+                  ? 'ابدأ بأول حجز لك واستمتع بتجربة مميزة.'
+                  : 'Start your first booking and enjoy an unforgettable experience.',
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(BuildContext context, {required bool isAr, required String title, required String subtitle}) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.confirmation_number_outlined, size: 54, color: AppColors.textMuted),
+            const SizedBox(height: 16),
+            Text(title, style: AppTypography.titleLarge, textAlign: TextAlign.center),
+            const SizedBox(height: 6),
+            Text(subtitle, style: AppTypography.bodySmall, textAlign: TextAlign.center),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton.icon(
+                onPressed: () => context.go('/discover'),
+                icon: const Icon(Icons.explore_outlined),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primaryGold,
+                  foregroundColor: AppColors.textDark,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  textStyle: AppTypography.titleSmall.copyWith(fontWeight: FontWeight.bold),
+                ),
+                label: Text(isAr ? 'ابدأ أول حجز لك' : 'Start Your First Booking'),
+              ),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: OutlinedButton.icon(
+                onPressed: () => context.go('/home'),
+                icon: const Icon(Icons.home_outlined),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  side: const BorderSide(color: AppColors.border),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  textStyle: AppTypography.titleSmall,
+                ),
+                label: Text(isAr ? 'العودة إلى الرئيسية' : 'Back to Home'),
               ),
             ),
           ],
