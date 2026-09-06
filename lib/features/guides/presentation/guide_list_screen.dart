@@ -38,13 +38,13 @@ class GuideListScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('الأدلاء السياحيين المعتمدين', style: AppTypography.headingSmall),
+        title: Text('المرشدون السياحيون المعتمدون', style: AppTypography.headingSmall),
       ),
       body: guidesAsync.when(
         data: (guides) {
           if (guides.isEmpty) {
             return Center(
-              child: Text('لا يوجد أدلاء متاحون حالياً', style: AppTypography.bodyMedium),
+              child: Text('لا يوجد مرشدون متاحون حالياً', style: AppTypography.bodyMedium),
             );
           }
           return ListView.separated(

@@ -291,34 +291,7 @@ class _CarDetailScreenState extends ConsumerState<CarDetailScreen> {
                               }).toList(),
                             ),
                           ],
-                          const SizedBox(height: 24),
-
-                          // Rental Terms
-                          Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: AppColors.card,
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: AppColors.border),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    const Icon(Icons.info_outline, color: AppColors.primaryGold, size: 20),
-                                    const SizedBox(width: 8),
-                                    Text('شروط الاستئجار والتسليم', style: AppTypography.titleSmall),
-                                  ],
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  '• الهوية الوطنية أو جواز السفر ساري المفعول.\n• رخصة قيادة سارية ومطابقة للأنظمة السعودية.\n• إمكانية تسليم السيارة في المطار أو الفندق مجاناً.',
-                                  style: AppTypography.bodySmall.copyWith(height: 1.7),
-                                ),
-                              ],
-                            ),
-                          ),
+                          const SizedBox(height: 32),
                         ],
                       ),
                     ),

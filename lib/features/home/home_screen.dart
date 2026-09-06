@@ -13,6 +13,7 @@ import '../discovery/data/models/discovery_models.dart';
 import '../events/data/event_repository.dart';
 import '../museums/data/museum_repository.dart';
 import '../cars/data/car_repository.dart';
+import '../guides/data/guide_repository.dart';
 import '../shop/data/shop_repository.dart';
 import '../cart/data/cart_repository.dart';
 import '../auth/auth_provider.dart';
@@ -28,6 +29,7 @@ class HomeScreen extends ConsumerWidget {
     final eventsAsync = ref.watch(eventsListProvider);
     final museumsAsync = ref.watch(museumsListProvider);
     final carsAsync = ref.watch(carsListProvider);
+    final guidesAsync = ref.watch(guidesListProvider);
     final productsAsync = ref.watch(productsListProvider);
     final cartState = ref.watch(cartNotifierProvider);
     final currentLocale = ref.watch(localeProvider);
@@ -641,7 +643,93 @@ class HomeScreen extends ConsumerWidget {
 
                 const SizedBox(height: 24),
 
-                // 9. Gift Shop Section ("متجر الهدايا")
+                // 9. Certified Tour Guides Section ("المرشدون السياحيون المعتمدون")
+                SectionHeader(
+                  title: isAr ? 'المرشدون السياحيون المعتمدون' : 'Certified Tour Guides',
+                  subtitle: isAr ? 'نخبة من المرشدين المرخصين والمحترفين' : 'Licensed & professional tour guides',
+                  actionText: isAr ? 'المزيد' : 'More',
+                  onActionTap: () => context.push('/guides'),
+                ),
+
+                guidesAsync.when(
+                  data: (guides) {
+                    if (guides.isEmpty) return const SizedBox.shrink();
+                    return SizedBox(
+                      height: 125,
+                      child: ListView.separated(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        scrollDirection: Axis.horizontal,
+                        itemCount: guides.length,
+                        separatorBuilder: (_, __) => const SizedBox(width: 12),
+                        itemBuilder: (context, index) {
+                          final guide = guides[index];
+                          return GestureDetector(
+                            onTap: () => context.push('/guide/${guide.id}'),
+                            child: Container(
+                              width: 240,
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: AppColors.card,
+                                borderRadius: BorderRadius.circular(18),
+                                border: Border.all(color: AppColors.border),
+                              ),
+                              child: Row(
+                                children: [
+                                  CircleAvatar(
+                                    radius: 30,
+                                    backgroundImage: CachedNetworkImageProvider(guide.imageUrl),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Text(
+                                          guide.name,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: AppTypography.titleSmall,
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          guide.title,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: AppTypography.bodySmall.copyWith(fontSize: 11),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Row(
+                                              children: [
+                                                const Icon(Icons.star, color: AppColors.primaryGold, size: 13),
+                                                const SizedBox(width: 3),
+                                                Text('${guide.rating}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                                              ],
+                                            ),
+                                            Text(guide.hourlyRate, style: AppTypography.price.copyWith(fontSize: 11)),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    );
+                  },
+                  loading: () => const SizedBox.shrink(),
+                  error: (_, __) => const SizedBox.shrink(),
+                ),
+
+                const SizedBox(height: 24),
+
+                // 10. Gift Shop Section ("متجر الهدايا")
                 SectionHeader(
                   title: isAr ? 'متجر الهدايا والتذكارات' : 'Gift Shop & Souvenirs',
                   subtitle: isAr ? 'هدايا وتذكارات تراثية سعودية أصيلة' : 'Authentic Saudi gifts and souvenirs',

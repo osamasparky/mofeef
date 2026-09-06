@@ -47,6 +47,16 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
     'Heritage Shop',
   ];
 
+  final List<IconData> _categoryIcons = [
+    Icons.explore,
+    Icons.route,
+    Icons.account_balance,
+    Icons.festival,
+    Icons.person_pin,
+    Icons.directions_car,
+    Icons.card_giftcard,
+  ];
+
   final List<String> _citiesAr = ['الكل', 'العُلا', 'الرياض', 'جدة التاريخية', 'الدرعية', 'مكة المكرمة', 'المدينة المنورة', 'عسير'];
   final List<String> _citiesEn = ['All', 'AlUla', 'Riyadh', 'Historic Jeddah', 'Diriyah', 'Makkah', 'Madinah', 'Asir'];
 
@@ -104,15 +114,13 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
                             _priceRange = const RangeValues(0, 2000);
                             _minRating = 0.0;
                           });
-                          setState(() {});
                         },
-                        child: Text(
-                          isAr ? 'إعادة ضبط' : 'Reset All',
-                          style: const TextStyle(color: AppColors.error),
-                        ),
+                        child: Text(isAr ? 'إعادة ضبط' : 'Reset', style: const TextStyle(color: AppColors.primaryGold)),
                       ),
                     ],
                   ),
+                  const Divider(color: AppColors.border),
+                  const SizedBox(height: 12),
                   // Category Filter
                   Text(isAr ? 'التصنيف الرئيسي' : 'Category', style: AppTypography.titleSmall),
                   const SizedBox(height: 8),
@@ -127,7 +135,6 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
                         selected: isSel,
                         onSelected: (val) {
                           setModalState(() => _selectedCategoryIndex = idx);
-                          setState(() {});
                         },
                         selectedColor: AppColors.primaryGold,
                         backgroundColor: AppColors.card,
@@ -147,24 +154,24 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
                     spacing: 8,
                     runSpacing: 8,
                     children: cities.map((city) {
-                      final isSel = (_selectedCity == city) || (_selectedCity == 'الكل' && city == (isAr ? 'الكل' : 'All'));
+                      final isSel = _selectedCity == city;
                       return ChoiceChip(
                         label: Text(city),
                         selected: isSel,
                         onSelected: (val) {
                           setModalState(() => _selectedCity = city);
-                          setState(() {});
                         },
                         selectedColor: AppColors.primaryGold,
                         backgroundColor: AppColors.card,
                         labelStyle: TextStyle(
                           color: isSel ? AppColors.textDark : AppColors.textPrimary,
                           fontWeight: isSel ? FontWeight.bold : FontWeight.normal,
+                          fontSize: 12,
                         ),
                       );
                     }).toList(),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 18),
 
                   // Price Range
                   Row(
@@ -186,37 +193,39 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
                     inactiveColor: AppColors.border,
                     onChanged: (val) {
                       setModalState(() => _priceRange = val);
-                      setState(() {});
                     },
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 14),
 
-                  // Minimum Rating
+                  // Min Rating
                   Text(isAr ? 'الحد الأدنى للتقييم' : 'Minimum Rating', style: AppTypography.titleSmall),
                   const SizedBox(height: 8),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [0.0, 3.0, 4.0, 4.5].map((r) {
+                    children: [0.0, 3.0, 4.0, 4.5, 4.8].map((r) {
                       final isSel = _minRating == r;
-                      final label = r == 0.0 ? (isAr ? 'الكل' : 'All') : '$r+ ⭐';
                       return GestureDetector(
-                        onTap: () {
-                          setModalState(() => _minRating = r);
-                          setState(() {});
-                        },
+                        onTap: () => setModalState(() => _minRating = r),
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                           decoration: BoxDecoration(
-                            color: isSel ? AppColors.goldGlow : AppColors.card,
+                            color: isSel ? AppColors.primaryGold : AppColors.card,
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(color: isSel ? AppColors.primaryGold : AppColors.border),
                           ),
-                          child: Text(
-                            label,
-                            style: TextStyle(
-                              color: isSel ? AppColors.primaryGold : AppColors.textPrimary,
-                              fontWeight: isSel ? FontWeight.bold : FontWeight.normal,
-                            ),
+                          child: Row(
+                            children: [
+                              Icon(Icons.star, size: 14, color: isSel ? AppColors.textDark : AppColors.primaryGold),
+                              const SizedBox(width: 4),
+                              Text(
+                                r == 0.0 ? (isAr ? 'الكل' : 'All') : '$r+',
+                                style: TextStyle(
+                                  color: isSel ? AppColors.textDark : AppColors.textPrimary,
+                                  fontWeight: isSel ? FontWeight.bold : FontWeight.normal,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       );
@@ -224,9 +233,13 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
                   ),
                   const SizedBox(height: 24),
 
+                  // Apply Button
                   CustomButton(
                     text: isAr ? 'تطبيق الفلاتر' : 'Apply Filters',
-                    onPressed: () => Navigator.pop(ctx),
+                    onPressed: () {
+                      setState(() {});
+                      Navigator.pop(context);
+                    },
                   ),
                 ],
               ),
@@ -246,32 +259,42 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isAr ? 'اكتشف روائع المملكة' : 'Discover Saudi Wonders', style: AppTypography.headingSmall),
+        title: Text(isAr ? 'اكتشف المملكة' : 'Discover Saudi', style: AppTypography.headingSmall),
+        centerTitle: true,
       ),
       body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Search & Filter Row
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
             child: Row(
               children: [
                 Expanded(
-                  child: TextField(
-                    controller: _searchController,
-                    onSubmitted: (_) => setState(() {}),
-                    decoration: InputDecoration(
-                      hintText: isAr ? 'ابحث عن وجهة، مسار، متحف، سيارة...' : 'Search trails, museums, cars...',
-                      prefixIcon: const Icon(Icons.search, color: AppColors.primaryGold),
-                      suffixIcon: _searchController.text.isNotEmpty
-                          ? IconButton(
-                              icon: const Icon(Icons.clear, color: AppColors.textSecondary),
-                              onPressed: () {
-                                _searchController.clear();
-                                setState(() {});
-                              },
-                            )
-                          : null,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: AppColors.card,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: AppColors.border),
+                    ),
+                    child: TextField(
+                      controller: _searchController,
+                      onChanged: (_) => setState(() {}),
+                      decoration: InputDecoration(
+                        hintText: isAr ? 'ابحث عن مسار، فعالية، مرشد أو منتج...' : 'Search trails, events, guides, cars...',
+                        hintStyle: AppTypography.bodySmall.copyWith(color: AppColors.textMuted),
+                        prefixIcon: const Icon(Icons.search, color: AppColors.primaryGold),
+                        suffixIcon: _searchController.text.isNotEmpty
+                            ? IconButton(
+                                icon: const Icon(Icons.clear, size: 18, color: AppColors.textMuted),
+                                onPressed: () {
+                                  _searchController.clear();
+                                  setState(() {});
+                                },
+                              )
+                            : null,
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      ),
                     ),
                   ),
                 ),
@@ -279,21 +302,20 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
                 GestureDetector(
                   onTap: () => _showFilterSheet(isAr),
                   child: Container(
-                    height: 52,
-                    width: 52,
+                    padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: AppColors.goldGlow,
+                      color: AppColors.card,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppColors.primaryGold),
+                      border: Border.all(color: AppColors.primaryGold.withOpacity(0.5)),
                     ),
-                    child: const Icon(Icons.tune, color: AppColors.primaryGold),
+                    child: const Icon(Icons.tune, color: AppColors.primaryGold, size: 22),
                   ),
                 ),
               ],
             ),
           ),
 
-          // Dynamic Category Chips
+          // Categories Horizontal Chips
           SizedBox(
             height: 48,
             child: ListView.separated(
@@ -304,28 +326,55 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
               itemBuilder: (context, index) {
                 final cat = categories[index];
                 final isSelected = _selectedCategoryIndex == index;
-                return ChoiceChip(
-                  label: Text(cat),
-                  selected: isSelected,
-                  onSelected: (selected) {
-                    if (selected) setState(() => _selectedCategoryIndex = index);
-                  },
-                  selectedColor: AppColors.primaryGold,
-                  backgroundColor: AppColors.surface,
-                  labelStyle: AppTypography.bodySmall.copyWith(
-                    color: isSelected ? AppColors.textDark : AppColors.textPrimary,
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                final icon = _categoryIcons[index % _categoryIcons.length];
+                return GestureDetector(
+                  onTap: () => setState(() => _selectedCategoryIndex = index),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 250),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: isSelected ? AppColors.primaryGold : AppColors.card,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: isSelected ? AppColors.primaryGold : AppColors.border,
+                        width: 1.2,
+                      ),
+                      boxShadow: isSelected
+                          ? [
+                              BoxShadow(
+                                color: AppColors.primaryGold.withOpacity(0.3),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              )
+                            ]
+                          : null,
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          icon,
+                          size: 16,
+                          color: isSelected ? AppColors.textDark : AppColors.primaryGold,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          cat,
+                          style: TextStyle(
+                            color: isSelected ? AppColors.textDark : AppColors.textPrimary,
+                            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  side: BorderSide(
-                    color: isSelected ? AppColors.primaryGold : AppColors.border,
-                  ),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 );
               },
             ),
           ),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
 
           // Content body based on selected category index
           Expanded(
@@ -379,7 +428,7 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
               final list = tours.take(6).toList();
               if (list.isEmpty) return const SizedBox.shrink();
               return SizedBox(
-                height: 220,
+                height: 230,
                 child: ListView.separated(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   scrollDirection: Axis.horizontal,
@@ -393,18 +442,45 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
                         width: 220,
                         decoration: BoxDecoration(
                           color: AppColors.card,
-                          borderRadius: BorderRadius.circular(18),
+                          borderRadius: BorderRadius.circular(20),
                           border: Border.all(color: AppColors.border),
+                          boxShadow: const [
+                            BoxShadow(color: Colors.black26, blurRadius: 6, offset: Offset(0, 3)),
+                          ],
                         ),
                         clipBehavior: Clip.antiAlias,
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            CachedNetworkImage(
-                              imageUrl: tour.imageUrl ?? 'https://images.unsplash.com/photo-1590073844006-33379778ae09?w=800&q=80',
-                              height: 120,
-                              width: double.infinity,
-                              fit: BoxFit.cover,
+                            Stack(
+                              children: [
+                                CachedNetworkImage(
+                                  imageUrl: tour.imageUrl ?? 'https://images.unsplash.com/photo-1590073844006-33379778ae09?w=800&q=80',
+                                  height: 125,
+                                  width: double.infinity,
+                                  fit: BoxFit.cover,
+                                ),
+                                Positioned(
+                                  top: 8,
+                                  right: isAr ? 8 : null,
+                                  left: isAr ? null : 8,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: Colors.black.withOpacity(0.7),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(Icons.star, color: AppColors.primaryGold, size: 12),
+                                        const SizedBox(width: 4),
+                                        Text('${tour.rating}', style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                             Padding(
                               padding: const EdgeInsets.all(10),
@@ -416,12 +492,16 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
-                                      Row(
-                                        children: [
-                                          const Icon(Icons.star, color: AppColors.primaryGold, size: 14),
-                                          const SizedBox(width: 4),
-                                          Text('${tour.rating}', style: AppTypography.bodySmall.copyWith(fontWeight: FontWeight.bold)),
-                                        ],
+                                      Expanded(
+                                        child: Row(
+                                          children: [
+                                            const Icon(Icons.location_on_outlined, size: 12, color: AppColors.primaryGold),
+                                            const SizedBox(width: 4),
+                                            Expanded(
+                                              child: Text(tour.locationName ?? (isAr ? 'المملكة' : 'KSA'), style: AppTypography.bodySmall.copyWith(fontSize: 11), maxLines: 1, overflow: TextOverflow.ellipsis),
+                                            ),
+                                          ],
+                                        ),
                                       ),
                                       Text(tour.formattedPrice, style: AppTypography.price.copyWith(fontSize: 13)),
                                     ],
@@ -1106,7 +1186,7 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
           padding: const EdgeInsets.all(16),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 2,
-            childAspectRatio: 0.72,
+            childAspectRatio: 0.65,
             crossAxisSpacing: 14,
             mainAxisSpacing: 14,
           ),
@@ -1118,31 +1198,82 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
               child: Container(
                 decoration: BoxDecoration(
                   color: AppColors.card,
-                  borderRadius: BorderRadius.circular(18),
+                  borderRadius: BorderRadius.circular(20),
                   border: Border.all(color: AppColors.border),
+                  boxShadow: const [
+                    BoxShadow(color: Colors.black26, blurRadius: 6, offset: Offset(0, 3)),
+                  ],
                 ),
+                clipBehavior: Clip.antiAlias,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Expanded(
-                      child: ClipRRect(
-                        borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
-                        child: CachedNetworkImage(
-                          imageUrl: product.imageUrl,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
-                        ),
+                      flex: 6,
+                      child: Stack(
+                        children: [
+                          CachedNetworkImage(
+                            imageUrl: product.imageUrl,
+                            width: double.infinity,
+                            height: double.infinity,
+                            fit: BoxFit.cover,
+                          ),
+                          if (product.discountPercent != null && product.discountPercent!.isNotEmpty)
+                            Positioned(
+                              top: 8,
+                              right: isAr ? 8 : null,
+                              left: isAr ? null : 8,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primaryGold,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  'خصم ${product.discountPercent}',
+                                  style: const TextStyle(color: AppColors.textDark, fontSize: 10, fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
                     ),
-                    Padding(
-                      padding: const EdgeInsets.all(10),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(product.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppTypography.titleSmall),
-                          const SizedBox(height: 4),
-                          Text(product.price, style: AppTypography.price.copyWith(fontSize: 13)),
-                        ],
+                    Expanded(
+                      flex: 4,
+                      child: Padding(
+                        padding: const EdgeInsets.all(10),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  product.category,
+                                  style: AppTypography.bodySmall.copyWith(fontSize: 10, color: AppColors.primaryGold),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  product.title,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: AppTypography.titleSmall.copyWith(fontSize: 13),
+                                ),
+                              ],
+                            ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  product.price,
+                                  style: AppTypography.price.copyWith(fontSize: 14),
+                                ),
+                                const Icon(Icons.shopping_bag_outlined, size: 16, color: AppColors.primaryGold),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ],

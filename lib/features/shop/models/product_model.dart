@@ -115,28 +115,34 @@ class ProductModel {
     }
 
     String chosenImg;
-    if (rawImg != null && rawImg.isNotEmpty) {
+    if (rawImg != null && rawImg.isNotEmpty && !rawImg.contains('via.placeholder')) {
       chosenImg = rawImg;
     } else if (gal.isNotEmpty) {
       chosenImg = gal.first;
     } else if (titleStr.contains('تمر') || titleStr.contains('عجوة')) {
       chosenImg = 'https://staging.modeefe.com/uploads/0000/6/2026/06/13/59d5a114-b797-46a0-ab4b-105e3d06f637.jpg';
-    } else if (titleStr.contains('عسل')) {
+    } else if (titleStr.contains('عسل') || titleStr.contains('سدرة')) {
       chosenImg = 'https://staging.modeefe.com/uploads/0000/6/2026/06/13/e1cca3ea-806b-4c5b-8cd4-fd5ce5135344.jpg';
     } else if (titleStr.contains('مبخرة') || titleStr.contains('بخور')) {
-      chosenImg = 'https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?w=800&q=80';
+      chosenImg = 'https://img-1.kwcdn.com/product/open/5cd147b6fecf4561bbaf3b0ca50ea400-goods.jpeg?imageView2/2/w/500/q/80/format/avif';
     } else if (titleStr.contains('مسك') || titleStr.contains('عطر')) {
-      chosenImg = 'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?w=800&q=80';
-    } else if (titleStr.contains('كعبة') || titleStr.contains('الكعبه') || titleStr.contains('مفتاح')) {
-      chosenImg = 'https://images.unsplash.com/photo-1564769625905-50e93615e769?w=800&q=80';
-    } else if (titleStr.contains('مجسم') || titleStr.contains('الواجهه')) {
-      chosenImg = 'https://images.unsplash.com/photo-1580418827493-f2b22c0a76cb?w=800&q=80';
+      chosenImg = 'https://elghazawy.b-cdn.net/158392/AL-FARES-MUSK-ABIYEDH-EDP-100ML.webp';
     } else if (titleStr.contains('تيشرت') || titleStr.contains('قميص')) {
-      chosenImg = 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=800&q=80';
+      chosenImg = 'https://i.postimg.cc/VNwWgdkz/tshert.png';
+    } else if (titleStr.contains('مجسم') || titleStr.contains('الواجهه') || titleStr.contains('الواجهة')) {
+      chosenImg = 'https://www.gazzaz.com.sa/cdn/shop/files/422514727043_2.jpg?v=1692605588&width=1780';
+    } else if (titleStr.contains('باب الكعب') || titleStr.contains('باب الكعبة')) {
+      chosenImg = 'https://www.gazzaz.com.sa/cdn/shop/products/422514727022.jpg?v=1671706104&width=1100';
+    } else if (titleStr.contains('مفتاح') || titleStr.contains('مفتاح الكعبة')) {
+      chosenImg = 'https://www.gazzaz.com.sa/cdn/shop/products/422514727012.jpg?v=1671706024&width=1100';
     } else if (titleStr.contains('كوب') || titleStr.contains('حراري')) {
-      chosenImg = 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=800&q=80';
+      chosenImg = 'https://img-1.kwcdn.com/product/Fancyalgo/VirtualModelMatting/49c6aca159729d39580c9c44587a94e0.jpg?imageView2/2/w/500/q/80/format/avif';
+    } else if (titleStr.contains('سجاد') || titleStr.contains('صلاة')) {
+      chosenImg = 'https://m.media-amazon.com/images/I/71pt72EQ8wL._AC_SX522_.jpg';
+    } else if (titleStr.contains('شماغ') || titleStr.contains('غترة')) {
+      chosenImg = 'https://m.media-amazon.com/images/I/61XZajcEtGL._AC_SX679_.jpg';
     } else {
-      chosenImg = 'https://images.unsplash.com/photo-1580418827493-f2b22c0a76cb?w=800&q=80';
+      chosenImg = 'https://staging.modeefe.com/uploads/0000/6/2026/06/13/59d5a114-b797-46a0-ab4b-105e3d06f637.jpg';
     }
 
     final rawDesc = json['content']?.toString() ?? json['desc']?.toString() ?? '';
@@ -145,8 +151,8 @@ class ProductModel {
     return ProductModel(
       id: json['id']?.toString() ?? '0',
       title: titleStr.isNotEmpty ? titleStr : 'منتج تراثي فاخر',
-      category: json['category'] is Map ? json['category']['name']?.toString() ?? 'مقتنيات' : (json['category']?.toString() ?? 'مقتنيات'),
-      storeName: json['store'] is Map ? json['store']['name']?.toString() ?? 'بازار مُضيف للمقتنيات' : 'بازار مُضيف للمقتنيات',
+      category: json['category'] is Map ? json['category']['name']?.toString() ?? 'هدايا وتذكارات' : (json['category']?.toString() ?? 'هدايا وتذكارات'),
+      storeName: json['store'] is Map ? json['store']['name']?.toString() ?? 'متجر الهدايا والتذكارات' : 'متجر الهدايا والتذكارات',
       price: displayPrice.contains('﷼') ? displayPrice : (displayPrice.contains('ر.س') ? displayPrice.replaceAll('ر.س', '﷼') : '$displayPrice ﷼'),
       priceNumeric: numPrice,
       originalPrice: displayOrigin.contains('﷼') ? displayOrigin : (displayOrigin.contains('ر.س') ? displayOrigin.replaceAll('ر.س', '﷼') : '$displayOrigin ﷼'),
