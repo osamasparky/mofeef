@@ -56,9 +56,21 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<UserModel> getProfile() async {
     try {
-      final user = await _remoteDataSource.getProfile();
-      await saveUser(user);
-      return user;
+      final token = await getSavedToken();
+      final profile = await _remoteDataSource.getProfile();
+      final userWithToken = UserModel(
+        id: profile.id,
+        name: profile.name,
+        firstName: profile.firstName,
+        lastName: profile.lastName,
+        email: profile.email,
+        phone: profile.phone,
+        avatarUrl: profile.avatarUrl,
+        role: profile.role,
+        token: profile.token ?? token,
+      );
+      await saveUser(userWithToken);
+      return userWithToken;
     } on DioException catch (e) {
       throw ServerFailure.fromDioException(e);
     }

@@ -461,11 +461,11 @@ class _ExperienceDetailsScreenState extends ConsumerState<ExperienceDetailsScree
                                   child: ExpansionTile(
                                     iconColor: AppColors.primaryGold,
                                     collapsedIconColor: AppColors.textSecondary,
-                                    title: Text(faq.title, style: AppTypography.titleSmall),
+                                    title: Text(faq.getDisplayTitle(isAr), style: AppTypography.titleSmall),
                                     children: [
                                       Padding(
                                         padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
-                                        child: Text(HtmlUtils.stripHtml(faq.content), style: AppTypography.bodyMedium.copyWith(height: 1.5)),
+                                        child: Text(HtmlUtils.stripHtml(faq.getDisplayContent(isAr)), style: AppTypography.bodyMedium.copyWith(height: 1.5)),
                                       ),
                                     ],
                                   ),

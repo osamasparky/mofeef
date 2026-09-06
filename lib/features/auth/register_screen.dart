@@ -237,58 +237,70 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
                       // First & Last Name
                       Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Expanded(
-                            child: _buildPillField(
+                            child: _buildInputField(
                               controller: _firstNameController,
-                              hint: isAr ? 'الاسم الأول' : 'First Name',
-                              icon: Icons.person_outline,
-                              validator: (v) => v == null || v.isEmpty ? 'مطلوب' : null,
+                              label: isAr ? 'الاسم الأول' : 'First Name',
+                              hint: isAr ? 'سعود' : 'Saud',
+                              icon: Icons.person_outline_rounded,
+                              validator: (v) => v == null || v.trim().isEmpty ? (isAr ? 'مطلوب' : 'Required') : null,
+                              textInputAction: TextInputAction.next,
                             ),
                           ),
-                          const SizedBox(width: 10),
+                          const SizedBox(width: 12),
                           Expanded(
-                            child: _buildPillField(
+                            child: _buildInputField(
                               controller: _lastNameController,
-                              hint: isAr ? 'اسم العائلة' : 'Last Name',
-                              icon: Icons.person_outline,
-                              validator: (v) => v == null || v.isEmpty ? 'مطلوب' : null,
+                              label: isAr ? 'اسم العائلة' : 'Last Name',
+                              hint: isAr ? 'العتيبي' : 'Alotaibi',
+                              icon: Icons.person_outline_rounded,
+                              validator: (v) => v == null || v.trim().isEmpty ? (isAr ? 'مطلوب' : 'Required') : null,
+                              textInputAction: TextInputAction.next,
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 14),
 
                       // Email
-                      _buildPillField(
+                      _buildInputField(
                         controller: _emailController,
-                        hint: isAr ? 'البريد الإلكتروني' : 'Email Address',
-                        icon: Icons.mail_outline,
+                        label: isAr ? 'البريد الإلكتروني' : 'Email Address',
+                        hint: isAr ? 'name@example.com' : 'name@example.com',
+                        icon: Icons.alternate_email_rounded,
                         keyboardType: TextInputType.emailAddress,
-                        validator: (v) => v == null || !v.contains('@') ? 'بريد غير صحيح' : null,
+                        validator: (v) => v == null || !v.contains('@') ? (isAr ? 'بريد غير صحيح' : 'Invalid email') : null,
+                        textInputAction: TextInputAction.next,
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 14),
 
                       // Phone
-                      _buildPillField(
+                      _buildInputField(
                         controller: _phoneController,
-                        hint: isAr ? 'رقم الجوال' : 'Phone Number',
-                        icon: Icons.phone_outlined,
+                        label: isAr ? 'رقم الجوال' : 'Phone Number',
+                        hint: isAr ? '05XXXXXXXX' : '05XXXXXXXX',
+                        icon: Icons.phone_android_rounded,
                         keyboardType: TextInputType.phone,
+                        textInputAction: TextInputAction.next,
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 14),
 
                       // Password
-                      _buildPillField(
+                      _buildInputField(
                         controller: _passwordController,
-                        hint: isAr ? 'كلمة المرور' : 'Password',
-                        icon: Icons.lock_outline,
+                        label: isAr ? 'كلمة المرور' : 'Password',
+                        hint: isAr ? '••••••••' : '••••••••',
+                        icon: Icons.lock_outline_rounded,
                         isPassword: true,
                         obscureText: _obscurePassword,
                         onToggleVisibility: () => setState(() => _obscurePassword = !_obscurePassword),
-                        validator: (v) => v == null || v.length < 6 ? '٦ خانات على الأقل' : null,
+                        validator: (v) => v == null || v.length < 6 ? (isAr ? '٦ خانات على الأقل' : 'Min 6 characters') : null,
+                        textInputAction: TextInputAction.done,
+                        onSubmitted: (_) => _handleRegister(),
                       ),
-                      const SizedBox(height: 22),
+                      const SizedBox(height: 24),
 
                       // Submit Button
                       SizedBox(
@@ -356,55 +368,109 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     );
   }
 
-  Widget _buildPillField({
+  Widget _buildInputField({
     required TextEditingController controller,
+    required String label,
     required String hint,
     required IconData icon,
     TextInputType keyboardType = TextInputType.text,
+    TextInputAction textInputAction = TextInputAction.next,
     bool isPassword = false,
     bool obscureText = false,
     VoidCallback? onToggleVisibility,
     String? Function(String?)? validator,
+    ValueChanged<String>? onSubmitted,
   }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFF0E1A26),
-        borderRadius: BorderRadius.circular(26),
-        border: Border.all(color: const Color(0xFF1E3246), width: 1.1),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 14),
-      child: Row(
-        children: [
-          if (isPassword)
-            IconButton(
-              icon: Icon(
-                obscureText ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                color: const Color(0xFF64748B),
-                size: 18,
-              ),
-              onPressed: onToggleVisibility,
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+          child: Text(
+            label,
+            style: const TextStyle(
+              color: Color(0xFFBAC7D5),
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              fontFamily: 'Tajawal',
             ),
-          Expanded(
-            child: TextFormField(
-              controller: controller,
-              obscureText: isPassword && obscureText,
-              keyboardType: keyboardType,
-              validator: validator,
-              style: const TextStyle(color: Colors.white, fontSize: 13),
-              decoration: InputDecoration(
-                hintText: hint,
-                hintStyle: const TextStyle(color: Color(0xFF64748B), fontSize: 12.5),
-                border: InputBorder.none,
-                isDense: true,
-                contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.25),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: TextFormField(
+            controller: controller,
+            obscureText: isPassword && obscureText,
+            keyboardType: keyboardType,
+            textInputAction: textInputAction,
+            validator: validator,
+            onFieldSubmitted: onSubmitted,
+            cursorColor: const Color(0xFFF5A623),
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              fontFamily: 'Tajawal',
+            ),
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: const Color(0xFF0D1722),
+              hintText: hint,
+              hintStyle: const TextStyle(
+                color: Color(0xFF5A6E82),
+                fontSize: 13,
+                fontFamily: 'Tajawal',
+              ),
+              prefixIcon: Container(
+                padding: const EdgeInsets.all(12),
+                child: Icon(
+                  icon,
+                  color: const Color(0xFFF5A623),
+                  size: 20,
+                ),
+              ),
+              suffixIcon: isPassword
+                  ? IconButton(
+                      icon: Icon(
+                        obscureText ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                        color: const Color(0xFF8A9BB0),
+                        size: 20,
+                      ),
+                      onPressed: onToggleVisibility,
+                    )
+                  : null,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: const BorderSide(color: Color(0xFF1E3246), width: 1.2),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: const BorderSide(color: Color(0xFFF5A623), width: 1.6),
+              ),
+              errorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: const BorderSide(color: AppColors.error, width: 1.2),
+              ),
+              focusedErrorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: const BorderSide(color: AppColors.error, width: 1.6),
               ),
             ),
           ),
-          Icon(icon, color: const Color(0xFFF5A623), size: 19),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

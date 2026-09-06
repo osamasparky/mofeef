@@ -259,27 +259,32 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                     const SizedBox(height: 22),
 
-                    // Email Input Pill Field
-                    _buildPillInputField(
+                    // Email Field with Label
+                    _buildInputField(
                       controller: _emailController,
-                      hint: isAr ? 'البريد الإلكتروني' : 'Email Address',
-                      icon: Icons.mail_outline,
+                      label: isAr ? 'البريد الإلكتروني' : 'Email Address',
+                      hint: isAr ? 'أدخل بريدك الإلكتروني' : 'name@example.com',
+                      icon: Icons.alternate_email_rounded,
                       keyboardType: TextInputType.emailAddress,
+                      textInputAction: TextInputAction.next,
                     ),
 
-                    const SizedBox(height: 14),
+                    const SizedBox(height: 16),
 
-                    // Password Input Pill Field
-                    _buildPillInputField(
+                    // Password Field with Label
+                    _buildInputField(
                       controller: _passwordController,
-                      hint: isAr ? 'كلمة المرور' : 'Password',
-                      icon: Icons.lock_outline,
+                      label: isAr ? 'كلمة المرور' : 'Password',
+                      hint: isAr ? '••••••••' : '••••••••',
+                      icon: Icons.lock_outline_rounded,
                       isPassword: true,
                       obscureText: _obscurePassword,
                       onToggleVisibility: () => setState(() => _obscurePassword = !_obscurePassword),
+                      textInputAction: TextInputAction.done,
+                      onSubmitted: (_) => _handleLogin(),
                     ),
 
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 12),
 
                     // Forgot Password Link
                     Align(
@@ -287,8 +292,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       child: TextButton(
                         onPressed: () {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('يرجى التواصل مع الدعم الفني لاستعادة كلمة المرور'),
+                            SnackBar(
+                              content: Text(isAr ? 'يرجى التواصل مع الدعم الفني لاستعادة كلمة المرور' : 'Please contact support to reset your password'),
+                              backgroundColor: AppColors.card,
                             ),
                           );
                         },
@@ -301,7 +307,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           isAr ? 'نسيت كلمة المرور؟' : 'Forgot Password?',
                           style: const TextStyle(
                             color: Color(0xFFF5A623),
-                            fontSize: 12,
+                            fontSize: 12.5,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -501,58 +507,107 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     );
   }
 
-  Widget _buildPillInputField({
+  Widget _buildInputField({
     required TextEditingController controller,
+    required String label,
     required String hint,
     required IconData icon,
     TextInputType keyboardType = TextInputType.text,
+    TextInputAction textInputAction = TextInputAction.next,
     bool isPassword = false,
     bool obscureText = false,
     VoidCallback? onToggleVisibility,
+    ValueChanged<String>? onSubmitted,
   }) {
-    return Container(
-      height: 52,
-      decoration: BoxDecoration(
-        color: const Color(0xFF0E1A26),
-        borderRadius: BorderRadius.circular(26),
-        border: Border.all(color: const Color(0xFF1E3246), width: 1.1),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Row(
-        children: [
-          if (isPassword)
-            IconButton(
-              icon: Icon(
-                obscureText ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                color: const Color(0xFF64748B),
-                size: 18,
-              ),
-              onPressed: onToggleVisibility,
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+          child: Text(
+            label,
+            style: const TextStyle(
+              color: Color(0xFFBAC7D5),
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              fontFamily: 'Tajawal',
             ),
-          Expanded(
-            child: TextField(
-              controller: controller,
-              obscureText: isPassword && obscureText,
-              keyboardType: keyboardType,
-              style: const TextStyle(color: Colors.white, fontSize: 13.5),
-              decoration: InputDecoration(
-                hintText: hint,
-                hintStyle: const TextStyle(color: Color(0xFF64748B), fontSize: 13),
-                border: InputBorder.none,
-                isDense: true,
-                contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.25),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: TextFormField(
+            controller: controller,
+            obscureText: isPassword && obscureText,
+            keyboardType: keyboardType,
+            textInputAction: textInputAction,
+            onFieldSubmitted: onSubmitted,
+            cursorColor: const Color(0xFFF5A623),
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 14.5,
+              fontWeight: FontWeight.w500,
+              fontFamily: 'Tajawal',
+            ),
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: const Color(0xFF0D1722),
+              hintText: hint,
+              hintStyle: const TextStyle(
+                color: Color(0xFF5A6E82),
+                fontSize: 13.5,
+                fontFamily: 'Tajawal',
+              ),
+              prefixIcon: Container(
+                padding: const EdgeInsets.all(12),
+                child: Icon(
+                  icon,
+                  color: const Color(0xFFF5A623),
+                  size: 20,
+                ),
+              ),
+              suffixIcon: isPassword
+                  ? IconButton(
+                      icon: Icon(
+                        obscureText ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                        color: const Color(0xFF8A9BB0),
+                        size: 20,
+                      ),
+                      onPressed: onToggleVisibility,
+                    )
+                  : null,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: const BorderSide(color: Color(0xFF1E3246), width: 1.2),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: const BorderSide(color: Color(0xFFF5A623), width: 1.6),
+              ),
+              errorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: const BorderSide(color: AppColors.error, width: 1.2),
+              ),
+              focusedErrorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: const BorderSide(color: AppColors.error, width: 1.6),
               ),
             ),
           ),
-          Icon(
-            icon,
-            color: const Color(0xFFF5A623),
-            size: 20,
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

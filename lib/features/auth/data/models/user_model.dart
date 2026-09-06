@@ -35,16 +35,20 @@ class UserModel {
     return 'مسافر مُضيف';
   }
 
-  factory UserModel.fromJson(Map<String, dynamic> json) {
+  factory UserModel.fromJson(Map<String, dynamic> json, {String? fallbackToken}) {
     // 1. Extract token (could be at root or in nested object)
     final token = json['access_token']?.toString() ??
         json['token']?.toString() ??
         json['user']?['token']?.toString() ??
-        json['data']?['token']?.toString();
+        json['data']?['token']?.toString() ??
+        fallbackToken;
 
     // 2. Extract user data map
-    final dynamic nested = json['user'] ?? json['data'];
-    final Map<String, dynamic> data = nested is Map<String, dynamic> ? nested : json;
+    dynamic rawData = json['user'] ?? json['data'] ?? json;
+    if (rawData is Map<String, dynamic> && rawData.containsKey('user') && rawData['user'] is Map) {
+      rawData = rawData['user'];
+    }
+    final Map<String, dynamic> data = rawData is Map<String, dynamic> ? rawData : json;
 
     final idVal = data['id'] ?? json['id'];
     final id = idVal is int ? idVal : (int.tryParse(idVal?.toString() ?? '0') ?? 0);

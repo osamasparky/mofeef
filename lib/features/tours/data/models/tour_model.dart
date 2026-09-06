@@ -27,10 +27,101 @@ class FaqItem {
 
   const FaqItem({required this.title, required this.content});
 
+  String getDisplayTitle(bool isAr) {
+    if (!isAr) return title;
+    return _localizeTitle(title);
+  }
+
+  String getDisplayContent(bool isAr) {
+    if (!isAr) return content;
+    return _localizeContent(title, content);
+  }
+
+  static String _localizeTitle(String rawTitle) {
+    // If title already has Arabic, return directly
+    final arabicRegex = RegExp(r'[\u0600-\u06FF]');
+    if (arabicRegex.hasMatch(rawTitle)) {
+      return rawTitle;
+    }
+
+    final lower = rawTitle.toLowerCase().trim();
+    if (lower.contains('wear') || lower.contains('dress code') || lower.contains('clothing')) {
+      return 'ما هي الملابس المناسبة للجولة؟';
+    }
+    if (lower.contains('children') || lower.contains('kids') || lower.contains('family') || lower.contains('age')) {
+      return 'هل الجولة مناسبة للأطفال والعائلات؟';
+    }
+    if (lower.contains('cancel') || lower.contains('refund')) {
+      return 'ما هي سياسة الإلغاء والاسترجاع؟';
+    }
+    if (lower.contains('transport') || lower.contains('pick up') || lower.contains('pickup') || lower.contains('transfer') || lower.contains('car')) {
+      return 'هل تشمل الجولة المواصلات والتنقل؟';
+    }
+    if (lower.contains('bring') || lower.contains('what to pack') || lower.contains('what should i bring')) {
+      return 'ما الذي يجب إحضاره معي أثناء الرحلة؟';
+    }
+    if (lower.contains('guide') || lower.contains('meet') || lower.contains('meeting point')) {
+      return 'أين نقطة الالتقاء مع المرشد السياحي؟';
+    }
+    if (lower.contains('weather') || lower.contains('rain')) {
+      return 'ما هي الإجراءات في حال تغير الأحوال الجوية؟';
+    }
+    if (lower.contains('food') || lower.contains('drink') || lower.contains('meal') || lower.contains('lunch') || lower.contains('dinner')) {
+      return 'هل تشمل الجولة الوجبات والمشروبات والضيافة؟';
+    }
+    if (lower.contains('health') || lower.contains('physical') || lower.contains('fitness') || lower.contains('wheelchair') || lower.contains('accessibility')) {
+      return 'هل تتطلب الجولة لياقة بدنية أو مناسبة لذوي الإعاقة؟';
+    }
+    if (lower.contains('photo') || lower.contains('camera')) {
+      return 'هل التصوير مسموح في مواقع الجولة؟';
+    }
+    if (lower.contains('time') || lower.contains('duration') || lower.contains('hours') || lower.contains('schedule')) {
+      return 'كم تبلغ مدة الجولة ومواعيد الانطلاق؟';
+    }
+    return rawTitle;
+  }
+
+  static String _localizeContent(String rawTitle, String rawContent) {
+    // If content already contains Arabic characters, return it
+    final arabicRegex = RegExp(r'[\u0600-\u06FF]');
+    if (arabicRegex.hasMatch(rawContent)) {
+      return rawContent;
+    }
+
+    final lowerTitle = rawTitle.toLowerCase().trim();
+    final lowerContent = rawContent.toLowerCase().trim();
+
+    if (lowerTitle.contains('wear') || lowerTitle.contains('dress code') || lowerContent.contains('clothing')) {
+      return 'يُنصح بارتداء ملابس مريحة وأحذية مناسبة للمشي الخارجي واستكشاف المعالم، مع مراعاة ملابس محتشمة ومناسبة لأجواء الطقس.';
+    }
+    if (lowerTitle.contains('children') || lowerTitle.contains('kids') || lowerTitle.contains('family')) {
+      return 'نعم، الجولة مهيأة وممتعة لكافة الأعمار والعائلات، ويُشترط مرافقة الوالدين للأطفال أثناء الفعاليات الميدانية.';
+    }
+    if (lowerTitle.contains('cancel') || lowerTitle.contains('refund')) {
+      return 'يمكنك إلغاء الحجز مجاناً واسترداد كامل المبلغ قبل موعد الجولة بـ 24 ساعة على الأقل عبر التطبيق.';
+    }
+    if (lowerTitle.contains('transport') || lowerTitle.contains('pick up') || lowerTitle.contains('pickup')) {
+      return 'نعم، تشمل باقاتنا وسائل نقل مريحة ومكيفة حديثة تنطلق من نقاط التجمع الرئيسية وإعادتكم بعد انتهاء الجولة.';
+    }
+    if (lowerTitle.contains('bring') || lowerTitle.contains('pack')) {
+      return 'يُرجى إحضار بطاقة الهوية الوطنية أو جواز السفر، تذكرة الحجز الإلكترونية على التطبيق، ونظارة شمسية وكاميرا لتوثيق الذكريات.';
+    }
+    if (lowerTitle.contains('guide') || lowerTitle.contains('meet')) {
+      return 'سيتم إرسال نقطة التجمع الدقيقة عبر خرائط قوقل مع رقم وبيانات المرشد السياحي المعتمد قبل موعد الرحلة.';
+    }
+    if (lowerTitle.contains('weather') || lowerTitle.contains('rain')) {
+      return 'تستمر الجولات بانتظام، وفي الحالات الجوية الاستثنائية يتم إعادة الجدولة أو رد المبلغ كاملاً لضمان سلامتكم.';
+    }
+    if (lowerTitle.contains('food') || lowerTitle.contains('drink') || lowerTitle.contains('meal')) {
+      return 'تتضمن الجولة القهوة السعودية الفاخرة والمياه والمشروبات المنعشة مع وجبة خفيفة حسب تفاصيل الباقة المحددة.';
+    }
+    return rawContent;
+  }
+
   factory FaqItem.fromJson(Map<String, dynamic> json) {
     return FaqItem(
-      title: json['title']?.toString() ?? '',
-      content: json['content']?.toString() ?? '',
+      title: json['title_ar']?.toString() ?? json['title']?.toString() ?? '',
+      content: json['content_ar']?.toString() ?? json['content']?.toString() ?? '',
     );
   }
 }
