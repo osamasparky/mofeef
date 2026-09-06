@@ -284,9 +284,9 @@ class ScaffoldWithNavBar extends ConsumerWidget {
       body: child,
       bottomNavigationBar: SafeArea(
         child: Container(
-          height: 68,
+          height: 70,
           margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           decoration: BoxDecoration(
             color: const Color(0xFF0C1926).withOpacity(0.96),
             borderRadius: BorderRadius.circular(38),
@@ -317,8 +317,8 @@ class ScaffoldWithNavBar extends ConsumerWidget {
                     children: [
                       if (isSelected)
                         Container(
-                          width: 38,
-                          height: 38,
+                          width: 36,
+                          height: 36,
                           decoration: const BoxDecoration(
                             color: Color(0xFFF5A623),
                             shape: BoxShape.circle,
@@ -333,7 +333,7 @@ class ScaffoldWithNavBar extends ConsumerWidget {
                           child: Icon(
                             item.activeIcon,
                             color: const Color(0xFF0C1926),
-                            size: 22,
+                            size: 20,
                           ),
                         )
                       else
@@ -342,7 +342,7 @@ class ScaffoldWithNavBar extends ConsumerWidget {
                           child: Icon(
                             item.icon,
                             color: const Color(0xFF8A9BB0),
-                            size: 22,
+                            size: 21,
                           ),
                         ),
                       const SizedBox(height: 2),
@@ -351,6 +351,7 @@ class ScaffoldWithNavBar extends ConsumerWidget {
                         style: TextStyle(
                           color: isSelected ? const Color(0xFFF5A623) : const Color(0xFF8A9BB0),
                           fontSize: 10,
+                          height: 1.1,
                           fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                         ),
                       ),
