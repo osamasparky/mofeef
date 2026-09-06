@@ -1,12 +1,13 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application
-        android:label="modeef"
+        android:label="مُضيف"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:enableOnBackInvokedCallback="true">
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:launchMode="singleTop"
+            android:launchMode="singleTask"
             android:taskAffinity=""
             android:theme="@style/LaunchTheme"
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
@@ -24,23 +25,25 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
-            <!-- Deep Linking Intent Filters -->
-            <intent-filter android:autoVerify="true">
+
+            <!-- 1. Custom Scheme Deep Linking: modeef://... (Opens App Immediately) -->
+            <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="modeef" />
             </intent-filter>
+
+            <!-- 2. Web App Links (https://staging.modeefe.com & modeefe.com) -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data
-                    android:scheme="https"
-                    android:host="staging.modeefe.com" />
-                <data
-                    android:scheme="https"
-                    android:host="modeefe.com" />
+                <data android:scheme="https" android:host="staging.modeefe.com" />
+                <data android:scheme="https" android:host="modeefe.com" />
+                <data android:scheme="https" android:host="www.modeefe.com" />
+                <data android:scheme="http" android:host="staging.modeefe.com" />
+                <data android:scheme="http" android:host="modeefe.com" />
             </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.

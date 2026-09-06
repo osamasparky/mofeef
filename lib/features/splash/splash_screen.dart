@@ -15,6 +15,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
   late AnimationController _animController;
   late Animation<double> _fadeAnimation;
   late Animation<double> _scaleAnimation;
+  bool _navigated = false;
 
   @override
   void initState() {
@@ -32,7 +33,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
 
     _animController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 900),
+      duration: const Duration(milliseconds: 600),
     );
 
     _fadeAnimation = CurvedAnimation(
@@ -40,7 +41,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
       curve: Curves.easeIn,
     );
 
-    _scaleAnimation = Tween<double>(begin: 1.03, end: 1.0).animate(
+    _scaleAnimation = Tween<double>(begin: 1.02, end: 1.0).animate(
       CurvedAnimation(
         parent: _animController,
         curve: Curves.easeOutQuad,
@@ -52,8 +53,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
   }
 
   Future<void> _navigateToNext() async {
-    await Future.delayed(const Duration(milliseconds: 1100));
-    if (!mounted) return;
+    await Future.delayed(const Duration(milliseconds: 750));
+    if (!mounted || _navigated) return;
+    _navigated = true;
     context.go('/home');
   }
 
