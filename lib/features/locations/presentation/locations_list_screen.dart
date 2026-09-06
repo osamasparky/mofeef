@@ -148,11 +148,12 @@ class _LocationsListScreenState extends ConsumerState<LocationsListScreen> {
                       onTap: () => context.push('/location/${loc.id}?name=${Uri.encodeComponent(loc.name)}'),
                       child: Container(
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: AppColors.border),
+                          color: const Color(0xFF162534),
+                          borderRadius: BorderRadius.circular(22),
+                          border: Border.all(color: const Color(0xFF38BDF8).withOpacity(0.35), width: 1.2),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.35),
+                              color: const Color(0xFF38BDF8).withOpacity(0.12),
                               blurRadius: 10,
                               offset: const Offset(0, 4),
                             ),
@@ -176,9 +177,9 @@ class _LocationsListScreenState extends ConsumerState<LocationsListScreen> {
                                   begin: Alignment.topCenter,
                                   end: Alignment.bottomCenter,
                                   colors: [
-                                    Colors.black.withOpacity(0.2),
+                                    Colors.black.withOpacity(0.15),
                                     Colors.black.withOpacity(0.4),
-                                    Colors.black.withOpacity(0.9),
+                                    const Color(0xFF0F2B3C).withOpacity(0.95),
                                   ],
                                   stops: const [0.0, 0.5, 1.0],
                                 ),
@@ -194,11 +195,11 @@ class _LocationsListScreenState extends ConsumerState<LocationsListScreen> {
                                   decoration: BoxDecoration(
                                     color: Colors.black.withOpacity(0.65),
                                     borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(color: AppColors.primaryGold.withOpacity(0.6)),
+                                    border: Border.all(color: const Color(0xFF38BDF8).withOpacity(0.7)),
                                   ),
                                   child: Text(
                                     loc.slug!,
-                                    style: const TextStyle(color: AppColors.primaryGold, fontSize: 10, fontWeight: FontWeight.bold),
+                                    style: const TextStyle(color: Color(0xFF38BDF8), fontSize: 10, fontWeight: FontWeight.bold),
                                   ),
                                 ),
                               ),
@@ -216,14 +217,14 @@ class _LocationsListScreenState extends ConsumerState<LocationsListScreen> {
                                     overflow: TextOverflow.ellipsis,
                                     style: AppTypography.titleMedium.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
                                   ),
-                                  const SizedBox(height: 2),
+                                  const SizedBox(height: 3),
                                   Row(
                                     children: [
-                                      const Icon(Icons.explore, color: AppColors.primaryGold, size: 12),
+                                      const Icon(Icons.explore, color: Color(0xFF38BDF8), size: 13),
                                       const SizedBox(width: 4),
                                       Text(
                                         isAr ? 'استكشف الوجهة' : 'Explore city',
-                                        style: const TextStyle(color: AppColors.primaryGold, fontSize: 11),
+                                        style: const TextStyle(color: Color(0xFF38BDF8), fontSize: 11, fontWeight: FontWeight.bold),
                                       ),
                                     ],
                                   ),

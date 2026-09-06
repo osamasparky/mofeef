@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_typography.dart';
 import '../../core/localization/locale_provider.dart';
 import '../../core/widgets/custom_button.dart';
+import '../../core/widgets/unified_item_card.dart';
 import '../tours/data/repositories/tour_repository.dart';
 import '../museums/data/museum_repository.dart';
 import '../events/data/event_repository.dart';
@@ -29,32 +29,38 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
   RangeValues _globalPriceRange = const RangeValues(0, 3000);
   double _minRating = 0.0;
 
-  // 1. Tours Specific Filters
-  String _tourDurationFilter = 'الكل'; // 'الكل', 'نصف يوم', 'يوم كامل', 'أيام متعددة'
+  // 1. Tours Specific Filters (Aligned with API & Staging: cat_id[], attrs[1][], price_range, review_score)
+  String _tourCategoryFilter = 'الكل'; // 'الكل', 'المسارات السياحية', 'السياحة البيئية', 'جولة مع مرشد', 'مغامرات'
+  String _tourThemeFilter = 'الكل'; // 'الكل', 'ثقافي', 'طبيعة ومغامرة', 'بحري', 'مستقل', 'أنشطة', 'مهرجانات وفعاليات', 'اهتمامات خاصة'
+  RangeValues _tourPriceRange = const RangeValues(50, 1500);
 
-  // 2. Museums Specific Filters
-  String _museumEntryType = 'الكل'; // 'الكل', 'مجاني', 'مدفوع'
+  // 2. Museums Specific Filters (Aligned with API: location_id, price_range, is_free)
+  String _museumEntryType = 'الكل'; // 'الكل', 'دخول مجاني فقط', 'تذاكر مدفوعة'
   RangeValues _museumPriceRange = const RangeValues(0, 500);
 
-  // 3. Events Specific Filters
-  String _eventEntryType = 'الكل'; // 'الكل', 'مجاني', 'مدفوع'
-  String _eventTimingFilter = 'الكل'; // 'الكل', 'اليوم', 'هذا الأسبوع'
+  // 3. Events Specific Filters (Aligned with API: location_id, attrs[11][], price_range)
+  String _eventTypeFilter = 'الكل'; // 'الكل', 'ثقافية', 'ترفيهية', 'موسيقية', 'عائلية', 'تراثية'
+  String _eventEntryType = 'الكل'; // 'الكل', 'مجانية فقط', 'مدفوعة'
   RangeValues _eventPriceRange = const RangeValues(0, 2000);
 
-  // 4. Guides Specific Filters
+  // 4. Guides Specific Filters (Aligned with API: is_available, free_consultation, tour_type, languages, price_range)
+  bool _guideOnlyAvailable = false;
+  bool _guideFreeConsultation = false;
+  String _guideTourType = 'الكل'; // 'الكل', 'حضوري', 'افتراضي'
   String _guideLanguageFilter = 'الكل'; // 'الكل', 'العربية', 'الإنجليزية', 'الفرنسية', 'الإسبانية', 'الألمانية', 'الصينية'
   RangeValues _guideHourlyRange = const RangeValues(0, 1000);
-  double _guideMinRating = 0.0;
 
-  // 5. Cars Specific Filters
-  String _carPassengerFilter = 'الكل'; // 'الكل', '2', '4-5', '7+'
-  String _carTransmissionFilter = 'الكل'; // 'الكل', 'أوتوماتيك', 'يدوي'
-  RangeValues _carPriceRange = const RangeValues(0, 2500);
+  // 5. Cars Specific Filters (Aligned with API: service_name, category, passenger, gear, price_range)
+  String _carCategoryFilter = 'الكل'; // 'الكل', 'فاخرة', 'دفع رباعي SUV', 'سيدان', 'عائلية VIP'
+  String _carPassengerFilter = 'الكل'; // 'الكل', '2 ركاب', '4-5 ركاب', '7+ عائلية'
+  String _carTransmissionFilter = 'الكل'; // 'الكل', 'أوتوماتيك', 'يدوي / عادي'
+  RangeValues _carPriceRange = const RangeValues(100, 2500);
 
-  // 6. Shop Specific Filters
-  String _productCategoryFilter = 'الكل'; // 'الكل', 'عطور وبخور', 'تمور ومأكولات', 'مقتنيات وهدايا', 'أزياء وتراث'
+  // 6. Shop Specific Filters (Aligned with API: cat_id[], on_sale, in_stock, orderby, price_range)
+  String _productCategoryFilter = 'الكل'; // 'الكل', 'أغذية ومأكولات', 'عطور وبخور', 'منتج أثري', 'منتج ديني', 'منتج ثقافي', 'ملابس وهدايا'
   bool _productOnlyInStock = false;
   bool _productOnlyOnSale = false;
+  String _productSortBy = 'الأحدث'; // 'الأحدث', 'السعر: الأقل أولاً', 'السعر: الأعلى أولاً', 'الأكثر مبيعاً'
   RangeValues _productPriceRange = const RangeValues(0, 1500);
 
   final List<String> _categoriesAr = [
@@ -90,15 +96,15 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
   final List<Color> _categoryColors = [
     AppColors.primaryGold,
     const Color(0xFFFBBF24), // Trails - Amber Gold
-    const Color(0xFFC084FC), // Museums - Purple
-    const Color(0xFFF43F5E), // Events - Crimson
-    const Color(0xFF34D399), // Guides - Emerald
+    const Color(0xFFC084FC), // Museums - Imperial Purple
+    const Color(0xFFF43F5E), // Events - Ruby Crimson
+    const Color(0xFF34D399), // Guides - Emerald Jade
     const Color(0xFF60A5FA), // Cars - Sky Blue
-    const Color(0xFFFB923C), // Shop - Orange
+    const Color(0xFFFB923C), // Shop - Terracotta Orange
   ];
 
-  final List<String> _citiesAr = ['الكل', 'العُلا', 'الرياض', 'جدة', 'الدرعية', 'مكة المكرمة', 'المدينة المنورة', 'عسير', 'أبها', 'الدمام'];
-  final List<String> _citiesEn = ['All', 'AlUla', 'Riyadh', 'Jeddah', 'Diriyah', 'Makkah', 'Madinah', 'Asir', 'Abha', 'Dammam'];
+  final List<String> _citiesAr = ['الكل', 'مكة المكرمة', 'المدينة المنورة', 'العُلا', 'الدرعية', 'الرياض', 'جدة', 'عسير', 'أبها', 'الدمام'];
+  final List<String> _citiesEn = ['All', 'Makkah', 'Madinah', 'AlUla', 'Diriyah', 'Riyadh', 'Jeddah', 'Asir', 'Abha', 'Dammam'];
 
   @override
   void dispose() {
@@ -110,32 +116,38 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
     _selectedCity = 'الكل';
     _globalPriceRange = const RangeValues(0, 3000);
     _minRating = 0.0;
-    _tourDurationFilter = 'الكل';
+    _tourCategoryFilter = 'الكل';
+    _tourThemeFilter = 'الكل';
+    _tourPriceRange = const RangeValues(50, 1500);
     _museumEntryType = 'الكل';
     _museumPriceRange = const RangeValues(0, 500);
+    _eventTypeFilter = 'الكل';
     _eventEntryType = 'الكل';
-    _eventTimingFilter = 'الكل';
     _eventPriceRange = const RangeValues(0, 2000);
+    _guideOnlyAvailable = false;
+    _guideFreeConsultation = false;
+    _guideTourType = 'الكل';
     _guideLanguageFilter = 'الكل';
     _guideHourlyRange = const RangeValues(0, 1000);
-    _guideMinRating = 0.0;
+    _carCategoryFilter = 'الكل';
     _carPassengerFilter = 'الكل';
     _carTransmissionFilter = 'الكل';
-    _carPriceRange = const RangeValues(0, 2500);
+    _carPriceRange = const RangeValues(100, 2500);
     _productCategoryFilter = 'الكل';
     _productOnlyInStock = false;
     _productOnlyOnSale = false;
+    _productSortBy = 'الأحدث';
     _productPriceRange = const RangeValues(0, 1500);
   }
 
   bool _isAnyFilterActive() {
     if (_selectedCity != 'الكل') return true;
     if (_minRating > 0.0) return true;
-    if (_selectedCategoryIndex == 1 && _tourDurationFilter != 'الكل') return true;
+    if (_selectedCategoryIndex == 1 && (_tourCategoryFilter != 'الكل' || _tourThemeFilter != 'الكل' || _tourPriceRange.end < 1500)) return true;
     if (_selectedCategoryIndex == 2 && (_museumEntryType != 'الكل' || _museumPriceRange.end < 500)) return true;
-    if (_selectedCategoryIndex == 3 && (_eventEntryType != 'الكل' || _eventTimingFilter != 'الكل' || _eventPriceRange.end < 2000)) return true;
-    if (_selectedCategoryIndex == 4 && (_guideLanguageFilter != 'الكل' || _guideMinRating > 0.0 || _guideHourlyRange.end < 1000)) return true;
-    if (_selectedCategoryIndex == 5 && (_carPassengerFilter != 'الكل' || _carTransmissionFilter != 'الكل' || _carPriceRange.end < 2500)) return true;
+    if (_selectedCategoryIndex == 3 && (_eventTypeFilter != 'الكل' || _eventEntryType != 'الكل' || _eventPriceRange.end < 2000)) return true;
+    if (_selectedCategoryIndex == 4 && (_guideOnlyAvailable || _guideFreeConsultation || _guideTourType != 'الكل' || _guideLanguageFilter != 'الكل' || _guideHourlyRange.end < 1000)) return true;
+    if (_selectedCategoryIndex == 5 && (_carCategoryFilter != 'الكل' || _carPassengerFilter != 'الكل' || _carTransmissionFilter != 'الكل' || _carPriceRange.end < 2500)) return true;
     if (_selectedCategoryIndex == 6 && (_productCategoryFilter != 'الكل' || _productOnlyInStock || _productOnlyOnSale || _productPriceRange.end < 1500)) return true;
     return false;
   }
@@ -155,7 +167,7 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
 
           return Container(
             constraints: BoxConstraints(
-              maxHeight: MediaQuery.of(context).size.height * 0.85,
+              maxHeight: MediaQuery.of(context).size.height * 0.88,
             ),
             padding: EdgeInsets.only(
               left: 20,
@@ -183,7 +195,7 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
                         Icon(Icons.tune, color: _categoryColors[_selectedCategoryIndex], size: 22),
                         const SizedBox(width: 8),
                         Text(
-                          isAr ? 'تصفية نتائج: ${categories[_selectedCategoryIndex]}' : 'Filter: ${categories[_selectedCategoryIndex]}',
+                          isAr ? 'فلاتر ${categories[_selectedCategoryIndex]}' : 'Filter ${categories[_selectedCategoryIndex]}',
                           style: AppTypography.headingSmall.copyWith(fontSize: 17),
                         ),
                       ],
@@ -206,8 +218,8 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // 1. Main Category Tabs inside sheet
-                        Text(isAr ? 'التصنيف الرئيسي' : 'Service Category', style: AppTypography.titleSmall),
+                        // Category Tabs inside Filter
+                        Text(isAr ? 'التصنيف' : 'Category', style: AppTypography.titleSmall),
                         const SizedBox(height: 8),
                         Wrap(
                           spacing: 8,
@@ -260,7 +272,7 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
 
                 const SizedBox(height: 12),
                 CustomButton(
-                  text: isAr ? 'تطبيق الفلاتر والبحث' : 'Apply Filters',
+                  text: isAr ? 'تطبيق الفلاتر وعرض النتائج' : 'Apply Filters',
                   onPressed: () {
                     setState(() {});
                     Navigator.pop(context);
@@ -274,9 +286,7 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
     );
   }
 
-  // --- Filter Sections by Category ---
-
-  // 0. All Categories Filter
+  // --- 0. All Filters Section ---
   Widget _buildAllFiltersSection(StateSetter setModalState, bool isAr, List<String> cities) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -302,26 +312,33 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
     );
   }
 
-  // 1. Tours Filter Section
+  // --- 1. Tours Filter Section (cat_id[], attrs[1][], price_range, review_score) ---
   Widget _buildTourFiltersSection(StateSetter setModalState, bool isAr, List<String> cities) {
-    final durations = isAr ? ['الكل', 'نصف يوم (< 6 ساعات)', 'يوم كامل', 'أكثر من يوم'] : ['All', 'Half Day (< 6h)', 'Full Day', 'Multi-day'];
+    final tourCategories = isAr
+        ? ['الكل', 'المسارات السياحية', 'السياحة البيئية', 'جولة مع مرشد', 'مغامرات']
+        : ['All', 'Tourist Trails', 'Ecotourism', 'Guided Tour', 'Adventures'];
+
+    final tourThemes = isAr
+        ? ['الكل', 'ثقافي', 'طبيعة ومغامرة', 'بحري', 'مستقل', 'أنشطة', 'مهرجانات وفعاليات', 'اهتمامات خاصة']
+        : ['All', 'Cultural', 'Nature & Adventure', 'Marine', 'Independent', 'Activities', 'Festivals & Events', 'Special Interest'];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildCityFilter(setModalState, isAr, cities),
         const SizedBox(height: 16),
-        Text(isAr ? 'مدة المسار السياحي' : 'Tour Duration', style: AppTypography.titleSmall),
+
+        Text(isAr ? 'نوع المسار السياحي (cat_id)' : 'Tour Category', style: AppTypography.titleSmall),
         const SizedBox(height: 8),
         Wrap(
           spacing: 8,
           runSpacing: 8,
-          children: durations.map((dur) {
-            final isSel = _tourDurationFilter == dur;
+          children: tourCategories.map((c) {
+            final isSel = _tourCategoryFilter == c;
             return ChoiceChip(
-              label: Text(dur),
+              label: Text(c),
               selected: isSel,
-              onSelected: (_) => setModalState(() => _tourDurationFilter = dur),
+              onSelected: (_) => setModalState(() => _tourCategoryFilter = c),
               selectedColor: const Color(0xFFFBBF24),
               backgroundColor: AppColors.card,
               labelStyle: TextStyle(
@@ -333,15 +350,40 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
           }).toList(),
         ),
         const SizedBox(height: 16),
-        _buildPriceRangeFilter(
-          setModalState,
-          title: isAr ? 'سعر المسار' : 'Tour Price',
-          values: _globalPriceRange,
-          max: 3000,
-          divisions: 30,
-          onChanged: (val) => setModalState(() => _globalPriceRange = val),
+
+        Text(isAr ? 'التراث والاهتمام (Attributes)' : 'Tour Theme & Attributes', style: AppTypography.titleSmall),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: tourThemes.map((th) {
+            final isSel = _tourThemeFilter == th;
+            return ChoiceChip(
+              label: Text(th),
+              selected: isSel,
+              onSelected: (_) => setModalState(() => _tourThemeFilter = th),
+              selectedColor: const Color(0xFFFBBF24),
+              backgroundColor: AppColors.card,
+              labelStyle: TextStyle(
+                color: isSel ? AppColors.textDark : AppColors.textPrimary,
+                fontWeight: isSel ? FontWeight.bold : FontWeight.normal,
+                fontSize: 12,
+              ),
+            );
+          }).toList(),
         ),
         const SizedBox(height: 16),
+
+        _buildPriceRangeFilter(
+          setModalState,
+          title: isAr ? 'سعر المسار (﷼)' : 'Tour Price (SAR)',
+          values: _tourPriceRange,
+          max: 1500,
+          divisions: 15,
+          onChanged: (val) => setModalState(() => _tourPriceRange = val),
+        ),
+        const SizedBox(height: 16),
+
         _buildRatingFilter(
           setModalState,
           isAr: isAr,
@@ -352,7 +394,7 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
     );
   }
 
-  // 2. Museums Filter Section
+  // --- 2. Museums Filter Section (location_id, price_range, is_free) ---
   Widget _buildMuseumFiltersSection(StateSetter setModalState, bool isAr, List<String> cities) {
     final entryTypes = isAr ? ['الكل', 'دخول مجاني فقط', 'تذاكر مدفوعة'] : ['All', 'Free Entry Only', 'Paid Tickets'];
 
@@ -361,6 +403,7 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
       children: [
         _buildCityFilter(setModalState, isAr, cities),
         const SizedBox(height: 16),
+
         Text(isAr ? 'نوع تذكرة الدخول' : 'Entry Type', style: AppTypography.titleSmall),
         const SizedBox(height: 8),
         Wrap(
@@ -382,38 +425,51 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
           }).toList(),
         ),
         const SizedBox(height: 16),
+
         _buildPriceRangeFilter(
           setModalState,
-          title: isAr ? 'سعر التذكرة' : 'Ticket Price',
+          title: isAr ? 'سعر التذكرة (﷼)' : 'Ticket Price (SAR)',
           values: _museumPriceRange,
           max: 500,
           divisions: 20,
           onChanged: (val) => setModalState(() => _museumPriceRange = val),
         ),
+        const SizedBox(height: 16),
+
+        _buildRatingFilter(
+          setModalState,
+          isAr: isAr,
+          currentRating: _minRating,
+          onSelected: (val) => setModalState(() => _minRating = val),
+        ),
       ],
     );
   }
 
-  // 3. Events Filter Section
+  // --- 3. Events Filter Section (location_id, attrs[11][], price_range) ---
   Widget _buildEventFiltersSection(StateSetter setModalState, bool isAr, List<String> cities) {
-    final entryTypes = isAr ? ['الكل', 'فعاليات مجانية فقط', 'فعاليات مدفوعة'] : ['All', 'Free Only', 'Paid'];
-    final timings = isAr ? ['الكل', 'فعاليات اليوم', 'خلال هذا الأسبوع'] : ['All', 'Today', 'This Week'];
+    final eventTypes = isAr
+        ? ['الكل', 'ثقافية', 'ترفيهية', 'موسيقية', 'عائلية', 'تراثية']
+        : ['All', 'Cultural', 'Entertainment', 'Music', 'Family', 'Heritage'];
+    final entryTypes = isAr ? ['الكل', 'مجانية فقط', 'مدفوعة'] : ['All', 'Free Only', 'Paid'];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildCityFilter(setModalState, isAr, cities),
         const SizedBox(height: 16),
-        Text(isAr ? 'موعد الفعالية' : 'Event Schedule', style: AppTypography.titleSmall),
+
+        Text(isAr ? 'نوع الفعالية (Event Type)' : 'Event Type', style: AppTypography.titleSmall),
         const SizedBox(height: 8),
         Wrap(
           spacing: 8,
-          children: timings.map((t) {
-            final isSel = _eventTimingFilter == t;
+          runSpacing: 8,
+          children: eventTypes.map((t) {
+            final isSel = _eventTypeFilter == t;
             return ChoiceChip(
               label: Text(t),
               selected: isSel,
-              onSelected: (_) => setModalState(() => _eventTimingFilter = t),
+              onSelected: (_) => setModalState(() => _eventTypeFilter = t),
               selectedColor: const Color(0xFFF43F5E),
               backgroundColor: AppColors.card,
               labelStyle: TextStyle(
@@ -425,7 +481,8 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
           }).toList(),
         ),
         const SizedBox(height: 16),
-        Text(isAr ? 'نوع الفعالية' : 'Event Entry', style: AppTypography.titleSmall),
+
+        Text(isAr ? 'الدخول والتذاكر' : 'Entry & Tickets', style: AppTypography.titleSmall),
         const SizedBox(height: 8),
         Wrap(
           spacing: 8,
@@ -446,9 +503,10 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
           }).toList(),
         ),
         const SizedBox(height: 16),
+
         _buildPriceRangeFilter(
           setModalState,
-          title: isAr ? 'سعر التذكرة' : 'Ticket Price',
+          title: isAr ? 'سعر الفعالية (﷼)' : 'Ticket Price (SAR)',
           values: _eventPriceRange,
           max: 2000,
           divisions: 20,
@@ -458,8 +516,9 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
     );
   }
 
-  // 4. Tour Guides Filter Section
+  // --- 4. Tour Guides Filter Section (is_available, free_consultation, tour_type, languages, price_range) ---
   Widget _buildGuideFiltersSection(StateSetter setModalState, bool isAr) {
+    final tourTypes = isAr ? ['الكل', 'حضوري', 'افتراضي'] : ['All', 'In-Person', 'Virtual'];
     final languages = isAr
         ? ['الكل', 'العربية', 'الإنجليزية', 'الفرنسية', 'الإسبانية', 'الألمانية', 'الصينية']
         : ['All', 'Arabic', 'English', 'French', 'Spanish', 'German', 'Chinese'];
@@ -467,6 +526,58 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Availability & Free Consultation Switches
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          decoration: BoxDecoration(
+            color: AppColors.card,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Column(
+            children: [
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                activeColor: const Color(0xFF34D399),
+                title: Text(isAr ? 'متاح للحجز الفوري (is_available)' : 'Available for Booking', style: AppTypography.titleSmall.copyWith(fontSize: 13)),
+                value: _guideOnlyAvailable,
+                onChanged: (val) => setModalState(() => _guideOnlyAvailable = val),
+              ),
+              const Divider(color: AppColors.border, height: 1),
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                activeColor: const Color(0xFF34D399),
+                title: Text(isAr ? 'يقدم استشارة مجانية (free_consultation)' : 'Offers Free Consultation', style: AppTypography.titleSmall.copyWith(fontSize: 13)),
+                value: _guideFreeConsultation,
+                onChanged: (val) => setModalState(() => _guideFreeConsultation = val),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        Text(isAr ? 'نوع الجولة الإرشادية (tour_type)' : 'Tour Type', style: AppTypography.titleSmall),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          children: tourTypes.map((t) {
+            final isSel = _guideTourType == t;
+            return ChoiceChip(
+              label: Text(t),
+              selected: isSel,
+              onSelected: (_) => setModalState(() => _guideTourType = t),
+              selectedColor: const Color(0xFF34D399),
+              backgroundColor: AppColors.card,
+              labelStyle: TextStyle(
+                color: isSel ? AppColors.textDark : AppColors.textPrimary,
+                fontWeight: isSel ? FontWeight.bold : FontWeight.normal,
+                fontSize: 12,
+              ),
+            );
+          }).toList(),
+        ),
+        const SizedBox(height: 16),
+
         Text(isAr ? 'لغات المرشد السياحي' : 'Guide Languages', style: AppTypography.titleSmall),
         const SizedBox(height: 8),
         Wrap(
@@ -489,34 +600,52 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
           }).toList(),
         ),
         const SizedBox(height: 16),
+
         _buildPriceRangeFilter(
           setModalState,
-          title: isAr ? 'سعر الساعة للإرشاد' : 'Hourly Rate',
+          title: isAr ? 'سعر الساعة للإرشاد (﷼)' : 'Hourly Rate (SAR)',
           values: _guideHourlyRange,
           max: 1000,
           divisions: 20,
           onChanged: (val) => setModalState(() => _guideHourlyRange = val),
         ),
-        const SizedBox(height: 16),
-        _buildRatingFilter(
-          setModalState,
-          isAr: isAr,
-          currentRating: _guideMinRating,
-          onSelected: (val) => setModalState(() => _guideMinRating = val),
-        ),
       ],
     );
   }
 
-  // 5. Cars Filter Section
+  // --- 5. Cars Filter Section (category, passenger, gear, price_range) ---
   Widget _buildCarFiltersSection(StateSetter setModalState, bool isAr) {
-    final passengers = isAr ? ['الكل', 'شخصين (2)', '4 إلى 5 ركاب', '7+ عائلية'] : ['All', '2 Passengers', '4-5 Passengers', '7+ Family'];
+    final categories = isAr ? ['الكل', 'فاخرة', 'دفع رباعي SUV', 'سيدان', 'عائلية VIP'] : ['All', 'Luxury', 'SUV 4x4', 'Sedan', 'VIP Family'];
+    final passengers = isAr ? ['الكل', '2 ركاب', '4-5 ركاب', '7+ عائلية'] : ['All', '2 Passengers', '4-5 Passengers', '7+ Family'];
     final transmissions = isAr ? ['الكل', 'أوتوماتيك', 'يدوي / عادي'] : ['All', 'Automatic', 'Manual'];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(isAr ? 'سعة الركاب' : 'Passenger Capacity', style: AppTypography.titleSmall),
+        Text(isAr ? 'نوع / فئة السيارة' : 'Car Category', style: AppTypography.titleSmall),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: categories.map((cat) {
+            final isSel = _carCategoryFilter == cat;
+            return ChoiceChip(
+              label: Text(cat),
+              selected: isSel,
+              onSelected: (_) => setModalState(() => _carCategoryFilter = cat),
+              selectedColor: const Color(0xFF60A5FA),
+              backgroundColor: AppColors.card,
+              labelStyle: TextStyle(
+                color: isSel ? AppColors.textDark : AppColors.textPrimary,
+                fontWeight: isSel ? FontWeight.bold : FontWeight.normal,
+                fontSize: 12,
+              ),
+            );
+          }).toList(),
+        ),
+        const SizedBox(height: 16),
+
+        Text(isAr ? 'سعة الركاب (passenger)' : 'Passenger Capacity', style: AppTypography.titleSmall),
         const SizedBox(height: 8),
         Wrap(
           spacing: 8,
@@ -538,7 +667,8 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
           }).toList(),
         ),
         const SizedBox(height: 16),
-        Text(isAr ? 'نوع ناقل الحركة (القير)' : 'Transmission', style: AppTypography.titleSmall),
+
+        Text(isAr ? 'نوع القير (gear)' : 'Transmission', style: AppTypography.titleSmall),
         const SizedBox(height: 8),
         Wrap(
           spacing: 8,
@@ -559,9 +689,10 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
           }).toList(),
         ),
         const SizedBox(height: 16),
+
         _buildPriceRangeFilter(
           setModalState,
-          title: isAr ? 'سعر الإيجار اليومي' : 'Daily Price',
+          title: isAr ? 'سعر الإيجار اليومي (﷼)' : 'Daily Price (SAR)',
           values: _carPriceRange,
           max: 2500,
           divisions: 25,
@@ -571,16 +702,20 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
     );
   }
 
-  // 6. Shop Filter Section
+  // --- 6. Shop Filter Section (cat_id[], on_sale, in_stock, orderby, price_range) ---
   Widget _buildShopFiltersSection(StateSetter setModalState, bool isAr) {
     final categories = isAr
-        ? ['الكل', 'عطور وبخور', 'تمور ومأكولات', 'مقتنيات وهدايا', 'أزياء وتراث']
-        : ['All', 'Perfumes & Oud', 'Dates & Gourmet', 'Gifts & Souvenirs', 'Apparel & Heritage'];
+        ? ['الكل', 'أغذية ومأكولات', 'عطور وبخور', 'منتج أثري', 'منتج ديني', 'منتج ثقافي', 'ملابس وهدايا']
+        : ['All', 'Dates & Gourmet', 'Perfumes & Oud', 'Antique Goods', 'Religious Souvenirs', 'Cultural Heritage', 'Apparel & Gifts'];
+
+    final sortOptions = isAr
+        ? ['الأحدث', 'السعر: الأقل أولاً', 'السعر: الأعلى أولاً', 'الأكثر مبيعاً']
+        : ['Latest', 'Price: Low to High', 'Price: High to Low', 'Best Selling'];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(isAr ? 'تصنيف المنتج التراثي' : 'Product Category', style: AppTypography.titleSmall),
+        Text(isAr ? 'تصنيف المتجر (cat_id[])' : 'Shop Category', style: AppTypography.titleSmall),
         const SizedBox(height: 8),
         Wrap(
           spacing: 8,
@@ -602,6 +737,30 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
           }).toList(),
         ),
         const SizedBox(height: 16),
+
+        Text(isAr ? 'ترتيب النتائج (orderby)' : 'Sort By', style: AppTypography.titleSmall),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: sortOptions.map((opt) {
+            final isSel = _productSortBy == opt;
+            return ChoiceChip(
+              label: Text(opt),
+              selected: isSel,
+              onSelected: (_) => setModalState(() => _productSortBy = opt),
+              selectedColor: const Color(0xFFFB923C),
+              backgroundColor: AppColors.card,
+              labelStyle: TextStyle(
+                color: isSel ? AppColors.textDark : AppColors.textPrimary,
+                fontWeight: isSel ? FontWeight.bold : FontWeight.normal,
+                fontSize: 12,
+              ),
+            );
+          }).toList(),
+        ),
+        const SizedBox(height: 16),
+
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           decoration: BoxDecoration(
@@ -614,25 +773,26 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
                 activeColor: const Color(0xFFFB923C),
-                title: Text(isAr ? 'المتوفر في المخزون فقط' : 'In-Stock Only', style: AppTypography.titleSmall.copyWith(fontSize: 13)),
-                value: _productOnlyInStock,
-                onChanged: (val) => setModalState(() => _productOnlyInStock = val),
+                title: Text(isAr ? 'العروض والتخفيضات (on_sale=1)' : 'On Sale Only', style: AppTypography.titleSmall.copyWith(fontSize: 13)),
+                value: _productOnlyOnSale,
+                onChanged: (val) => setModalState(() => _productOnlyOnSale = val),
               ),
               const Divider(color: AppColors.border, height: 1),
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
                 activeColor: const Color(0xFFFB923C),
-                title: Text(isAr ? 'العروض والتخفيضات فقط' : 'On-Sale Only', style: AppTypography.titleSmall.copyWith(fontSize: 13)),
-                value: _productOnlyOnSale,
-                onChanged: (val) => setModalState(() => _productOnlyOnSale = val),
+                title: Text(isAr ? 'المتوفر في المخزون فقط' : 'In-Stock Only', style: AppTypography.titleSmall.copyWith(fontSize: 13)),
+                value: _productOnlyInStock,
+                onChanged: (val) => setModalState(() => _productOnlyInStock = val),
               ),
             ],
           ),
         ),
         const SizedBox(height: 16),
+
         _buildPriceRangeFilter(
           setModalState,
-          title: isAr ? 'سعر المنتج' : 'Product Price',
+          title: isAr ? 'سعر المنتج (﷼)' : 'Product Price (SAR)',
           values: _productPriceRange,
           max: 1500,
           divisions: 15,
@@ -642,13 +802,13 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
     );
   }
 
-  // --- Helper filter widgets ---
+  // --- Filter Helpers ---
 
   Widget _buildCityFilter(StateSetter setModalState, bool isAr, List<String> cities) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(isAr ? 'المدينة / الوجهة' : 'City / Destination', style: AppTypography.titleSmall),
+        Text(isAr ? 'الوجهة / المدينة (location_id)' : 'City / Destination', style: AppTypography.titleSmall),
         const SizedBox(height: 8),
         Wrap(
           spacing: 8,
@@ -785,7 +945,7 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
                       controller: _searchController,
                       onChanged: (_) => setState(() {}),
                       decoration: InputDecoration(
-                        hintText: isAr ? 'ابحث عن مسار، فعالية، مرشد أو منتج...' : 'Search trails, events, guides, cars...',
+                        hintText: isAr ? 'ابحث عن مسار، فعالية، مرشد، أو منتج...' : 'Search trails, events, guides, cars...',
                         hintStyle: AppTypography.bodySmall.copyWith(color: AppColors.textMuted),
                         prefixIcon: Icon(Icons.search, color: _categoryColors[_selectedCategoryIndex]),
                         suffixIcon: _searchController.text.isNotEmpty
@@ -812,7 +972,7 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: isFilterActive ? _categoryColors[_selectedCategoryIndex].withOpacity(0.15) : AppColors.card,
+                          color: isFilterActive ? _categoryColors[_selectedCategoryIndex].withOpacity(0.18) : AppColors.card,
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
                             color: isFilterActive ? _categoryColors[_selectedCategoryIndex] : AppColors.border,
@@ -908,15 +1068,15 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
             ),
           ),
 
-          // Active filter banner (if any active)
+          // Active filter banner
           if (isFilterActive)
             Container(
               margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: _categoryColors[_selectedCategoryIndex].withOpacity(0.1),
+                color: _categoryColors[_selectedCategoryIndex].withOpacity(0.12),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: _categoryColors[_selectedCategoryIndex].withOpacity(0.3)),
+                border: Border.all(color: _categoryColors[_selectedCategoryIndex].withOpacity(0.35)),
               ),
               child: Row(
                 children: [
@@ -925,7 +1085,7 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
                   Expanded(
                     child: Text(
                       isAr ? 'فلاتر مخصصة مفعلة' : 'Active category filters',
-                      style: AppTypography.bodySmall.copyWith(fontSize: 11, color: _categoryColors[_selectedCategoryIndex]),
+                      style: AppTypography.bodySmall.copyWith(fontSize: 11, color: _categoryColors[_selectedCategoryIndex], fontWeight: FontWeight.bold),
                     ),
                   ),
                   GestureDetector(
@@ -944,7 +1104,7 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
               ),
             ),
 
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
 
           // Content body based on selected category index
           Expanded(
@@ -975,7 +1135,7 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
     }
   }
 
-  // --- Combined All List ---
+  // --- Combined All List (Using UnifiedItemCard) ---
   Widget _buildAllCombinedList(bool isAr, String search) {
     final toursAsync = ref.watch(toursListProvider(search.isEmpty ? null : search));
     final museumsAsync = ref.watch(museumsListProvider);
@@ -983,419 +1143,190 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
     final guidesAsync = ref.watch(guidesListProvider);
     final carsAsync = ref.watch(carsListProvider);
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.only(bottom: 32),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // 1. المسارات السياحية
-          _buildSectionHeader(
-            title: isAr ? 'المسارات السياحية' : 'Tourist Trails',
-            accentColor: _categoryColors[1],
-            onTapMore: () => setState(() => _selectedCategoryIndex = 1),
-            isAr: isAr,
-          ),
-          toursAsync.when(
-            data: (tours) {
-              final list = tours.where((t) {
-                final price = t.salePrice ?? t.price;
-                if (price < _globalPriceRange.start || price > _globalPriceRange.end) return false;
-                if (t.rating < _minRating) return false;
-                if (_selectedCity != 'الكل' && _selectedCity != 'All') {
-                  if (t.locationName != null && !t.locationName!.contains(_selectedCity)) return false;
-                }
-                return true;
-              }).take(6).toList();
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 32),
+      children: [
+        // 1. المسارات السياحية
+        _buildSectionHeader(
+          title: isAr ? 'المسارات السياحية' : 'Tourist Trails',
+          accentColor: _categoryColors[1],
+          onTapMore: () => setState(() => _selectedCategoryIndex = 1),
+          isAr: isAr,
+        ),
+        toursAsync.when(
+          data: (tours) {
+            final list = tours.where((t) {
+              final price = t.salePrice ?? t.price;
+              if (price < _globalPriceRange.start || price > _globalPriceRange.end) return false;
+              if (t.rating < _minRating) return false;
+              if (_selectedCity != 'الكل' && _selectedCity != 'All') {
+                if (t.locationName != null && !t.locationName!.contains(_selectedCity)) return false;
+              }
+              return true;
+            }).take(3).toList();
 
-              if (list.isEmpty) return const SizedBox.shrink();
-              return SizedBox(
-                height: 230,
-                child: ListView.separated(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  scrollDirection: Axis.horizontal,
-                  itemCount: list.length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 14),
-                  itemBuilder: (context, index) {
-                    final tour = list[index];
-                    return GestureDetector(
-                      onTap: () => context.push('/experience/${tour.id}'),
-                      child: Container(
-                        width: 220,
-                        decoration: BoxDecoration(
-                          color: AppColors.card,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: AppColors.border),
-                          boxShadow: const [
-                            BoxShadow(color: Colors.black26, blurRadius: 6, offset: Offset(0, 3)),
-                          ],
-                        ),
-                        clipBehavior: Clip.antiAlias,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Stack(
-                              children: [
-                                CachedNetworkImage(
-                                  imageUrl: tour.imageUrl ?? 'https://images.unsplash.com/photo-1590073844006-33379778ae09?w=800&q=80',
-                                  height: 125,
-                                  width: double.infinity,
-                                  fit: BoxFit.cover,
-                                ),
-                                Positioned(
-                                  top: 8,
-                                  right: isAr ? 8 : null,
-                                  left: isAr ? null : 8,
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                    decoration: BoxDecoration(
-                                      color: Colors.black.withOpacity(0.7),
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        const Icon(Icons.star, color: AppColors.primaryGold, size: 12),
-                                        const SizedBox(width: 4),
-                                        Text('${tour.rating}', style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.all(10),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(tour.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppTypography.titleSmall),
-                                  const SizedBox(height: 4),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Expanded(
-                                        child: Row(
-                                          children: [
-                                            const Icon(Icons.location_on_outlined, size: 12, color: AppColors.primaryGold),
-                                            const SizedBox(width: 4),
-                                            Expanded(
-                                              child: Text(tour.locationName ?? (isAr ? 'المملكة' : 'KSA'), style: AppTypography.bodySmall.copyWith(fontSize: 11), maxLines: 1, overflow: TextOverflow.ellipsis),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      Text(tour.formattedPrice, style: AppTypography.price.copyWith(fontSize: 13)),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              );
-            },
-            loading: () => const Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator(color: AppColors.primaryGold))),
-            error: (_, __) => const SizedBox.shrink(),
-          ),
-          const SizedBox(height: 24),
+            return Column(
+              children: list.map((tour) {
+                return UnifiedItemCard(
+                  title: tour.title,
+                  imageUrl: tour.imageUrl,
+                  locationName: tour.locationName ?? (isAr ? 'المملكة' : 'KSA'),
+                  rating: tour.rating,
+                  subtitle: tour.duration,
+                  price: tour.formattedPrice,
+                  accentColor: _categoryColors[1],
+                  onTap: () => context.push('/experience/${tour.id}'),
+                );
+              }).toList(),
+            );
+          },
+          loading: () => const Center(child: Padding(padding: EdgeInsets.all(12), child: CircularProgressIndicator(color: AppColors.primaryGold))),
+          error: (_, __) => const SizedBox.shrink(),
+        ),
+        const SizedBox(height: 18),
 
-          // 2. المتاحف والمعالم
-          _buildSectionHeader(
-            title: isAr ? 'المتاحف والمعالم' : 'Museums & Landmarks',
-            accentColor: _categoryColors[2],
-            onTapMore: () => setState(() => _selectedCategoryIndex = 2),
-            isAr: isAr,
-          ),
-          museumsAsync.when(
-            data: (museums) {
-              final list = museums.where((m) {
-                if (m.price < _globalPriceRange.start || m.price > _globalPriceRange.end) return false;
-                if (m.rating < _minRating) return false;
-                if (_selectedCity != 'الكل' && _selectedCity != 'All') {
-                  if (m.locationName != null && !m.locationName!.contains(_selectedCity)) return false;
-                }
-                return true;
-              }).take(6).toList();
+        // 2. المتاحف والمعالم
+        _buildSectionHeader(
+          title: isAr ? 'المتاحف والمعالم' : 'Museums & Landmarks',
+          accentColor: _categoryColors[2],
+          onTapMore: () => setState(() => _selectedCategoryIndex = 2),
+          isAr: isAr,
+        ),
+        museumsAsync.when(
+          data: (museums) {
+            final list = museums.where((m) {
+              if (m.price < _globalPriceRange.start || m.price > _globalPriceRange.end) return false;
+              if (m.rating < _minRating) return false;
+              if (_selectedCity != 'الكل' && _selectedCity != 'All') {
+                if (m.locationName != null && !m.locationName!.contains(_selectedCity)) return false;
+              }
+              return true;
+            }).take(3).toList();
 
-              if (list.isEmpty) return const SizedBox.shrink();
-              return SizedBox(
-                height: 210,
-                child: ListView.separated(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  scrollDirection: Axis.horizontal,
-                  itemCount: list.length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 14),
-                  itemBuilder: (context, index) {
-                    final m = list[index];
-                    return GestureDetector(
-                      onTap: () => context.push('/museum/${m.id}'),
-                      child: Container(
-                        width: 210,
-                        decoration: BoxDecoration(
-                          color: AppColors.card,
-                          borderRadius: BorderRadius.circular(18),
-                          border: Border.all(color: AppColors.border),
-                        ),
-                        clipBehavior: Clip.antiAlias,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            CachedNetworkImage(
-                              imageUrl: m.imageUrl ?? 'https://images.unsplash.com/photo-1566127444979-b3d2b654e3d7?w=800&q=80',
-                              height: 120,
-                              width: double.infinity,
-                              fit: BoxFit.cover,
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.all(10),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(m.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppTypography.titleSmall),
-                                  const SizedBox(height: 4),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text(m.locationName ?? (isAr ? 'الرياض' : 'Riyadh'), style: AppTypography.bodySmall),
-                                      Text(m.formattedPrice, style: AppTypography.price.copyWith(fontSize: 13)),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              );
-            },
-            loading: () => const SizedBox.shrink(),
-            error: (_, __) => const SizedBox.shrink(),
-          ),
-          const SizedBox(height: 24),
+            return Column(
+              children: list.map((museum) {
+                return UnifiedItemCard(
+                  title: museum.title,
+                  imageUrl: museum.imageUrl,
+                  locationName: museum.locationName ?? (isAr ? 'المملكة' : 'KSA'),
+                  rating: museum.rating,
+                  subtitle: museum.workingHours,
+                  price: museum.formattedPrice,
+                  accentColor: _categoryColors[2],
+                  onTap: () => context.push('/museum/${museum.id}'),
+                );
+              }).toList(),
+            );
+          },
+          loading: () => const SizedBox.shrink(),
+          error: (_, __) => const SizedBox.shrink(),
+        ),
+        const SizedBox(height: 18),
 
-          // 3. الفعاليات والمواسم
-          _buildSectionHeader(
-            title: isAr ? 'الفعاليات والمواسم' : 'Events & Seasons',
-            accentColor: _categoryColors[3],
-            onTapMore: () => setState(() => _selectedCategoryIndex = 3),
-            isAr: isAr,
-          ),
-          eventsAsync.when(
-            data: (events) {
-              final list = events.where((e) {
-                if (e.priceNum < _globalPriceRange.start || e.priceNum > _globalPriceRange.end) return false;
-                if (_selectedCity != 'الكل' && _selectedCity != 'All') {
-                  if (!e.location.contains(_selectedCity)) return false;
-                }
-                return true;
-              }).take(6).toList();
+        // 3. الفعاليات والمواسم
+        _buildSectionHeader(
+          title: isAr ? 'الفعاليات والمواسم' : 'Events & Seasons',
+          accentColor: _categoryColors[3],
+          onTapMore: () => setState(() => _selectedCategoryIndex = 3),
+          isAr: isAr,
+        ),
+        eventsAsync.when(
+          data: (events) {
+            final list = events.where((e) {
+              if (e.priceNum < _globalPriceRange.start || e.priceNum > _globalPriceRange.end) return false;
+              if (_selectedCity != 'الكل' && _selectedCity != 'All') {
+                if (!e.location.contains(_selectedCity)) return false;
+              }
+              return true;
+            }).take(3).toList();
 
-              if (list.isEmpty) return const SizedBox.shrink();
-              return SizedBox(
-                height: 210,
-                child: ListView.separated(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  scrollDirection: Axis.horizontal,
-                  itemCount: list.length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 14),
-                  itemBuilder: (context, index) {
-                    final ev = list[index];
-                    return GestureDetector(
-                      onTap: () => context.push('/event/${ev.id}'),
-                      child: Container(
-                        width: 210,
-                        decoration: BoxDecoration(
-                          color: AppColors.card,
-                          borderRadius: BorderRadius.circular(18),
-                          border: Border.all(color: AppColors.border),
-                        ),
-                        clipBehavior: Clip.antiAlias,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            CachedNetworkImage(
-                              imageUrl: ev.imageUrl,
-                              height: 120,
-                              width: double.infinity,
-                              fit: BoxFit.cover,
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.all(10),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(ev.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppTypography.titleSmall),
-                                  const SizedBox(height: 4),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text(ev.location, style: AppTypography.bodySmall),
-                                      Text(ev.price, style: AppTypography.price.copyWith(fontSize: 13)),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              );
-            },
-            loading: () => const SizedBox.shrink(),
-            error: (_, __) => const SizedBox.shrink(),
-          ),
-          const SizedBox(height: 24),
+            return Column(
+              children: list.map((ev) {
+                return UnifiedItemCard(
+                  title: ev.title,
+                  imageUrl: ev.imageUrl,
+                  locationName: ev.location,
+                  rating: 4.8,
+                  subtitle: ev.duration,
+                  price: ev.price,
+                  accentColor: _categoryColors[3],
+                  onTap: () => context.push('/event/${ev.id}'),
+                );
+              }).toList(),
+            );
+          },
+          loading: () => const SizedBox.shrink(),
+          error: (_, __) => const SizedBox.shrink(),
+        ),
+        const SizedBox(height: 18),
 
-          // 4. المرشدون السياحيون
-          _buildSectionHeader(
-            title: isAr ? 'نخبة المرشدين السياحيين' : 'Tour Guides',
-            accentColor: _categoryColors[4],
-            onTapMore: () => setState(() => _selectedCategoryIndex = 4),
-            isAr: isAr,
-          ),
-          guidesAsync.when(
-            data: (guides) {
-              final list = guides.where((g) {
-                if (g.rating < _minRating) return false;
-                return true;
-              }).take(6).toList();
+        // 4. المرشدون السياحيون
+        _buildSectionHeader(
+          title: isAr ? 'نخبة المرشدين السياحيين' : 'Tour Guides',
+          accentColor: _categoryColors[4],
+          onTapMore: () => setState(() => _selectedCategoryIndex = 4),
+          isAr: isAr,
+        ),
+        guidesAsync.when(
+          data: (guides) {
+            final list = guides.where((g) {
+              if (g.rating < _minRating) return false;
+              return true;
+            }).take(3).toList();
 
-              if (list.isEmpty) return const SizedBox.shrink();
-              return SizedBox(
-                height: 130,
-                child: ListView.separated(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  scrollDirection: Axis.horizontal,
-                  itemCount: list.length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 14),
-                  itemBuilder: (context, index) {
-                    final g = list[index];
-                    return GestureDetector(
-                      onTap: () => context.push('/guide/${g.id}'),
-                      child: Container(
-                        width: 240,
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: AppColors.card,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: AppColors.border),
-                        ),
-                        child: Row(
-                          children: [
-                            CircleAvatar(
-                              radius: 28,
-                              backgroundImage: CachedNetworkImageProvider(g.imageUrl),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(g.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppTypography.titleSmall),
-                                  const SizedBox(height: 2),
-                                  Text(g.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppTypography.bodySmall.copyWith(fontSize: 11)),
-                                  const SizedBox(height: 4),
-                                  Text(g.hourlyRate, style: AppTypography.price.copyWith(fontSize: 12)),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              );
-            },
-            loading: () => const SizedBox.shrink(),
-            error: (_, __) => const SizedBox.shrink(),
-          ),
-          const SizedBox(height: 24),
+            return Column(
+              children: list.map((g) {
+                return UnifiedItemCard(
+                  title: g.name,
+                  imageUrl: g.imageUrl,
+                  locationName: g.title,
+                  rating: g.rating,
+                  subtitle: g.languages.join(' • '),
+                  price: g.hourlyRate,
+                  accentColor: _categoryColors[4],
+                  onTap: () => context.push('/guide/${g.id}'),
+                );
+              }).toList(),
+            );
+          },
+          loading: () => const SizedBox.shrink(),
+          error: (_, __) => const SizedBox.shrink(),
+        ),
+        const SizedBox(height: 18),
 
-          // 5. السيارات والتنقل
-          _buildSectionHeader(
-            title: isAr ? 'السيارات والتنقل الفاخر' : 'Cars & Transport',
-            accentColor: _categoryColors[5],
-            onTapMore: () => setState(() => _selectedCategoryIndex = 5),
-            isAr: isAr,
-          ),
-          carsAsync.when(
-            data: (cars) {
-              final list = cars.where((c) {
-                if (c.price < _globalPriceRange.start || c.price > _globalPriceRange.end) return false;
-                return true;
-              }).take(6).toList();
+        // 5. السيارات والتنقل
+        _buildSectionHeader(
+          title: isAr ? 'السيارات والتنقل الفاخر' : 'Cars & Transport',
+          accentColor: _categoryColors[5],
+          onTapMore: () => setState(() => _selectedCategoryIndex = 5),
+          isAr: isAr,
+        ),
+        carsAsync.when(
+          data: (cars) {
+            final list = cars.where((c) {
+              if (c.price < _globalPriceRange.start || c.price > _globalPriceRange.end) return false;
+              return true;
+            }).take(3).toList();
 
-              if (list.isEmpty) return const SizedBox.shrink();
-              return SizedBox(
-                height: 210,
-                child: ListView.separated(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  scrollDirection: Axis.horizontal,
-                  itemCount: list.length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 14),
-                  itemBuilder: (context, index) {
-                    final car = list[index];
-                    return GestureDetector(
-                      onTap: () => context.push('/car/${car.id}'),
-                      child: Container(
-                        width: 220,
-                        decoration: BoxDecoration(
-                          color: AppColors.card,
-                          borderRadius: BorderRadius.circular(18),
-                          border: Border.all(color: AppColors.border),
-                        ),
-                        clipBehavior: Clip.antiAlias,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            CachedNetworkImage(
-                              imageUrl: car.imageUrl,
-                              height: 120,
-                              width: double.infinity,
-                              fit: BoxFit.cover,
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.all(10),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(car.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppTypography.titleSmall),
-                                  const SizedBox(height: 4),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text('${car.passengerCount} ${isAr ? 'ركاب' : 'passengers'}', style: AppTypography.bodySmall),
-                                      Text(car.pricePerDay, style: AppTypography.price.copyWith(fontSize: 13)),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              );
-            },
-            loading: () => const SizedBox.shrink(),
-            error: (_, __) => const SizedBox.shrink(),
-          ),
-        ],
-      ),
+            return Column(
+              children: list.map((car) {
+                return UnifiedItemCard(
+                  title: car.title,
+                  imageUrl: car.imageUrl,
+                  locationName: car.locationName ?? (isAr ? 'الرياض' : 'Riyadh'),
+                  rating: car.rating,
+                  subtitle: '${car.passengerCount} ${isAr ? 'ركاب' : 'passengers'} • ${car.transmission}',
+                  price: car.pricePerDay,
+                  accentColor: _categoryColors[5],
+                  onTap: () => context.push('/car/${car.id}'),
+                );
+              }).toList(),
+            );
+          },
+          loading: () => const SizedBox.shrink(),
+          error: (_, __) => const SizedBox.shrink(),
+        ),
+      ],
     );
   }
 
@@ -1406,11 +1337,11 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
     required Color accentColor,
   }) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+      padding: const EdgeInsets.only(top: 10, bottom: 8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(title, style: AppTypography.titleMedium.copyWith(fontWeight: FontWeight.bold)),
+          Text(title, style: AppTypography.titleMedium.copyWith(fontWeight: FontWeight.bold, fontSize: 16)),
           GestureDetector(
             onTap: onTapMore,
             child: Row(
@@ -1436,89 +1367,37 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
       data: (tours) {
         final filtered = tours.where((t) {
           final price = t.salePrice ?? t.price;
-          if (price < _globalPriceRange.start || price > _globalPriceRange.end) return false;
+          if (price < _tourPriceRange.start || price > _tourPriceRange.end) return false;
           if (t.rating < _minRating) return false;
           if (_selectedCity != 'الكل' && _selectedCity != 'All') {
             if (t.locationName != null && !t.locationName!.contains(_selectedCity)) return false;
           }
-          if (_tourDurationFilter != 'الكل' && _tourDurationFilter != 'All') {
-            final dur = t.duration ?? '';
-            if (_tourDurationFilter.contains('نصف') && !dur.contains('نصف') && !dur.contains('ساع')) return false;
-            if (_tourDurationFilter.contains('كامل') && !dur.contains('يوم')) return false;
+          if (_tourCategoryFilter != 'الكل' && _tourCategoryFilter != 'All') {
+            if (t.categoryName != null && !t.categoryName!.contains(_tourCategoryFilter) && !t.title.contains(_tourCategoryFilter)) return false;
+          }
+          if (_tourThemeFilter != 'الكل' && _tourThemeFilter != 'All') {
+            final desc = (t.content ?? '') + (t.title);
+            if (!desc.contains(_tourThemeFilter)) return false;
           }
           return true;
         }).toList();
 
         if (filtered.isEmpty) return _buildEmptyState(isAr);
 
-        return ListView.separated(
-          padding: const EdgeInsets.all(16),
+        return ListView.builder(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           itemCount: filtered.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 14),
           itemBuilder: (context, index) {
             final tour = filtered[index];
-            return GestureDetector(
+            return UnifiedItemCard(
+              title: tour.title,
+              imageUrl: tour.imageUrl,
+              locationName: tour.locationName ?? (isAr ? 'المملكة' : 'KSA'),
+              rating: tour.rating,
+              subtitle: tour.duration,
+              price: tour.formattedPrice,
+              accentColor: _categoryColors[1],
               onTap: () => context.push('/experience/${tour.id}'),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: AppColors.card,
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: AppColors.border),
-                ),
-                child: Row(
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(18),
-                      child: CachedNetworkImage(
-                        imageUrl: tour.imageUrl ?? 'https://images.unsplash.com/photo-1590073844006-33379778ae09?w=800&q=80',
-                        width: 120,
-                        height: 110,
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(tour.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppTypography.titleMedium),
-                            const SizedBox(height: 4),
-                            Row(
-                              children: [
-                                const Icon(Icons.location_on_outlined, size: 14, color: Color(0xFFFBBF24)),
-                                const SizedBox(width: 4),
-                                Expanded(
-                                  child: Text(tour.locationName ?? (isAr ? 'المملكة' : 'KSA'), style: AppTypography.bodySmall, maxLines: 1, overflow: TextOverflow.ellipsis),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Row(
-                                  children: [
-                                    const Icon(Icons.star, color: Color(0xFFFBBF24), size: 14),
-                                    const SizedBox(width: 4),
-                                    Text('${tour.rating}', style: AppTypography.titleSmall.copyWith(fontSize: 12)),
-                                    if (tour.duration != null) ...[
-                                      const SizedBox(width: 8),
-                                      Text('• ${tour.duration}', style: AppTypography.bodySmall.copyWith(fontSize: 11)),
-                                    ],
-                                  ],
-                                ),
-                                Text(tour.formattedPrice, style: AppTypography.price.copyWith(fontSize: 14, color: const Color(0xFFFBBF24))),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
             );
           },
         );
@@ -1546,50 +1425,20 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
 
         if (filtered.isEmpty) return _buildEmptyState(isAr);
 
-        return ListView.separated(
-          padding: const EdgeInsets.all(16),
+        return ListView.builder(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           itemCount: filtered.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 14),
           itemBuilder: (context, index) {
             final museum = filtered[index];
-            return GestureDetector(
+            return UnifiedItemCard(
+              title: museum.title,
+              imageUrl: museum.imageUrl,
+              locationName: museum.locationName ?? (isAr ? 'المملكة' : 'KSA'),
+              rating: museum.rating,
+              subtitle: museum.workingHours,
+              price: museum.formattedPrice,
+              accentColor: _categoryColors[2],
               onTap: () => context.push('/museum/${museum.id}'),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: AppColors.card,
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: AppColors.border),
-                ),
-                child: Row(
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(18),
-                      child: CachedNetworkImage(
-                        imageUrl: museum.imageUrl ?? 'https://images.unsplash.com/photo-1566127444979-b3d2b654e3d7?w=800&q=80',
-                        width: 120,
-                        height: 110,
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(museum.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppTypography.titleMedium),
-                            const SizedBox(height: 4),
-                            Text(museum.locationName ?? (isAr ? 'الرياض' : 'Riyadh'), style: AppTypography.bodySmall),
-                            const SizedBox(height: 8),
-                            Text(museum.formattedPrice, style: AppTypography.price.copyWith(fontSize: 14, color: const Color(0xFFC084FC))),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
             );
           },
         );
@@ -1610,6 +1459,9 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
           if (_selectedCity != 'الكل' && _selectedCity != 'All') {
             if (!e.location.contains(_selectedCity)) return false;
           }
+          if (_eventTypeFilter != 'الكل' && _eventTypeFilter != 'All') {
+            if (!e.title.contains(_eventTypeFilter) && !e.description.contains(_eventTypeFilter)) return false;
+          }
           if (_eventEntryType.contains('مجاني') && e.priceNum > 0) return false;
           if (_eventEntryType.contains('مدفوع') && e.priceNum == 0) return false;
           return true;
@@ -1617,50 +1469,20 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
 
         if (filtered.isEmpty) return _buildEmptyState(isAr);
 
-        return ListView.separated(
-          padding: const EdgeInsets.all(16),
+        return ListView.builder(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           itemCount: filtered.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 14),
           itemBuilder: (context, index) {
             final event = filtered[index];
-            return GestureDetector(
+            return UnifiedItemCard(
+              title: event.title,
+              imageUrl: event.imageUrl,
+              locationName: event.location,
+              rating: 4.8,
+              subtitle: event.duration,
+              price: event.price,
+              accentColor: _categoryColors[3],
               onTap: () => context.push('/event/${event.id}'),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: AppColors.card,
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: AppColors.border),
-                ),
-                child: Row(
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(18),
-                      child: CachedNetworkImage(
-                        imageUrl: event.imageUrl,
-                        width: 120,
-                        height: 110,
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(event.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppTypography.titleMedium),
-                            const SizedBox(height: 4),
-                            Text(event.location, style: AppTypography.bodySmall),
-                            const SizedBox(height: 8),
-                            Text(event.price, style: AppTypography.price.copyWith(fontSize: 14, color: const Color(0xFFF43F5E))),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
             );
           },
         );
@@ -1677,67 +1499,32 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
       data: (guides) {
         final filtered = guides.where((g) {
           if (search.isNotEmpty && !g.name.toLowerCase().contains(search.toLowerCase())) return false;
-          if (g.rating < _guideMinRating) return false;
+          if (g.rating < _minRating) return false;
           if (_guideLanguageFilter != 'الكل' && _guideLanguageFilter != 'All') {
             if (!g.languages.any((l) => l.contains(_guideLanguageFilter))) return false;
+          }
+          if (_guideTourType != 'الكل' && _guideTourType != 'All') {
+            if (!g.title.contains(_guideTourType)) return false;
           }
           return true;
         }).toList();
 
         if (filtered.isEmpty) return _buildEmptyState(isAr);
 
-        return ListView.separated(
-          padding: const EdgeInsets.all(16),
+        return ListView.builder(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           itemCount: filtered.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 14),
           itemBuilder: (context, index) {
             final guide = filtered[index];
-            return GestureDetector(
+            return UnifiedItemCard(
+              title: guide.name,
+              imageUrl: guide.imageUrl,
+              locationName: guide.title,
+              rating: guide.rating,
+              subtitle: guide.languages.join(' • '),
+              price: guide.hourlyRate,
+              accentColor: _categoryColors[4],
               onTap: () => context.push('/guide/${guide.id}'),
-              child: Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: AppColors.card,
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: AppColors.border),
-                ),
-                child: Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 34,
-                      backgroundImage: CachedNetworkImageProvider(guide.imageUrl),
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(guide.name, style: AppTypography.titleMedium),
-                          const SizedBox(height: 2),
-                          Text(guide.title, style: AppTypography.bodySmall),
-                          const SizedBox(height: 6),
-                          Row(
-                            children: [
-                              const Icon(Icons.star, color: Color(0xFF34D399), size: 16),
-                              const SizedBox(width: 4),
-                              Text('${guide.rating}', style: AppTypography.titleSmall),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Text(
-                                  guide.languages.join(', '),
-                                  style: AppTypography.bodySmall.copyWith(color: const Color(0xFF34D399), fontSize: 11),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                    Text(guide.hourlyRate, style: AppTypography.price.copyWith(fontSize: 13, color: const Color(0xFF34D399))),
-                  ],
-                ),
-              ),
             );
           },
         );
@@ -1755,6 +1542,9 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
         final filtered = cars.where((c) {
           if (search.isNotEmpty && !c.title.toLowerCase().contains(search.toLowerCase())) return false;
           if (c.price < _carPriceRange.start || c.price > _carPriceRange.end) return false;
+          if (_carCategoryFilter != 'الكل' && _carCategoryFilter != 'All') {
+            if (!c.category.contains(_carCategoryFilter) && !c.title.contains(_carCategoryFilter)) return false;
+          }
           if (_carPassengerFilter != 'الكل' && _carPassengerFilter != 'All') {
             if (_carPassengerFilter.contains('2') && c.passengerCount > 2) return false;
             if (_carPassengerFilter.contains('4') && (c.passengerCount < 4 || c.passengerCount > 5)) return false;
@@ -1769,50 +1559,20 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
 
         if (filtered.isEmpty) return _buildEmptyState(isAr);
 
-        return ListView.separated(
-          padding: const EdgeInsets.all(16),
+        return ListView.builder(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           itemCount: filtered.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 14),
           itemBuilder: (context, index) {
             final car = filtered[index];
-            return GestureDetector(
+            return UnifiedItemCard(
+              title: car.title,
+              imageUrl: car.imageUrl,
+              locationName: car.locationName ?? (isAr ? 'الرياض' : 'Riyadh'),
+              rating: car.rating,
+              subtitle: '${car.passengerCount} ${isAr ? 'ركاب' : 'passengers'} • ${car.transmission}',
+              price: car.pricePerDay,
+              accentColor: _categoryColors[5],
               onTap: () => context.push('/car/${car.id}'),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: AppColors.card,
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: AppColors.border),
-                ),
-                child: Row(
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(18),
-                      child: CachedNetworkImage(
-                        imageUrl: car.imageUrl,
-                        width: 120,
-                        height: 100,
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(car.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppTypography.titleMedium),
-                            const SizedBox(height: 4),
-                            Text('${car.passengerCount} ${isAr ? 'ركاب' : 'passengers'} • ${car.transmission}', style: AppTypography.bodySmall),
-                            const SizedBox(height: 8),
-                            Text(car.pricePerDay, style: AppTypography.price.copyWith(fontSize: 14, color: const Color(0xFF60A5FA))),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
             );
           },
         );
@@ -1822,12 +1582,12 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
     );
   }
 
-  // --- Category 6: Heritage Shop Products Grid ---
+  // --- Category 6: Heritage Shop Products ---
   Widget _buildProductsList(bool isAr, String search) {
     final productsAsync = ref.watch(productsListProvider);
     return productsAsync.when(
       data: (products) {
-        final filtered = products.where((p) {
+        var list = products.where((p) {
           if (search.isNotEmpty && !p.title.toLowerCase().contains(search.toLowerCase())) return false;
           if (p.priceNumeric < _productPriceRange.start || p.priceNumeric > _productPriceRange.end) return false;
           if (_productOnlyInStock && !p.inStock) return false;
@@ -1838,105 +1598,29 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
           return true;
         }).toList();
 
-        if (filtered.isEmpty) return _buildEmptyState(isAr);
+        // Sort
+        if (_productSortBy.contains('الأقل')) {
+          list.sort((a, b) => a.priceNumeric.compareTo(b.priceNumeric));
+        } else if (_productSortBy.contains('الأعلى')) {
+          list.sort((a, b) => b.priceNumeric.compareTo(a.priceNumeric));
+        }
 
-        return GridView.builder(
-          padding: const EdgeInsets.all(16),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            childAspectRatio: 0.65,
-            crossAxisSpacing: 14,
-            mainAxisSpacing: 14,
-          ),
-          itemCount: filtered.length,
+        if (list.isEmpty) return _buildEmptyState(isAr);
+
+        return ListView.builder(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          itemCount: list.length,
           itemBuilder: (context, index) {
-            final product = filtered[index];
-            return GestureDetector(
+            final product = list[index];
+            return UnifiedItemCard(
+              title: product.title,
+              imageUrl: product.imageUrl,
+              locationName: product.category,
+              rating: product.rating,
+              subtitle: product.discountPercent != null && product.discountPercent!.isNotEmpty ? 'خصم ${product.discountPercent}' : (isAr ? 'أصلي 100%' : 'Original'),
+              price: product.price,
+              accentColor: _categoryColors[6],
               onTap: () => context.push('/product/${product.id}'),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: AppColors.card,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: AppColors.border),
-                  boxShadow: const [
-                    BoxShadow(color: Colors.black26, blurRadius: 6, offset: Offset(0, 3)),
-                  ],
-                ),
-                clipBehavior: Clip.antiAlias,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      flex: 6,
-                      child: Stack(
-                        children: [
-                          CachedNetworkImage(
-                            imageUrl: product.imageUrl,
-                            width: double.infinity,
-                            height: double.infinity,
-                            fit: BoxFit.cover,
-                          ),
-                          if (product.discountPercent != null && product.discountPercent!.isNotEmpty)
-                            Positioned(
-                              top: 8,
-                              right: isAr ? 8 : null,
-                              left: isAr ? null : 8,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFFB923C),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Text(
-                                  'خصم ${product.discountPercent}',
-                                  style: const TextStyle(color: Colors.black, fontSize: 10, fontWeight: FontWeight.bold),
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                    Expanded(
-                      flex: 4,
-                      child: Padding(
-                        padding: const EdgeInsets.all(10),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  product.category,
-                                  style: AppTypography.bodySmall.copyWith(fontSize: 10, color: const Color(0xFFFB923C)),
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  product.title,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: AppTypography.titleSmall.copyWith(fontSize: 13),
-                                ),
-                              ],
-                            ),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  product.price,
-                                  style: AppTypography.price.copyWith(fontSize: 14, color: const Color(0xFFFB923C)),
-                                ),
-                                const Icon(Icons.shopping_bag_outlined, size: 16, color: Color(0xFFFB923C)),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
             );
           },
         );

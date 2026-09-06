@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_typography.dart';
 import '../../../core/localization/locale_provider.dart';
+import '../../../core/widgets/unified_item_card.dart';
 import '../../tours/data/models/tour_model.dart';
 import '../../tours/data/repositories/tour_repository.dart';
 import '../../events/data/event_repository.dart';
@@ -44,6 +45,13 @@ class DestinationDetailScreen extends ConsumerStatefulWidget {
 
 class _DestinationDetailScreenState extends ConsumerState<DestinationDetailScreen> {
   int _selectedTab = 0; // 0: Tours, 1: Events, 2: Museums, 3: Guides
+
+  final List<Color> _tabColors = [
+    const Color(0xFFFBBF24), // Tours - Amber
+    const Color(0xFFF43F5E), // Events - Ruby Crimson
+    const Color(0xFFC084FC), // Museums - Purple
+    const Color(0xFF34D399), // Guides - Emerald
+  ];
 
   String _getCityBanner(int id) {
     switch (id) {
@@ -152,13 +160,13 @@ class _DestinationDetailScreenState extends ConsumerState<DestinationDetailScree
                     scrollDirection: Axis.horizontal,
                     child: Row(
                       children: [
-                        _buildTab(0, isAr ? 'المسارات والتجارب' : 'Trails & Tours', Icons.alt_route),
+                        _buildTab(0, isAr ? 'المسارات والتجارب' : 'Trails & Tours', Icons.alt_route, _tabColors[0]),
                         const SizedBox(width: 8),
-                        _buildTab(1, isAr ? 'الفعاليات والمواسم' : 'Events', Icons.festival_outlined),
+                        _buildTab(1, isAr ? 'الفعاليات والمواسم' : 'Events', Icons.festival_outlined, _tabColors[1]),
                         const SizedBox(width: 8),
-                        _buildTab(2, isAr ? 'المتاحف' : 'Museums', Icons.account_balance_outlined),
+                        _buildTab(2, isAr ? 'المتاحف' : 'Museums', Icons.account_balance_outlined, _tabColors[2]),
                         const SizedBox(width: 8),
-                        _buildTab(3, isAr ? 'المرشدون' : 'Guides', Icons.person_pin_outlined),
+                        _buildTab(3, isAr ? 'المرشدون' : 'Guides', Icons.person_pin_outlined, _tabColors[3]),
                       ],
                     ),
                   ),
@@ -168,27 +176,36 @@ class _DestinationDetailScreenState extends ConsumerState<DestinationDetailScree
           ),
 
           // Tab Content
-          _buildActiveTabContent(isAr),
+          _buildActiveTabContent(isAr, cityName),
         ],
       ),
     );
   }
 
-  Widget _buildTab(int index, String label, IconData icon) {
+  Widget _buildTab(int index, String label, IconData icon, Color color) {
     final isSelected = _selectedTab == index;
     return GestureDetector(
       onTap: () => setState(() => _selectedTab = index),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.primaryGold : AppColors.card,
+          color: isSelected ? color : AppColors.card,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: isSelected ? AppColors.primaryGold : AppColors.border),
+          border: Border.all(color: isSelected ? color : AppColors.border),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: color.withOpacity(0.35),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  )
+                ]
+              : null,
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 16, color: isSelected ? AppColors.textDark : AppColors.primaryGold),
+            Icon(icon, size: 16, color: isSelected ? AppColors.textDark : color),
             const SizedBox(width: 6),
             Text(
               label,
@@ -204,7 +221,7 @@ class _DestinationDetailScreenState extends ConsumerState<DestinationDetailScree
     );
   }
 
-  Widget _buildActiveTabContent(bool isAr) {
+  Widget _buildActiveTabContent(bool isAr, String cityName) {
     switch (_selectedTab) {
       case 0:
         // Tours & Trails in City
@@ -223,52 +240,15 @@ class _DestinationDetailScreenState extends ConsumerState<DestinationDetailScree
                 delegate: SliverChildBuilderDelegate(
                   (context, idx) {
                     final t = tours[idx];
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 14),
-                      child: GestureDetector(
-                        onTap: () => context.push('/experience/${t.id}'),
-                        child: Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: AppColors.card,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: AppColors.border),
-                          ),
-                          child: Row(
-                            children: [
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(12),
-                                child: CachedNetworkImage(
-                                  imageUrl: t.imageUrl ?? 'https://images.unsplash.com/photo-1590073844006-33379778ae09?w=800&q=80',
-                                  width: 80,
-                                  height: 80,
-                                  fit: BoxFit.cover,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(t.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppTypography.titleSmall),
-                                    const SizedBox(height: 4),
-                                    Text(t.formattedPrice, style: AppTypography.price.copyWith(fontSize: 14)),
-                                    const SizedBox(height: 4),
-                                    Row(
-                                      children: [
-                                        const Icon(Icons.star, color: AppColors.primaryGold, size: 14),
-                                        const SizedBox(width: 4),
-                                        Text('${t.rating}', style: AppTypography.bodySmall),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const Icon(Icons.arrow_forward_ios, size: 14, color: AppColors.primaryGold),
-                            ],
-                          ),
-                        ),
-                      ),
+                    return UnifiedItemCard(
+                      title: t.title,
+                      imageUrl: t.imageUrl,
+                      locationName: t.locationName ?? cityName,
+                      rating: t.rating,
+                      subtitle: t.duration,
+                      price: t.formattedPrice,
+                      accentColor: _tabColors[0],
+                      onTap: () => context.push('/experience/${t.id}'),
                     );
                   },
                   childCount: tours.length,
@@ -297,46 +277,15 @@ class _DestinationDetailScreenState extends ConsumerState<DestinationDetailScree
                 delegate: SliverChildBuilderDelegate(
                   (context, idx) {
                     final ev = events[idx];
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 14),
-                      child: GestureDetector(
-                        onTap: () => context.push('/event/${ev.id}'),
-                        child: Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: AppColors.card,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: AppColors.border),
-                          ),
-                          child: Row(
-                            children: [
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(12),
-                                child: CachedNetworkImage(
-                                  imageUrl: ev.imageUrl,
-                                  width: 80,
-                                  height: 80,
-                                  fit: BoxFit.cover,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(ev.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppTypography.titleSmall),
-                                    const SizedBox(height: 4),
-                                    Text(ev.date, style: AppTypography.bodySmall.copyWith(color: AppColors.primaryGold)),
-                                    const SizedBox(height: 4),
-                                    Text(ev.price, style: AppTypography.price.copyWith(fontSize: 13)),
-                                  ],
-                                ),
-                              ),
-                              const Icon(Icons.arrow_forward_ios, size: 14, color: AppColors.primaryGold),
-                            ],
-                          ),
-                        ),
-                      ),
+                    return UnifiedItemCard(
+                      title: ev.title,
+                      imageUrl: ev.imageUrl,
+                      locationName: ev.location.isNotEmpty ? ev.location : cityName,
+                      rating: 4.8,
+                      subtitle: ev.duration,
+                      price: ev.price,
+                      accentColor: _tabColors[1],
+                      onTap: () => context.push('/event/${ev.id}'),
                     );
                   },
                   childCount: events.length,
@@ -365,46 +314,15 @@ class _DestinationDetailScreenState extends ConsumerState<DestinationDetailScree
                 delegate: SliverChildBuilderDelegate(
                   (context, idx) {
                     final m = museums[idx];
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 14),
-                      child: GestureDetector(
-                        onTap: () => context.push('/museum/${m.id}'),
-                        child: Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: AppColors.card,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: AppColors.border),
-                          ),
-                          child: Row(
-                            children: [
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(12),
-                                child: CachedNetworkImage(
-                                  imageUrl: m.imageUrl ?? 'https://images.unsplash.com/photo-1590073844006-33379778ae09?w=800&q=80',
-                                  width: 80,
-                                  height: 80,
-                                  fit: BoxFit.cover,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(m.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppTypography.titleSmall),
-                                    const SizedBox(height: 4),
-                                    Text(m.formattedPrice, style: AppTypography.price.copyWith(fontSize: 13)),
-                                    const SizedBox(height: 4),
-                                    Text(m.workingHours ?? (isAr ? '٩ص — ٩م' : '9 AM — 9 PM'), style: AppTypography.bodySmall.copyWith(color: AppColors.textMuted, fontSize: 11)),
-                                  ],
-                                ),
-                              ),
-                              const Icon(Icons.arrow_forward_ios, size: 14, color: AppColors.primaryGold),
-                            ],
-                          ),
-                        ),
-                      ),
+                    return UnifiedItemCard(
+                      title: m.title,
+                      imageUrl: m.imageUrl,
+                      locationName: m.locationName ?? cityName,
+                      rating: m.rating,
+                      subtitle: m.workingHours,
+                      price: m.formattedPrice,
+                      accentColor: _tabColors[2],
+                      onTap: () => context.push('/museum/${m.id}'),
                     );
                   },
                   childCount: museums.length,
@@ -434,41 +352,15 @@ class _DestinationDetailScreenState extends ConsumerState<DestinationDetailScree
                 delegate: SliverChildBuilderDelegate(
                   (context, idx) {
                     final g = guides[idx];
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 14),
-                      child: GestureDetector(
-                        onTap: () => context.push('/guide/${g.id}'),
-                        child: Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: AppColors.card,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: AppColors.border),
-                          ),
-                          child: Row(
-                            children: [
-                              CircleAvatar(
-                                radius: 32,
-                                backgroundImage: CachedNetworkImageProvider(g.imageUrl),
-                              ),
-                              const SizedBox(width: 14),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(g.name, style: AppTypography.titleSmall),
-                                    const SizedBox(height: 2),
-                                    Text(g.title, style: AppTypography.bodySmall.copyWith(color: AppColors.primaryGold, fontSize: 11)),
-                                    const SizedBox(height: 4),
-                                    Text(g.hourlyRate, style: AppTypography.price.copyWith(fontSize: 13)),
-                                  ],
-                                ),
-                              ),
-                              const Icon(Icons.arrow_forward_ios, size: 14, color: AppColors.primaryGold),
-                            ],
-                          ),
-                        ),
-                      ),
+                    return UnifiedItemCard(
+                      title: g.name,
+                      imageUrl: g.imageUrl,
+                      locationName: g.title,
+                      rating: g.rating,
+                      subtitle: g.languages.join(' • '),
+                      price: g.hourlyRate,
+                      accentColor: _tabColors[3],
+                      onTap: () => context.push('/guide/${g.id}'),
                     );
                   },
                   childCount: guides.length,
