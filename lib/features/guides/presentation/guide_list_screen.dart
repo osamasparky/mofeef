@@ -88,8 +88,17 @@ class GuideListScreen extends ConsumerWidget {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(guide.name, style: AppTypography.titleMedium),
+                              Expanded(
+                                child: Text(
+                                  guide.name,
+                                  style: AppTypography.titleMedium,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
                               Row(
+                                mainAxisSize: MainAxisSize.min,
                                 children: [
                                   const Icon(Icons.star, color: AppColors.primaryGold, size: 14),
                                   const SizedBox(width: 4),
@@ -104,10 +113,18 @@ class GuideListScreen extends ConsumerWidget {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(guide.hourlyRate, style: AppTypography.price.copyWith(fontSize: 13)),
+                              Expanded(
+                                child: Text(
+                                  guide.hourlyRate,
+                                  style: AppTypography.price.copyWith(fontSize: 13),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
                               CustomButton(
                                 text: 'طلب إرشاد',
-                                width: 100,
+                                width: 95,
                                 height: 36,
                                 onPressed: () {
                                   ScaffoldMessenger.of(context).showSnackBar(
