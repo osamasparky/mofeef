@@ -256,19 +256,68 @@ class HomeScreen extends ConsumerWidget {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          _buildCategoryCard(context, isAr ? 'الوجهات' : 'Destinations', Icons.map_outlined, () => context.push('/locations')),
-                          _buildCategoryCard(context, isAr ? 'المسارات' : 'Trails', Icons.alt_route, () => context.push('/trails')),
-                          _buildCategoryCard(context, isAr ? 'المتاحف' : 'Museums', Icons.account_balance_outlined, () => context.push('/museums')),
-                          _buildCategoryCard(context, isAr ? 'الفعاليات' : 'Events', Icons.festival_outlined, () => context.push('/events')),
+                          _buildCategoryCard(
+                            context,
+                            label: isAr ? 'الوجهات' : 'Destinations',
+                            icon: Icons.map_outlined,
+                            accentColor: const Color(0xFF38BDF8),
+                            gradientColors: const [Color(0xFF0F2B3C), Color(0xFF081924)],
+                            onTap: () => context.push('/locations'),
+                          ),
+                          _buildCategoryCard(
+                            context,
+                            label: isAr ? 'المسارات' : 'Trails',
+                            icon: Icons.alt_route,
+                            accentColor: const Color(0xFFFBBF24),
+                            gradientColors: const [Color(0xFF2C210E), Color(0xFF191206)],
+                            onTap: () => context.push('/trails'),
+                          ),
+                          _buildCategoryCard(
+                            context,
+                            label: isAr ? 'المتاحف' : 'Museums',
+                            icon: Icons.account_balance_outlined,
+                            accentColor: const Color(0xFFC084FC),
+                            gradientColors: const [Color(0xFF261833), Color(0xFF140B1D)],
+                            onTap: () => context.push('/museums'),
+                          ),
+                          _buildCategoryCard(
+                            context,
+                            label: isAr ? 'الفعاليات' : 'Events',
+                            icon: Icons.festival_outlined,
+                            accentColor: const Color(0xFFF43F5E),
+                            gradientColors: const [Color(0xFF33141E), Color(0xFF1E080F)],
+                            onTap: () => context.push('/events'),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 12),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
-                          _buildCategoryCard(context, isAr ? 'المرشدون' : 'Guides', Icons.person_pin_outlined, () => context.push('/guides')),
-                          _buildCategoryCard(context, isAr ? 'السيارات' : 'Cars', Icons.directions_car_outlined, () => context.push('/cars')),
-                          _buildCategoryCard(context, isAr ? 'المتجر' : 'Shop', Icons.storefront_outlined, () => context.push('/store')),
+                          _buildCategoryCard(
+                            context,
+                            label: isAr ? 'المرشدون' : 'Guides',
+                            icon: Icons.person_pin_outlined,
+                            accentColor: const Color(0xFF34D399),
+                            gradientColors: const [Color(0xFF0D2B20), Color(0xFF061A13)],
+                            onTap: () => context.push('/guides'),
+                          ),
+                          _buildCategoryCard(
+                            context,
+                            label: isAr ? 'السيارات' : 'Cars',
+                            icon: Icons.directions_car_outlined,
+                            accentColor: const Color(0xFF60A5FA),
+                            gradientColors: const [Color(0xFF162536), Color(0xFF0B141E)],
+                            onTap: () => context.push('/cars'),
+                          ),
+                          _buildCategoryCard(
+                            context,
+                            label: isAr ? 'المتجر' : 'Shop',
+                            icon: Icons.storefront_outlined,
+                            accentColor: const Color(0xFFFB923C),
+                            gradientColors: const [Color(0xFF2F1D12), Color(0xFF1A0E07)],
+                            onTap: () => context.push('/store'),
+                          ),
                         ],
                       ),
                     ],
@@ -845,7 +894,14 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildCategoryCard(BuildContext context, String label, IconData icon, VoidCallback onTap) {
+  Widget _buildCategoryCard(
+    BuildContext context, {
+    required String label,
+    required IconData icon,
+    required VoidCallback onTap,
+    required Color accentColor,
+    required List<Color> gradientColors,
+  }) {
     return GestureDetector(
       onTap: onTap,
       child: Column(
@@ -854,21 +910,32 @@ class HomeScreen extends ConsumerWidget {
             width: 76,
             height: 70,
             decoration: BoxDecoration(
-              color: AppColors.surface,
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: gradientColors,
+              ),
               borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: AppColors.border),
+              border: Border.all(color: accentColor.withOpacity(0.35), width: 1.2),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.2),
-                  blurRadius: 6,
-                  offset: const Offset(0, 3),
+                  color: accentColor.withOpacity(0.15),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
                 ),
               ],
             ),
-            child: Icon(icon, color: AppColors.primaryGold, size: 28),
+            child: Icon(icon, color: accentColor, size: 28),
           ),
           const SizedBox(height: 6),
-          Text(label, style: AppTypography.titleSmall.copyWith(fontSize: 12), textAlign: TextAlign.center),
+          Text(
+            label,
+            style: AppTypography.titleSmall.copyWith(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
+            textAlign: TextAlign.center,
+          ),
         ],
       ),
     );
