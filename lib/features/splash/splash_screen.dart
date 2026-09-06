@@ -32,7 +32,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
 
     _animController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1800),
+      duration: const Duration(milliseconds: 900),
     );
 
     _fadeAnimation = CurvedAnimation(
@@ -40,10 +40,10 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
       curve: Curves.easeIn,
     );
 
-    _scaleAnimation = Tween<double>(begin: 1.05, end: 1.0).animate(
+    _scaleAnimation = Tween<double>(begin: 1.03, end: 1.0).animate(
       CurvedAnimation(
         parent: _animController,
-        curve: Curves.easeOutCubic,
+        curve: Curves.easeOutQuad,
       ),
     );
 
@@ -52,7 +52,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
   }
 
   Future<void> _navigateToNext() async {
-    await Future.delayed(const Duration(milliseconds: 2500));
+    await Future.delayed(const Duration(milliseconds: 1100));
     if (!mounted) return;
     context.go('/home');
   }
