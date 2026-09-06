@@ -9,6 +9,7 @@ import '../../core/utils/share_helper.dart';
 import '../../core/widgets/custom_button.dart';
 import '../cart/data/cart_repository.dart';
 import 'data/shop_repository.dart';
+import '../wishlist/data/wishlist_repository.dart';
 import 'models/product_model.dart';
 
 class ProductDetailsScreen extends ConsumerStatefulWidget {
@@ -57,6 +58,46 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
                       ),
                     ),
                     actions: [
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 8.0),
+                        child: CircleAvatar(
+                          backgroundColor: Colors.black.withOpacity(0.55),
+                          child: IconButton(
+                            icon: Icon(
+                              ref.watch(wishlistProvider).isFavorite(widget.productId, 'product')
+                                  ? Icons.favorite
+                                  : Icons.favorite_border,
+                              color: ref.watch(wishlistProvider).isFavorite(widget.productId, 'product')
+                                  ? AppColors.error
+                                  : AppColors.primaryGold,
+                            ),
+                            onPressed: () async {
+                              final added = await ref.read(wishlistProvider.notifier).toggleFavorite(
+                                WishlistItemModel(
+                                  id: int.tryParse(widget.productId.toString()) ?? 0,
+                                  objectId: int.tryParse(widget.productId.toString()) ?? 0,
+                                  objectModel: 'product',
+                                  title: prod.title,
+                                  imageUrl: prod.imageUrl,
+                                  price: prod.priceNumeric,
+                                  location: isAr ? 'المتجر التراثي' : 'Heritage Shop',
+                                ),
+                              );
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(added
+                                        ? (isAr ? 'تمت إضافة المنتج إلى المفضلة ❤️' : 'Added product to favorites ❤️')
+                                        : (isAr ? 'تمت إزالة المنتج من المفضلة' : 'Removed from favorites')),
+                                    backgroundColor: added ? AppColors.primaryGold : AppColors.card,
+                                    duration: const Duration(seconds: 2),
+                                  ),
+                                );
+                              }
+                            },
+                          ),
+                        ),
+                      ),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 8.0),
                         child: CircleAvatar(

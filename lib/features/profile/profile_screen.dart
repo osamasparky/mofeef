@@ -17,11 +17,11 @@ class ProfileScreen extends ConsumerWidget {
     final authState = ref.watch(authProvider);
     final currentLocale = ref.watch(localeProvider);
     final isAr = currentLocale.languageCode == 'ar';
-    final wishlistAsync = ref.watch(wishlistItemsProvider);
+    final wishlistState = ref.watch(wishlistProvider);
     final bookingsAsync = ref.watch(bookingHistoryProvider(''));
     final walletState = ref.watch(walletProvider);
 
-    final favCount = wishlistAsync.asData?.value.length.toString() ?? '0';
+    final favCount = wishlistState.items.length.toString();
     final bookCount = bookingsAsync.asData?.value.length.toString() ?? '0';
 
     return Scaffold(

@@ -11,6 +11,7 @@ import '../../../core/utils/share_helper.dart';
 import '../../../core/widgets/custom_button.dart';
 import '../../../core/widgets/image_viewer_dialog.dart';
 import '../../booking/data/booking_draft.dart';
+import '../../wishlist/data/wishlist_repository.dart';
 import '../data/museum_repository.dart';
 
 class MuseumDetailScreen extends ConsumerWidget {
@@ -61,7 +62,47 @@ class MuseumDetailScreen extends ConsumerWidget {
                     ),
                     actions: [
                       Padding(
-                        padding: const EdgeInsets.all(8.0),
+                        padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 8.0),
+                        child: CircleAvatar(
+                          backgroundColor: Colors.black.withOpacity(0.55),
+                          child: IconButton(
+                            icon: Icon(
+                              ref.watch(wishlistProvider).isFavorite(museumId, 'museum')
+                                  ? Icons.favorite
+                                  : Icons.favorite_border,
+                              color: ref.watch(wishlistProvider).isFavorite(museumId, 'museum')
+                                  ? AppColors.error
+                                  : AppColors.primaryGold,
+                            ),
+                            onPressed: () async {
+                              final added = await ref.read(wishlistProvider.notifier).toggleFavorite(
+                                WishlistItemModel(
+                                  id: int.tryParse(museumId.toString()) ?? 0,
+                                  objectId: int.tryParse(museumId.toString()) ?? 0,
+                                  objectModel: 'museum',
+                                  title: museum.title,
+                                  imageUrl: img,
+                                  price: museum.price,
+                                  location: museum.locationName,
+                                ),
+                              );
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(added
+                                        ? (isAr ? 'تمت إضافة المعلم إلى المفضلة ❤️' : 'Added landmark to favorites ❤️')
+                                        : (isAr ? 'تمت إزالة المعلم من المفضلة' : 'Removed from favorites')),
+                                    backgroundColor: added ? AppColors.primaryGold : AppColors.card,
+                                    duration: const Duration(seconds: 2),
+                                  ),
+                                );
+                              }
+                            },
+                          ),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 8.0),
                         child: CircleAvatar(
                           backgroundColor: Colors.black.withOpacity(0.55),
                           child: IconButton(

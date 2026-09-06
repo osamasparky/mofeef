@@ -10,6 +10,7 @@ import '../../../core/utils/share_helper.dart';
 import '../../../core/widgets/custom_button.dart';
 import '../../../core/widgets/image_viewer_dialog.dart';
 import '../../booking/data/booking_draft.dart';
+import '../../wishlist/data/wishlist_repository.dart';
 import '../data/event_repository.dart';
 
 class EventDetailScreen extends ConsumerStatefulWidget {
@@ -66,7 +67,47 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
                     ),
                     actions: [
                       Padding(
-                        padding: const EdgeInsets.all(8.0),
+                        padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 8.0),
+                        child: CircleAvatar(
+                          backgroundColor: Colors.black.withOpacity(0.55),
+                          child: IconButton(
+                            icon: Icon(
+                              ref.watch(wishlistProvider).isFavorite(widget.eventId, 'event')
+                                  ? Icons.favorite
+                                  : Icons.favorite_border,
+                              color: ref.watch(wishlistProvider).isFavorite(widget.eventId, 'event')
+                                  ? AppColors.error
+                                  : AppColors.primaryGold,
+                            ),
+                            onPressed: () async {
+                              final added = await ref.read(wishlistProvider.notifier).toggleFavorite(
+                                WishlistItemModel(
+                                  id: int.tryParse(widget.eventId.toString()) ?? 0,
+                                  objectId: int.tryParse(widget.eventId.toString()) ?? 0,
+                                  objectModel: 'event',
+                                  title: event.title,
+                                  imageUrl: event.imageUrl,
+                                  price: event.priceNum,
+                                  location: event.location,
+                                ),
+                              );
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(added
+                                        ? (isAr ? 'تمت إضافة الفعالية إلى المفضلة ❤️' : 'Added event to favorites ❤️')
+                                        : (isAr ? 'تمت إزالة الفعالية من المفضلة' : 'Removed from favorites')),
+                                    backgroundColor: added ? AppColors.primaryGold : AppColors.card,
+                                    duration: const Duration(seconds: 2),
+                                  ),
+                                );
+                              }
+                            },
+                          ),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 8.0),
                         child: CircleAvatar(
                           backgroundColor: Colors.black.withOpacity(0.55),
                           child: IconButton(

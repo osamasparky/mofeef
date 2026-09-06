@@ -17,6 +17,7 @@ import '../guides/data/guide_repository.dart';
 import '../shop/data/shop_repository.dart';
 import '../cart/data/cart_repository.dart';
 import '../auth/auth_provider.dart';
+import '../wishlist/data/wishlist_repository.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -32,6 +33,7 @@ class HomeScreen extends ConsumerWidget {
     final guidesAsync = ref.watch(guidesListProvider);
     final productsAsync = ref.watch(productsListProvider);
     final cartState = ref.watch(cartNotifierProvider);
+    final wishlist = ref.watch(wishlistProvider);
     final currentLocale = ref.watch(localeProvider);
     final isAr = currentLocale.languageCode == 'ar';
 
@@ -551,6 +553,7 @@ class HomeScreen extends ConsumerWidget {
                         separatorBuilder: (_, __) => const SizedBox(width: 14),
                         itemBuilder: (context, index) {
                           final tour = tours[index];
+                          final isFav = wishlist.isFavorite(tour.id, 'tour');
                           return ExperienceCard(
                             title: tour.title,
                             category: tour.categoryName ?? (isAr ? 'مسار سياحي' : 'Tourist Trail'),
@@ -559,6 +562,31 @@ class HomeScreen extends ConsumerWidget {
                             duration: tour.duration ?? (isAr ? 'ساعتان' : '2 hours'),
                             rating: tour.rating,
                             imageUrl: tour.imageUrl ?? 'https://images.unsplash.com/photo-1590073844006-33379778ae09?w=800&q=80',
+                            isFavorite: isFav,
+                            onFavoriteTap: () async {
+                              final added = await ref.read(wishlistProvider.notifier).toggleFavorite(
+                                WishlistItemModel(
+                                  id: tour.id,
+                                  objectId: tour.id,
+                                  objectModel: 'tour',
+                                  title: tour.title,
+                                  imageUrl: tour.imageUrl,
+                                  price: tour.salePrice ?? tour.price,
+                                  location: tour.locationName ?? tour.address,
+                                ),
+                              );
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(added
+                                        ? (isAr ? 'تمت إضافة المسار إلى المفضلة ❤️' : 'Added to favorites ❤️')
+                                        : (isAr ? 'تمت إزالة المسار من المفضلة' : 'Removed from favorites')),
+                                    backgroundColor: added ? AppColors.primaryGold : AppColors.card,
+                                    duration: const Duration(seconds: 2),
+                                  ),
+                                );
+                              }
+                            },
                             onTap: () => context.push('/experience/${tour.id}'),
                           );
                         },

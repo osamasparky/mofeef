@@ -4,8 +4,10 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_typography.dart';
+import '../../../core/localization/locale_provider.dart';
 import '../../../core/utils/html_utils.dart';
 import '../../../core/utils/share_helper.dart';
+import '../../wishlist/data/wishlist_repository.dart';
 import '../../../core/widgets/custom_button.dart';
 import '../data/guide_repository.dart';
 
@@ -16,6 +18,8 @@ class GuideDetailScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final currentLocale = ref.watch(localeProvider);
+    final isAr = currentLocale.languageCode == 'ar';
     final guideAsync = ref.watch(guideDetailProvider(guideId));
 
     return Scaffold(
@@ -43,7 +47,47 @@ class GuideDetailScreen extends ConsumerWidget {
                     ),
                     actions: [
                       Padding(
-                        padding: const EdgeInsets.all(8.0),
+                        padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 8.0),
+                        child: CircleAvatar(
+                          backgroundColor: Colors.black.withOpacity(0.5),
+                          child: IconButton(
+                            icon: Icon(
+                              ref.watch(wishlistProvider).isFavorite(guideId, 'guide')
+                                  ? Icons.favorite
+                                  : Icons.favorite_border,
+                              color: ref.watch(wishlistProvider).isFavorite(guideId, 'guide')
+                                  ? AppColors.error
+                                  : AppColors.primaryGold,
+                            ),
+                            onPressed: () async {
+                              final added = await ref.read(wishlistProvider.notifier).toggleFavorite(
+                                WishlistItemModel(
+                                  id: int.tryParse(guideId.toString()) ?? 0,
+                                  objectId: int.tryParse(guideId.toString()) ?? 0,
+                                  objectModel: 'guide',
+                                  title: guide.name,
+                                  imageUrl: guide.imageUrl,
+                                  price: double.tryParse(guide.hourlyRate.replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0.0,
+                                  location: guide.languages.join(' • '),
+                                ),
+                              );
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(added
+                                        ? (isAr ? 'تمت إضافة المرشد إلى المفضلة ❤️' : 'Added guide to favorites ❤️')
+                                        : (isAr ? 'تمت إزالة المرشد من المفضلة' : 'Removed from favorites')),
+                                    backgroundColor: added ? AppColors.primaryGold : AppColors.card,
+                                    duration: const Duration(seconds: 2),
+                                  ),
+                                );
+                              }
+                            },
+                          ),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 8.0),
                         child: CircleAvatar(
                           backgroundColor: Colors.black.withOpacity(0.5),
                           child: IconButton(

@@ -13,6 +13,7 @@ import '../booking/data/booking_draft.dart';
 import '../tours/data/models/tour_model.dart';
 import '../tours/data/repositories/tour_repository.dart';
 import '../../core/utils/share_helper.dart';
+import '../wishlist/data/wishlist_repository.dart';
 
 final tourDetailProvider = FutureProvider.family<TourModel, String>((ref, id) async {
   return ref.watch(tourRepositoryProvider).getTourDetail(id);
@@ -106,14 +107,37 @@ class _ExperienceDetailsScreenState extends ConsumerState<ExperienceDetailsScree
                         child: CircleAvatar(
                           backgroundColor: Colors.black.withOpacity(0.55),
                           child: IconButton(
-                            icon: const Icon(Icons.favorite_border, color: AppColors.primaryGold),
-                            onPressed: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(isAr ? 'تمت إضافة المسار إلى المفضلة' : 'Added trail to favorites'),
-                                  backgroundColor: AppColors.success,
+                            icon: Icon(
+                              ref.watch(wishlistProvider).isFavorite(widget.experienceId, 'tour')
+                                  ? Icons.favorite
+                                  : Icons.favorite_border,
+                              color: ref.watch(wishlistProvider).isFavorite(widget.experienceId, 'tour')
+                                  ? AppColors.error
+                                  : AppColors.primaryGold,
+                            ),
+                            onPressed: () async {
+                              final added = await ref.read(wishlistProvider.notifier).toggleFavorite(
+                                WishlistItemModel(
+                                  id: int.tryParse(widget.experienceId) ?? 0,
+                                  objectId: int.tryParse(widget.experienceId) ?? 0,
+                                  objectModel: 'tour',
+                                  title: tour.title,
+                                  imageUrl: tour.imageUrl,
+                                  price: tour.salePrice ?? tour.price,
+                                  location: tour.locationName ?? tour.address,
                                 ),
                               );
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(added
+                                        ? (isAr ? 'تمت إضافة المسار إلى المفضلة ❤️' : 'Added trail to favorites ❤️')
+                                        : (isAr ? 'تمت إزالة المسار من المفضلة' : 'Removed from favorites')),
+                                    backgroundColor: added ? AppColors.primaryGold : AppColors.card,
+                                    duration: const Duration(seconds: 2),
+                                  ),
+                                );
+                              }
                             },
                           ),
                         ),

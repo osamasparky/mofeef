@@ -4,11 +4,13 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_typography.dart';
+import '../../../core/localization/locale_provider.dart';
 import '../../../core/utils/share_helper.dart';
 import '../../../core/widgets/custom_button.dart';
 import '../../../core/widgets/image_viewer_dialog.dart';
 import '../../booking/data/booking_draft.dart';
 import '../data/car_repository.dart';
+import '../../wishlist/data/wishlist_repository.dart';
 
 class CarDetailScreen extends ConsumerStatefulWidget {
   final dynamic carId;
@@ -36,6 +38,8 @@ class _CarDetailScreenState extends ConsumerState<CarDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final currentLocale = ref.watch(localeProvider);
+    final isAr = currentLocale.languageCode == 'ar';
     final carAsync = ref.watch(carDetailProvider(widget.carId));
 
     return Scaffold(
@@ -63,6 +67,46 @@ class _CarDetailScreenState extends ConsumerState<CarDetailScreen> {
                       ),
                     ),
                     actions: [
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 8.0),
+                        child: CircleAvatar(
+                          backgroundColor: Colors.black.withOpacity(0.55),
+                          child: IconButton(
+                            icon: Icon(
+                              ref.watch(wishlistProvider).isFavorite(widget.carId, 'car')
+                                  ? Icons.favorite
+                                  : Icons.favorite_border,
+                              color: ref.watch(wishlistProvider).isFavorite(widget.carId, 'car')
+                                  ? AppColors.error
+                                  : AppColors.primaryGold,
+                            ),
+                            onPressed: () async {
+                              final added = await ref.read(wishlistProvider.notifier).toggleFavorite(
+                                WishlistItemModel(
+                                  id: int.tryParse(widget.carId.toString()) ?? 0,
+                                  objectId: int.tryParse(widget.carId.toString()) ?? 0,
+                                  objectModel: 'car',
+                                  title: car.title,
+                                  imageUrl: car.imageUrl,
+                                  price: car.price,
+                                  location: car.locationName,
+                                ),
+                              );
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(added
+                                        ? (isAr ? 'تمت إضافة السيارة إلى المفضلة ❤️' : 'Added car to favorites ❤️')
+                                        : (isAr ? 'تمت إزالة السيارة من المفضلة' : 'Removed from favorites')),
+                                    backgroundColor: added ? AppColors.primaryGold : AppColors.card,
+                                    duration: const Duration(seconds: 2),
+                                  ),
+                                );
+                              }
+                            },
+                          ),
+                        ),
+                      ),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 8.0),
                         child: CircleAvatar(
