@@ -45,6 +45,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     final token = await _repository.getSavedToken();
     final savedUser = await _repository.getSavedUser();
 
+    if (!mounted) return;
     if (savedUser != null) {
       state = state.copyWith(isAuthenticated: true, user: savedUser);
     }
@@ -52,8 +53,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
     if (token != null && token.isNotEmpty) {
       try {
         final profile = await _repository.getProfile();
+        if (!mounted) return;
         state = state.copyWith(isAuthenticated: true, user: profile);
       } catch (_) {
+        if (!mounted) return;
         if (savedUser != null) {
           state = state.copyWith(isAuthenticated: true, user: savedUser);
         } else {
@@ -73,6 +76,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         finalUser = profile;
       } catch (_) {}
 
+      if (!mounted) return true;
       state = state.copyWith(
         isAuthenticated: true,
         isLoading: false,
@@ -80,12 +84,14 @@ class AuthNotifier extends StateNotifier<AuthState> {
       );
       return true;
     } on Failure catch (e) {
+      if (!mounted) return false;
       state = state.copyWith(
         isLoading: false,
         errorMessage: e.message,
       );
       return false;
     } catch (e) {
+      if (!mounted) return false;
       state = state.copyWith(
         isLoading: false,
         errorMessage: 'تعذر تسجيل الدخول، يرجى المحاولة لاحقاً',
@@ -104,6 +110,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         finalUser = profile;
       } catch (_) {}
 
+      if (!mounted) return true;
       state = state.copyWith(
         isAuthenticated: true,
         isLoading: false,
@@ -111,6 +118,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       );
       return true;
     } on Failure catch (e) {
+      if (!mounted) return false;
       state = state.copyWith(
         isLoading: false,
         errorMessage: e.message,
@@ -120,12 +128,14 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   void updateUserState(UserModel user) {
+    if (!mounted) return;
     state = state.copyWith(user: user);
     _repository.saveUser(user);
   }
 
   Future<void> logout() async {
     await _repository.logout();
+    if (!mounted) return;
     state = const AuthState();
   }
 }
