@@ -12,6 +12,7 @@ import '../../core/widgets/image_viewer_dialog.dart';
 import '../booking/data/booking_draft.dart';
 import '../tours/data/models/tour_model.dart';
 import '../tours/data/repositories/tour_repository.dart';
+import '../../core/utils/share_helper.dart';
 
 final tourDetailProvider = FutureProvider.family<TourModel, String>((ref, id) async {
   return ref.watch(tourRepositoryProvider).getTourDetail(id);
@@ -80,6 +81,26 @@ class _ExperienceDetailsScreenState extends ConsumerState<ExperienceDetailsScree
                       ),
                     ),
                     actions: [
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
+                        child: CircleAvatar(
+                          backgroundColor: Colors.black.withOpacity(0.55),
+                          child: IconButton(
+                            icon: const Icon(Icons.share_outlined, color: Colors.white, size: 20),
+                            onPressed: () {
+                              ShareHelper.shareItem(
+                                context: context,
+                                title: tour.title,
+                                category: isAr ? 'مسار سياحي' : 'Tourist Trail',
+                                id: widget.experienceId,
+                                price: tour.formattedPrice,
+                                location: tour.locationName,
+                                type: 'tour',
+                              );
+                            },
+                          ),
+                        ),
+                      ),
                       Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: CircleAvatar(

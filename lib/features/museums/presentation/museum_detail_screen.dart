@@ -7,6 +7,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_typography.dart';
 import '../../../core/localization/locale_provider.dart';
 import '../../../core/utils/html_utils.dart';
+import '../../../core/utils/share_helper.dart';
 import '../../../core/widgets/custom_button.dart';
 import '../../../core/widgets/image_viewer_dialog.dart';
 import '../../booking/data/booking_draft.dart';
@@ -58,6 +59,26 @@ class MuseumDetailScreen extends ConsumerWidget {
                         ),
                       ),
                     ),
+                    actions: [
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: CircleAvatar(
+                          backgroundColor: Colors.black.withOpacity(0.55),
+                          child: IconButton(
+                            icon: const Icon(Icons.share_outlined, color: Colors.white),
+                            onPressed: () => ShareHelper.shareItem(
+                              context: context,
+                              title: museum.title,
+                              category: isAr ? 'متحف ومعلم' : 'Museum & Landmark',
+                              id: museumId.toString(),
+                              price: museum.formattedPrice,
+                              location: museum.locationName,
+                              type: 'museum',
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                     flexibleSpace: FlexibleSpaceBar(
                       background: GestureDetector(
                         onTap: () => ImageViewerDialog.show(context, images: [img]),

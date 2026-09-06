@@ -50,7 +50,7 @@ class MyReservationsScreen extends ConsumerWidget {
                           const Icon(Icons.confirmation_number_outlined, size: 54, color: AppColors.textMuted),
                           const SizedBox(height: 16),
                           Text(
-                            isAr ? 'لا توجد حجوزات قادمة' : 'No upcoming bookings',
+                            isAr ? 'لا يوجد حجوزات' : 'No Bookings',
                             style: AppTypography.titleLarge,
                           ),
                           const SizedBox(height: 6),
@@ -62,9 +62,10 @@ class MyReservationsScreen extends ConsumerWidget {
                             textAlign: TextAlign.center,
                           ),
                           const SizedBox(height: 24),
-                          ElevatedButton(
-                            onPressed: () => context.go('/discover'),
-                            child: Text(isAr ? 'استكشف التجارب الآن' : 'Explore Now'),
+                          ElevatedButton.icon(
+                            onPressed: () => context.go('/home'),
+                            icon: const Icon(Icons.home_outlined),
+                            label: Text(isAr ? 'العودة إلى الرئيسية' : 'Back to Home'),
                           ),
                         ],
                       ),
@@ -123,7 +124,19 @@ class MyReservationsScreen extends ConsumerWidget {
                         children: [
                           const Icon(Icons.history_outlined, size: 48, color: AppColors.textMuted),
                           const SizedBox(height: 12),
-                          Text(isAr ? 'لا توجد حجوزات سابقة مكتملة' : 'No completed bookings', style: AppTypography.bodyMedium),
+                          Text(isAr ? 'لا يوجد حجوزات' : 'No Bookings', style: AppTypography.titleLarge),
+                          const SizedBox(height: 6),
+                          Text(
+                            isAr ? 'لا توجد حجوزات سابقة مكتملة حتى الآن' : 'No completed bookings yet.',
+                            style: AppTypography.bodySmall,
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 24),
+                          ElevatedButton.icon(
+                            onPressed: () => context.go('/home'),
+                            icon: const Icon(Icons.home_outlined),
+                            label: Text(isAr ? 'العودة إلى الرئيسية' : 'Back to Home'),
+                          ),
                         ],
                       ),
                     ),

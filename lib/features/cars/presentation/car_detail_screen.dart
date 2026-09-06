@@ -4,6 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_typography.dart';
+import '../../../core/utils/share_helper.dart';
 import '../../../core/widgets/custom_button.dart';
 import '../../../core/widgets/image_viewer_dialog.dart';
 import '../../booking/data/booking_draft.dart';
@@ -63,7 +64,25 @@ class _CarDetailScreenState extends ConsumerState<CarDetailScreen> {
                     ),
                     actions: [
                       Padding(
-                        padding: const EdgeInsets.all(8.0),
+                        padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 8.0),
+                        child: CircleAvatar(
+                          backgroundColor: Colors.black.withOpacity(0.55),
+                          child: IconButton(
+                            icon: const Icon(Icons.share_outlined, color: Colors.white),
+                            onPressed: () => ShareHelper.shareItem(
+                              context: context,
+                              title: car.title,
+                              category: 'تأجير سيارات فارهة',
+                              id: widget.carId.toString(),
+                              price: '${car.price} ر.س / يوم',
+                              location: car.locationName,
+                              type: 'car',
+                            ),
+                          ),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 8.0),
                         child: CircleAvatar(
                           backgroundColor: Colors.black.withOpacity(0.55),
                           child: IconButton(

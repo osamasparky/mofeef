@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_typography.dart';
 import '../../core/localization/locale_provider.dart';
+import '../../core/utils/share_helper.dart';
 import '../../core/widgets/custom_button.dart';
 import '../cart/data/cart_repository.dart';
 import 'data/shop_repository.dart';
@@ -56,6 +57,23 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
                       ),
                     ),
                     actions: [
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 8.0),
+                        child: CircleAvatar(
+                          backgroundColor: Colors.black.withOpacity(0.55),
+                          child: IconButton(
+                            icon: const Icon(Icons.share_outlined, color: Colors.white),
+                            onPressed: () => ShareHelper.shareItem(
+                              context: context,
+                              title: prod.title,
+                              category: 'متجر مضيف',
+                              id: widget.productId,
+                              price: prod.price,
+                              type: 'product',
+                            ),
+                          ),
+                        ),
+                      ),
                       Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: Stack(

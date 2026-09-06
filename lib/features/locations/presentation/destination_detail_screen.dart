@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_typography.dart';
 import '../../../core/localization/locale_provider.dart';
+import '../../../core/utils/share_helper.dart';
 import '../../../core/widgets/unified_item_card.dart';
 import '../../tours/data/models/tour_model.dart';
 import '../../tours/data/repositories/tour_repository.dart';
@@ -111,6 +112,24 @@ class _DestinationDetailScreenState extends ConsumerState<DestinationDetailScree
                 ),
               ),
             ),
+            actions: [
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: CircleAvatar(
+                  backgroundColor: Colors.black.withOpacity(0.55),
+                  child: IconButton(
+                    icon: const Icon(Icons.share_outlined, color: Colors.white),
+                    onPressed: () => ShareHelper.shareItem(
+                      context: context,
+                      title: cityName,
+                      category: isAr ? 'وجهة سياحية' : 'Destination',
+                      id: widget.locationId.toString(),
+                      type: 'destination',
+                    ),
+                  ),
+                ),
+              ),
+            ],
             flexibleSpace: FlexibleSpaceBar(
               title: Text(cityName, style: AppTypography.headingSmall.copyWith(color: Colors.white)),
               centerTitle: true,

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_typography.dart';
 import '../../../core/utils/html_utils.dart';
+import '../../../core/utils/share_helper.dart';
 import '../../../core/widgets/custom_button.dart';
 import '../data/guide_repository.dart';
 
@@ -40,6 +41,26 @@ class GuideDetailScreen extends ConsumerWidget {
                         ),
                       ),
                     ),
+                    actions: [
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: CircleAvatar(
+                          backgroundColor: Colors.black.withOpacity(0.5),
+                          child: IconButton(
+                            icon: const Icon(Icons.share_outlined, color: Colors.white),
+                            onPressed: () => ShareHelper.shareItem(
+                              context: context,
+                              title: guide.name,
+                              category: 'مرشد سياحي معتمد',
+                              id: guideId.toString(),
+                              price: guide.hourlyRate,
+                              location: guide.languages.join(' • '),
+                              type: 'guide',
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                     flexibleSpace: FlexibleSpaceBar(
                       background: CachedNetworkImage(
                         imageUrl: guide.imageUrl,

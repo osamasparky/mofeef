@@ -80,8 +80,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 SizedBox(
                   height: 230,
                   width: double.infinity,
-                  child: Image.network(
-                    'https://images.unsplash.com/photo-1590073844006-33379778ae09?w=1200&q=85',
+                  child: Image.asset(
+                    'assets/images/home_hero_bg.jpg',
                     fit: BoxFit.cover,
                     errorBuilder: (_, __, ___) => Container(color: const Color(0xFF0F1B26)),
                   ),

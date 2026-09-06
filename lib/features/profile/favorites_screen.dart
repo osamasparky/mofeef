@@ -32,7 +32,7 @@ class FavoritesScreen extends ConsumerWidget {
                     const Icon(Icons.favorite_border, size: 54, color: AppColors.textMuted),
                     const SizedBox(height: 16),
                     Text(
-                      isAr ? 'قائمة المفضلات فارغة' : 'Your Wishlist is Empty',
+                      isAr ? 'لا يوجد مفضلة' : 'No Favorites',
                       style: AppTypography.titleLarge,
                     ),
                     const SizedBox(height: 6),
@@ -44,9 +44,10 @@ class FavoritesScreen extends ConsumerWidget {
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 24),
-                    ElevatedButton(
-                      onPressed: () => context.go('/discover'),
-                      child: Text(isAr ? 'استكشف التجارب الآن' : 'Explore Tours Now'),
+                    ElevatedButton.icon(
+                      onPressed: () => context.go('/home'),
+                      icon: const Icon(Icons.home_outlined),
+                      label: Text(isAr ? 'العودة إلى الرئيسية' : 'Back to Home'),
                     ),
                   ],
                 ),
