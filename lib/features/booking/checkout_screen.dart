@@ -97,21 +97,51 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     required int guests,
     required double finalTotal,
     required bool isAr,
+    String? imageUrl,
+    String? location,
   }) async {
     setState(() => _isSubmitting = true);
     try {
       final dateStr = '${_selectedDate.year}-${_selectedDate.month.toString().padLeft(2, '0')}-${_selectedDate.day.toString().padLeft(2, '0')}';
       final bookingCode = 'MDF-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}';
 
-      await ref.read(bookingRepositoryProvider).addToCart(
-        serviceId: serviceId,
+      final newBooking = BookingItemModel(
+        id: DateTime.now().millisecondsSinceEpoch % 1000000,
+        code: bookingCode,
+        serviceTitle: title,
         serviceType: serviceType,
         startDate: dateStr,
-        guests: guests,
+        total: finalTotal,
+        status: 'confirmed',
+        totalGuests: guests,
+        image: imageUrl,
+        location: location,
       );
 
-      // Invalidate booking history so the new booking immediately appears
+      // 1. Immediately persist locally
+      await ref.read(bookingRepositoryProvider).saveBookingLocally(newBooking);
+
+      // 2. Call backend API
+      try {
+        await ref.read(bookingRepositoryProvider).addToCart(
+          serviceId: serviceId,
+          serviceType: serviceType,
+          startDate: dateStr,
+          guests: guests,
+          extraData: {
+            'booking_code': bookingCode,
+            'name': _nameController.text.trim(),
+            'email': _emailController.text.trim(),
+            'phone': _phoneController.text.trim(),
+            'payment_gateway': _selectedPaymentMethod,
+          },
+        );
+      } catch (_) {}
+
+      // 3. Invalidate booking history so the new booking immediately appears
       ref.invalidate(bookingHistoryProvider(''));
+      ref.invalidate(bookingHistoryProvider('upcoming'));
+      ref.invalidate(bookingHistoryProvider('completed'));
       ref.invalidate(myTicketsProvider);
 
       if (mounted) {
@@ -488,6 +518,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                   guests: draft.totalGuests,
                   finalTotal: total,
                   isAr: isAr,
+                  imageUrl: draft.imageUrl,
                 ),
               ),
               const SizedBox(height: 12),
@@ -773,6 +804,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                     guests: _ticketCount,
                     finalTotal: total,
                     isAr: isAr,
+                    imageUrl: tour.imageUrl,
+                    location: tour.locationName ?? tour.address,
                   ),
                 ),
                 const SizedBox(height: 12),

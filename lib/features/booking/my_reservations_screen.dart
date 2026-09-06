@@ -50,26 +50,34 @@ class MyReservationsScreen extends ConsumerWidget {
                         : 'Start your first booking and enjoy an unforgettable experience.',
                   );
                 }
-                return ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 110),
-                  itemCount: bookings.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 16),
-                  itemBuilder: (context, index) {
-                    final b = bookings[index];
-                    return _buildTicketCard(
-                      context,
-                      isAr: isAr,
-                      title: b.serviceTitle,
-                      category: b.serviceType == 'tour' ? (isAr ? 'مسار سياحي' : 'Tourist Trail') : (isAr ? 'تذكرة معلم' : 'Ticket'),
-                      bookingCode: b.code,
-                      date: b.startDate.isNotEmpty ? b.startDate : (isAr ? 'موعد الزيارة' : 'Visit Date'),
-                      time: isAr ? 'تاريخ الحجز' : 'Booking Date',
-                      ticketsCount: b.totalGuests,
-                      price: '${b.total.toStringAsFixed(0)} ﷼',
-                      status: b.status == 'confirmed' ? (isAr ? 'مؤكد' : 'Confirmed') : b.status,
-                      statusColor: AppColors.success,
-                    );
+                return RefreshIndicator(
+                  color: AppColors.primaryGold,
+                  onRefresh: () async {
+                    ref.invalidate(bookingHistoryProvider(''));
+                    await ref.read(bookingHistoryProvider('').future);
                   },
+                  child: ListView.separated(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 110),
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    itemCount: bookings.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 16),
+                    itemBuilder: (context, index) {
+                      final b = bookings[index];
+                      return _buildTicketCard(
+                        context,
+                        isAr: isAr,
+                        title: b.serviceTitle,
+                        category: b.serviceType == 'tour' ? (isAr ? 'مسار سياحي' : 'Tourist Trail') : (isAr ? 'تذكرة معلم' : 'Ticket'),
+                        bookingCode: b.code,
+                        date: b.startDate.isNotEmpty ? b.startDate : (isAr ? 'موعد الزيارة' : 'Visit Date'),
+                        time: isAr ? 'تاريخ الحجز' : 'Booking Date',
+                        ticketsCount: b.totalGuests,
+                        price: '${b.total.toStringAsFixed(0)} ﷼',
+                        status: b.status == 'confirmed' ? (isAr ? 'مؤكد' : 'Confirmed') : b.status,
+                        statusColor: AppColors.success,
+                      );
+                    },
+                  ),
                 );
               },
               loading: () => const Center(child: CircularProgressIndicator(color: AppColors.primaryGold)),
@@ -103,26 +111,34 @@ class MyReservationsScreen extends ConsumerWidget {
                         : 'Start your first booking and enjoy an unforgettable experience.',
                   );
                 }
-                return ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 110),
-                  itemCount: tickets.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 16),
-                  itemBuilder: (context, index) {
-                    final t = tickets[index];
-                    return _buildTicketCard(
-                      context,
-                      isAr: isAr,
-                      title: t.title,
-                      category: isAr ? 'تذكرة مؤكدة' : 'Confirmed Ticket',
-                      bookingCode: t.bookingCode,
-                      date: t.date,
-                      time: isAr ? 'تذكرة إلكترونية' : 'E-Ticket',
-                      ticketsCount: 1,
-                      price: isAr ? 'مكتملة' : 'Completed',
-                      status: isAr ? 'مكتمل' : 'Completed',
-                      statusColor: AppColors.primaryGold,
-                    );
+                return RefreshIndicator(
+                  color: AppColors.primaryGold,
+                  onRefresh: () async {
+                    ref.invalidate(myTicketsProvider);
+                    await ref.read(myTicketsProvider.future);
                   },
+                  child: ListView.separated(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 110),
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    itemCount: tickets.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 16),
+                    itemBuilder: (context, index) {
+                      final t = tickets[index];
+                      return _buildTicketCard(
+                        context,
+                        isAr: isAr,
+                        title: t.title,
+                        category: isAr ? 'تذكرة مؤكدة' : 'Confirmed Ticket',
+                        bookingCode: t.bookingCode,
+                        date: t.date,
+                        time: isAr ? 'تذكرة إلكترونية' : 'E-Ticket',
+                        ticketsCount: t.totalGuests,
+                        price: t.total > 0 ? '${t.total.toStringAsFixed(0)} ﷼' : (isAr ? 'مكتملة' : 'Completed'),
+                        status: isAr ? 'مكتمل' : 'Completed',
+                        statusColor: AppColors.primaryGold,
+                      );
+                    },
+                  ),
                 );
               },
               loading: () => const Center(child: CircularProgressIndicator(color: AppColors.primaryGold)),
