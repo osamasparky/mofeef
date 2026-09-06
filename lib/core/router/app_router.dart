@@ -30,7 +30,6 @@ import '../../features/cars/presentation/car_list_screen.dart';
 import '../../features/cars/presentation/car_detail_screen.dart';
 import '../../features/events/presentation/event_list_screen.dart';
 import '../../features/events/presentation/event_detail_screen.dart';
-import '../constants/app_colors.dart';
 import '../localization/locale_provider.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -252,46 +251,129 @@ class ScaffoldWithNavBar extends ConsumerWidget {
     final currentLocale = ref.watch(localeProvider);
     final isAr = currentLocale.languageCode == 'ar';
 
+    final navItems = [
+      _NavItemData(
+        label: isAr ? 'الرئيسية' : 'Home',
+        icon: Icons.home_outlined,
+        activeIcon: Icons.home_rounded,
+      ),
+      _NavItemData(
+        label: isAr ? 'اكتشف' : 'Discover',
+        icon: Icons.explore_outlined,
+        activeIcon: Icons.explore,
+      ),
+      _NavItemData(
+        label: isAr ? 'الحجوزات' : 'Bookings',
+        icon: Icons.event_available_outlined,
+        activeIcon: Icons.event_available,
+      ),
+      _NavItemData(
+        label: isAr ? 'المفضلات' : 'Favorites',
+        icon: Icons.favorite_border,
+        activeIcon: Icons.favorite,
+      ),
+      _NavItemData(
+        label: isAr ? 'حسابي' : 'Account',
+        icon: Icons.person_outline,
+        activeIcon: Icons.person,
+      ),
+    ];
+
     return Scaffold(
+      extendBody: true,
       body: child,
-      bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          border: Border(top: BorderSide(color: AppColors.border, width: 1)),
-        ),
-        child: NavigationBar(
-          selectedIndex: currentIndex,
-          onDestinationSelected: (index) => _onItemTapped(index, context),
-          backgroundColor: AppColors.surface,
-          indicatorColor: AppColors.goldGlow,
-          destinations: [
-            NavigationDestination(
-              icon: const Icon(Icons.home_outlined),
-              selectedIcon: const Icon(Icons.home, color: AppColors.primaryGold),
-              label: isAr ? 'الرئيسية' : 'Home',
-            ),
-            NavigationDestination(
-              icon: const Icon(Icons.explore_outlined),
-              selectedIcon: const Icon(Icons.explore, color: AppColors.primaryGold),
-              label: isAr ? 'اكتشف' : 'Discover',
-            ),
-            NavigationDestination(
-              icon: const Icon(Icons.confirmation_number_outlined),
-              selectedIcon: const Icon(Icons.confirmation_number, color: AppColors.primaryGold),
-              label: isAr ? 'حجوزاتي' : 'Bookings',
-            ),
-            NavigationDestination(
-              icon: const Icon(Icons.favorite_border),
-              selectedIcon: const Icon(Icons.favorite, color: AppColors.primaryGold),
-              label: isAr ? 'المفضلة' : 'Wishlist',
-            ),
-            NavigationDestination(
-              icon: const Icon(Icons.person_outline),
-              selectedIcon: const Icon(Icons.person, color: AppColors.primaryGold),
-              label: isAr ? 'حسابي' : 'Profile',
-            ),
-          ],
+      bottomNavigationBar: SafeArea(
+        child: Container(
+          height: 68,
+          margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            color: const Color(0xFF0C1926).withOpacity(0.96),
+            borderRadius: BorderRadius.circular(38),
+            border: Border.all(color: const Color(0xFF1E3246), width: 1.2),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.45),
+                blurRadius: 18,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: List.generate(navItems.length, (index) {
+              final item = navItems[index];
+              final isSelected = currentIndex == index;
+
+              return GestureDetector(
+                onTap: () => _onItemTapped(index, context),
+                behavior: HitTestBehavior.opaque,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      if (isSelected)
+                        Container(
+                          width: 38,
+                          height: 38,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFF5A623),
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Color(0x66F5A623),
+                                blurRadius: 10,
+                                offset: Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Icon(
+                            item.activeIcon,
+                            color: const Color(0xFF0C1926),
+                            size: 22,
+                          ),
+                        )
+                      else
+                        Padding(
+                          padding: const EdgeInsets.only(top: 4, bottom: 2),
+                          child: Icon(
+                            item.icon,
+                            color: const Color(0xFF8A9BB0),
+                            size: 22,
+                          ),
+                        ),
+                      const SizedBox(height: 2),
+                      Text(
+                        item.label,
+                        style: TextStyle(
+                          color: isSelected ? const Color(0xFFF5A623) : const Color(0xFF8A9BB0),
+                          fontSize: 10,
+                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }),
+          ),
         ),
       ),
     );
   }
+}
+
+class _NavItemData {
+  final String label;
+  final IconData icon;
+  final IconData activeIcon;
+
+  const _NavItemData({
+    required this.label,
+    required this.icon,
+    required this.activeIcon,
+  });
 }

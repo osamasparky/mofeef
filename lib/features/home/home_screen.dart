@@ -38,87 +38,284 @@ class HomeScreen extends ConsumerWidget {
     return Scaffold(
       body: CustomScrollView(
         slivers: [
-          // 1. Luxury Header matching Figma
-          SliverAppBar(
-            pinned: true,
-            expandedHeight: 80,
-            backgroundColor: AppColors.background,
-            automaticallyImplyLeading: false,
-            flexibleSpace: FlexibleSpaceBar(
-              titlePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              title: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: AppColors.goldGlow,
-                          border: Border.all(color: AppColors.primaryGold, width: 1.5),
-                        ),
-                        child: Center(
-                          child: Text(
-                            authState.userName != null && authState.userName!.isNotEmpty
-                                ? authState.userName!.characters.first.toUpperCase()
-                                : 'م',
-                            style: const TextStyle(
-                              color: AppColors.primaryGold,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 18,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(isAr ? 'مرحباً بك' : 'Welcome', style: AppTypography.bodySmall),
-                          Text(
-                            authState.userName ?? (isAr ? 'مسافر مُضيف' : 'Modeefe Traveler'),
-                            style: AppTypography.titleSmall.copyWith(color: AppColors.primaryGold),
-                          ),
-                        ],
-                      ),
-                    ],
+          // 1. Integrated Hero Header matching Image 2
+          SliverToBoxAdapter(
+            child: Container(
+              margin: const EdgeInsets.fromLTRB(16, 12, 16, 14),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(28),
+                border: Border.all(color: const Color(0xFF263A4D), width: 1.2),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.5),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
                   ),
-                  Row(
-                    children: [
-                      // Cart Button with badge
-                      Stack(
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.shopping_bag_outlined, color: AppColors.textPrimary, size: 22),
-                            onPressed: () => context.push('/cart'),
-                          ),
-                          if (cartState.items.isNotEmpty)
-                            Positioned(
-                              top: 6,
-                              right: 6,
-                              child: Container(
-                                padding: const EdgeInsets.all(4),
-                                decoration: const BoxDecoration(
-                                  color: AppColors.primaryGold,
-                                  shape: BoxShape.circle,
+                ],
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: Stack(
+                children: [
+                  // AlUla Mountain Background
+                  Positioned.fill(
+                    child: Image.network(
+                      'https://images.unsplash.com/photo-1590073844006-33379778ae09?w=1200&q=85',
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(color: const Color(0xFF0F1B26)),
+                    ),
+                  ),
+
+                  // Teal / Amber Gradient Overlay
+                  Positioned.fill(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            const Color(0xFF1B4E4A).withOpacity(0.65), // Turquoise top tint
+                            const Color(0xFF09141D).withOpacity(0.55),
+                            const Color(0xFF070F17).withOpacity(0.92), // Dark bottom
+                          ],
+                          stops: const [0.0, 0.45, 1.0],
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // Hero Content
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(18, 16, 18, 20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Top Bar: User Profile & Notification
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            // User Info (Right side in RTL)
+                            Row(
+                              children: [
+                                Stack(
+                                  children: [
+                                    Container(
+                                      width: 44,
+                                      height: 44,
+                                      decoration: const BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: Color(0xFFF5A623),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Color(0x66F5A623),
+                                            blurRadius: 10,
+                                            offset: Offset(0, 2),
+                                          ),
+                                        ],
+                                      ),
+                                      child: Center(
+                                        child: Text(
+                                          authState.userName != null && authState.userName!.isNotEmpty
+                                              ? authState.userName!.characters.first.toUpperCase()
+                                              : 'م',
+                                          style: const TextStyle(
+                                            color: Color(0xFF0C1926),
+                                            fontWeight: FontWeight.w900,
+                                            fontSize: 20,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    Positioned(
+                                      bottom: 0,
+                                      left: 0,
+                                      child: Container(
+                                        width: 12,
+                                        height: 12,
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFF5A623),
+                                          shape: BoxShape.circle,
+                                          border: Border.all(color: const Color(0xFF0C1926), width: 2),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                child: Text(
-                                  '${cartState.items.length}',
-                                  style: const TextStyle(color: AppColors.textDark, fontSize: 10, fontWeight: FontWeight.bold),
+                                const SizedBox(width: 12),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      isAr ? 'مرحباً بك' : 'Welcome',
+                                      style: const TextStyle(
+                                        color: Color(0xFF8FD1C8),
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      authState.userName ?? (isAr ? 'مسافر مُضيف' : 'Modeefe Traveler'),
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+
+                            // Notification & Cart Icons
+                            Row(
+                              children: [
+                                if (cartState.items.isNotEmpty)
+                                  GestureDetector(
+                                    onTap: () => context.push('/cart'),
+                                    child: Container(
+                                      margin: const EdgeInsets.only(left: 8),
+                                      width: 40,
+                                      height: 40,
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFF1E353B).withOpacity(0.85),
+                                        shape: BoxShape.circle,
+                                        border: Border.all(color: Colors.white.withOpacity(0.15)),
+                                      ),
+                                      child: Stack(
+                                        alignment: Alignment.center,
+                                        children: [
+                                          const Icon(Icons.shopping_bag_outlined, color: Colors.white, size: 20),
+                                          Positioned(
+                                            top: 6,
+                                            right: 6,
+                                            child: Container(
+                                              padding: const EdgeInsets.all(3),
+                                              decoration: const BoxDecoration(
+                                                color: Color(0xFFF5A623),
+                                                shape: BoxShape.circle,
+                                              ),
+                                              child: Text(
+                                                '${cartState.items.length}',
+                                                style: const TextStyle(color: Color(0xFF0C1926), fontSize: 9, fontWeight: FontWeight.bold),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                GestureDetector(
+                                  onTap: () => context.push('/notifications'),
+                                  child: Container(
+                                    width: 42,
+                                    height: 42,
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF203B3E).withOpacity(0.85),
+                                      shape: BoxShape.circle,
+                                      border: Border.all(color: Colors.white.withOpacity(0.15)),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.3),
+                                          blurRadius: 8,
+                                          offset: const Offset(0, 2),
+                                        ),
+                                      ],
+                                    ),
+                                    child: const Icon(
+                                      Icons.notifications_none_outlined,
+                                      color: Colors.white,
+                                      size: 22,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 36),
+
+                        // Handpicked Experiences Badge
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF18242D).withOpacity(0.8),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: Colors.white.withOpacity(0.12)),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.auto_awesome, color: Color(0xFFF5A623), size: 14),
+                              const SizedBox(width: 6),
+                              Text(
+                                isAr ? 'تجارب مختارة بعناية' : 'Handpicked Experiences',
+                                style: const TextStyle(
+                                  color: Color(0xFFE2E8F0),
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 12),
+
+                        // Big Hero Title
+                        Text(
+                          isAr ? 'من التراث إلى التجربة' : 'From Heritage to Experience',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 27,
+                            fontWeight: FontWeight.w900,
+                            fontFamily: 'Tajawal',
+                            letterSpacing: 0.2,
+                            shadows: [
+                              Shadow(color: Colors.black54, blurRadius: 10, offset: Offset(0, 3)),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 20),
+
+                        // Search Bar inside Hero
+                        GestureDetector(
+                          onTap: () => context.go('/discover'),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF16222D).withOpacity(0.92),
+                              borderRadius: BorderRadius.circular(22),
+                              border: Border.all(color: const Color(0xFF26384A), width: 1.2),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.3),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
                             ),
-                        ],
-                      ),
-                      // Notifications Button
-                      IconButton(
-                        icon: const Icon(Icons.notifications_outlined, color: AppColors.textPrimary, size: 22),
-                        onPressed: () => context.push('/notifications'),
-                      ),
-                    ],
+                            child: Row(
+                              children: [
+                                const Icon(Icons.search, color: Color(0xFFF5A623), size: 22),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    isAr ? 'ابحث عن وجهة، تجربة، أو فعالية' : 'Search for a destination, trail, or event...',
+                                    style: const TextStyle(
+                                      color: Color(0xFF8A9BB0),
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -130,124 +327,6 @@ class HomeScreen extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Hero Banner matching Figma ("من التراث إلى التجربة")
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: Container(
-                    height: 200,
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(24),
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF1E2D38), Color(0xFF07121A)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      border: Border.all(color: AppColors.primaryGold.withOpacity(0.35)),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.4),
-                          blurRadius: 16,
-                          offset: const Offset(0, 6),
-                        ),
-                      ],
-                    ),
-                    child: Stack(
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(24),
-                          child: Opacity(
-                            opacity: 0.35,
-                            child: Image.network(
-                              'https://images.unsplash.com/photo-1590073844006-33379778ae09?w=800&q=80',
-                              fit: BoxFit.cover,
-                              width: double.infinity,
-                              height: double.infinity,
-                            ),
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.all(20),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-                                decoration: BoxDecoration(
-                                  color: AppColors.goldGlow,
-                                  borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(color: AppColors.primaryGold.withOpacity(0.4)),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const Icon(Icons.auto_awesome, color: AppColors.primaryGold, size: 14),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      isAr ? 'تجارب مختارة بعناية' : 'Handpicked Experiences',
-                                      style: AppTypography.bodySmall.copyWith(
-                                        color: AppColors.primaryGold,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(height: 10),
-                              Text(
-                                isAr ? 'من التراث إلى التجربة' : 'From Heritage to Experience',
-                                style: AppTypography.headingMedium.copyWith(fontSize: 22),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                isAr ? 'اكتشف روائع المملكة الأصيلة ومساراتها التاريخية' : 'Discover the authentic wonders of the Kingdom',
-                                style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                // Search Bar matching Figma
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
-                  child: GestureDetector(
-                    onTap: () => context.go('/discover'),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                      decoration: BoxDecoration(
-                        color: AppColors.surface,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: AppColors.border),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.search, color: AppColors.primaryGold),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              isAr ? 'ابحث عن وجهة، مسار سياحي، أو فعالية...' : 'Search for a destination, trail, or event...',
-                              style: AppTypography.bodyMedium,
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.all(6),
-                            decoration: BoxDecoration(
-                              color: AppColors.goldGlow,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Icon(Icons.tune, color: AppColors.primaryGold, size: 16),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-
                 // 3. Complete Categories Grid/Row (7 Core Services from API)
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
