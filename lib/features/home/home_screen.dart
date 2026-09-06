@@ -38,16 +38,15 @@ class HomeScreen extends ConsumerWidget {
     return Scaffold(
       body: CustomScrollView(
         slivers: [
-          // 1. Integrated Hero Header matching Image 2
+          // 1. Integrated Full-Width Hero Header
           SliverToBoxAdapter(
             child: Container(
-              margin: const EdgeInsets.fromLTRB(16, 12, 16, 14),
+              margin: EdgeInsets.zero,
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(28),
-                border: Border.all(color: const Color(0xFF263A4D), width: 1.2),
+                borderRadius: const BorderRadius.vertical(bottom: Radius.circular(32)),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.5),
+                    color: Colors.black.withOpacity(0.55),
                     blurRadius: 20,
                     offset: const Offset(0, 8),
                   ),
@@ -56,12 +55,15 @@ class HomeScreen extends ConsumerWidget {
               clipBehavior: Clip.antiAlias,
               child: Stack(
                 children: [
-                  // AlUla Mountain Background
+                  // Full Cover Background Image
                   Positioned.fill(
-                    child: Image.network(
-                      'https://images.unsplash.com/photo-1590073844006-33379778ae09?w=1200&q=85',
+                    child: Image.asset(
+                      'assets/images/home_hero_bg.jpg',
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Container(color: const Color(0xFF0F1B26)),
+                      errorBuilder: (_, __, ___) => Image.network(
+                        'https://images.unsplash.com/photo-1590073844006-33379778ae09?w=1200&q=85',
+                        fit: BoxFit.cover,
+                      ),
                     ),
                   ),
 
@@ -73,9 +75,9 @@ class HomeScreen extends ConsumerWidget {
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
                           colors: [
-                            const Color(0xFF1B4E4A).withOpacity(0.65), // Turquoise top tint
+                            const Color(0xFF1B4E4A).withOpacity(0.60), // Turquoise top tint
                             const Color(0xFF09141D).withOpacity(0.55),
-                            const Color(0xFF070F17).withOpacity(0.92), // Dark bottom
+                            const Color(0xFF070F17).withOpacity(0.95), // Dark bottom
                           ],
                           stops: const [0.0, 0.45, 1.0],
                         ),
@@ -83,12 +85,14 @@ class HomeScreen extends ConsumerWidget {
                     ),
                   ),
 
-                  // Hero Content
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(18, 16, 18, 20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
+                  // Hero Content with SafeArea
+                  SafeArea(
+                    bottom: false,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 10, 20, 26),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
                         // Top Bar: User Profile & Notification
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -317,17 +321,19 @@ class HomeScreen extends ConsumerWidget {
                       ],
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
+        ),
 
-          // 2. Main Body Content
-          SliverToBoxAdapter(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // 3. Complete Categories Grid/Row (7 Core Services from API)
+        // 2. Main Body Content
+        SliverToBoxAdapter(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 18),
+              // 3. Complete Categories Grid/Row (7 Core Services from API)
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Column(
