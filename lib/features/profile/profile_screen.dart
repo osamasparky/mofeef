@@ -36,7 +36,7 @@ class ProfileScreen extends ConsumerWidget {
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 110),
         child: Column(
           children: [
             // User Profile Card matching Figma

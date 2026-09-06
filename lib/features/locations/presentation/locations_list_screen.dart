@@ -132,7 +132,7 @@ class _LocationsListScreenState extends ConsumerState<LocationsListScreen> {
                 }
 
                 return GridView.builder(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 110),
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
                     childAspectRatio: 0.82,

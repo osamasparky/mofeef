@@ -1144,7 +1144,7 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
     final carsAsync = ref.watch(carsListProvider);
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 32),
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 110),
       children: [
         // 1. المسارات السياحية
         _buildSectionHeader(
@@ -1385,7 +1385,7 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
         if (filtered.isEmpty) return _buildEmptyState(isAr);
 
         return ListView.builder(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 110),
           itemCount: filtered.length,
           itemBuilder: (context, index) {
             final tour = filtered[index];
@@ -1426,7 +1426,7 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
         if (filtered.isEmpty) return _buildEmptyState(isAr);
 
         return ListView.builder(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 110),
           itemCount: filtered.length,
           itemBuilder: (context, index) {
             final museum = filtered[index];
@@ -1470,7 +1470,7 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
         if (filtered.isEmpty) return _buildEmptyState(isAr);
 
         return ListView.builder(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 110),
           itemCount: filtered.length,
           itemBuilder: (context, index) {
             final event = filtered[index];
@@ -1512,7 +1512,7 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
         if (filtered.isEmpty) return _buildEmptyState(isAr);
 
         return ListView.builder(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 110),
           itemCount: filtered.length,
           itemBuilder: (context, index) {
             final guide = filtered[index];
@@ -1560,7 +1560,7 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
         if (filtered.isEmpty) return _buildEmptyState(isAr);
 
         return ListView.builder(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 110),
           itemCount: filtered.length,
           itemBuilder: (context, index) {
             final car = filtered[index];
@@ -1608,7 +1608,7 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
         if (list.isEmpty) return _buildEmptyState(isAr);
 
         return ListView.builder(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 110),
           itemCount: list.length,
           itemBuilder: (context, index) {
             final product = list[index];
