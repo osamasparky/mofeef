@@ -155,6 +155,7 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
   void _showFilterSheet(bool isAr) {
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(

@@ -197,50 +197,129 @@ class ProfileScreen extends ConsumerWidget {
   void _showLanguageDialog(BuildContext context, WidgetRef ref, bool isAr) {
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
+      useSafeArea: true,
       backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
-      builder: (ctx) => Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2)),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 44,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.border,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              isAr ? 'اختر لغة التطبيق' : 'Select App Language',
-              style: AppTypography.titleLarge,
-            ),
-            const SizedBox(height: 16),
-            ListTile(
-              leading: const Text('🇸🇦', style: TextStyle(fontSize: 24)),
-              title: const Text('العربية (Arabic)', style: TextStyle(fontWeight: FontWeight.bold)),
-              trailing: isAr ? const Icon(Icons.check_circle, color: AppColors.primaryGold) : null,
-              onTap: () {
-                ref.read(localeProvider.notifier).setLocale('ar');
-                Navigator.pop(ctx);
-              },
-            ),
-            const Divider(color: AppColors.border),
-            ListTile(
-              leading: const Text('🇬🇧', style: TextStyle(fontSize: 24)),
-              title: const Text('English (الإنجليزية)', style: TextStyle(fontWeight: FontWeight.bold)),
-              trailing: !isAr ? const Icon(Icons.check_circle, color: AppColors.primaryGold) : null,
-              onTap: () {
-                ref.read(localeProvider.notifier).setLocale('en');
-                Navigator.pop(ctx);
-              },
-            ),
-            const SizedBox(height: 12),
-          ],
+              const SizedBox(height: 18),
+              Text(
+                isAr ? 'اختر لغة التطبيق' : 'Select App Language',
+                style: AppTypography.headingSmall,
+              ),
+              const SizedBox(height: 6),
+              Text(
+                isAr ? 'سيتم تطبيق اللغة المختارة على كامل واجهات التطبيق' : 'The selected language will apply across the entire app',
+                style: AppTypography.bodySmall,
+              ),
+              const SizedBox(height: 20),
+
+              // Arabic Option Card
+              GestureDetector(
+                onTap: () {
+                  ref.read(localeProvider.notifier).setLocale('ar');
+                  Navigator.pop(ctx);
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: isAr ? AppColors.goldGlow : AppColors.card,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: isAr ? AppColors.primaryGold : AppColors.border,
+                      width: isAr ? 1.5 : 1.0,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      const Text('🇸🇦', style: TextStyle(fontSize: 28)),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'العربية',
+                              style: AppTypography.titleMedium.copyWith(
+                                color: isAr ? AppColors.primaryGold : Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const Text('Arabic (المملكة العربية السعودية)', style: TextStyle(color: AppColors.textMuted, fontSize: 12)),
+                          ],
+                        ),
+                      ),
+                      if (isAr)
+                        const Icon(Icons.check_circle_rounded, color: AppColors.primaryGold, size: 24),
+                    ],
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              // English Option Card
+              GestureDetector(
+                onTap: () {
+                  ref.read(localeProvider.notifier).setLocale('en');
+                  Navigator.pop(ctx);
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: !isAr ? AppColors.goldGlow : AppColors.card,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: !isAr ? AppColors.primaryGold : AppColors.border,
+                      width: !isAr ? 1.5 : 1.0,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      const Text('🇬🇧', style: TextStyle(fontSize: 28)),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'English',
+                              style: AppTypography.titleMedium.copyWith(
+                                color: !isAr ? AppColors.primaryGold : Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const Text('الإنجليزية (English)', style: TextStyle(color: AppColors.textMuted, fontSize: 12)),
+                          ],
+                        ),
+                      ),
+                      if (!isAr)
+                        const Icon(Icons.check_circle_rounded, color: AppColors.primaryGold, size: 24),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
         ),
       ),
     );

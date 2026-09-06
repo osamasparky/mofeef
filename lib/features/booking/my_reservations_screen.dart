@@ -343,6 +343,8 @@ class MyReservationsScreen extends ConsumerWidget {
   void _showQrModal(BuildContext context, bool isAr, String title, String code) {
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
+      useSafeArea: true,
       backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
